@@ -1,0 +1,6 @@
+#cloud-config
+# For Multipass: multipass launch 24.04 --name anahnu --cpus 2 --memory 4G --disk 20G --cloud-init deploy/vm/cloud-init.yaml
+package_update: true
+packages:
+  - git
+  - unzip

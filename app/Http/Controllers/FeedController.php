@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Resources\PostResource;
+use App\Models\Post;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class FeedController extends Controller
+{
+    public function __invoke(Request $request): Response
+    {
+        $posts = self::postQuery($request)
+            ->whereDoesntHave('group', fn (Builder $q) => $q->where('is_private', true))
+            ->paginate(20);
+
+        return Inertia::render('feed', [
+            'posts' => PostResource::collection($posts),
+        ]);
+    }
+
+    /** Posts with everything a post card shows, newest first. */
+    public static function postQuery(Request $request): Builder
+    {
+        $locale = app()->getLocale();
+
+        return Post::query()
+            ->with([
+                'user', 'group',
+                'comments.user',
+                'contentTranslations' => fn ($q) => $q->where('locale', $locale),
+                'comments.contentTranslations' => fn ($q) => $q->where('locale', $locale),
+            ])
+            ->withCount('likes')
+            ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $request->user()?->id)])
+            ->latest();
+    }
+}

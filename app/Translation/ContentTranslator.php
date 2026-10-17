@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Translation;
+
+use App\Models\ContentTranslation;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+/**
+ * Returns a model field in the reader's language, translating once and caching the result.
+ */
+class ContentTranslator
+{
+    public function __construct(private Translator $translator) {}
+
+    public function enabled(): bool
+    {
+        return ! $this->translator instanceof NullTranslator;
+    }
+
+    public function sourceLocale(Model $model, string $field): ?string
+    {
+        return $model->getAttribute('locale') ?? LanguageGuesser::guess((string) $model->getAttribute($field));
+    }
+
+    public function needsTranslation(Model $model, string $field, string $locale): bool
+    {
+        $text = (string) $model->getAttribute($field);
+
+        return $this->enabled() && trim(strip_tags($text)) !== '' && $this->sourceLocale($model, $field) !== $locale;
+    }
+
+    public function translate(Model $model, string $field, string $locale): ?string
+    {
+        if (! $this->needsTranslation($model, $field, $locale)) {
+            return null;
+        }
+
+        if ($cached = $model->cachedTranslation($field, $locale)) {
+            return $cached;
+        }
+
+        $text = (string) $model->getAttribute($field);
+
+        try {
+            $translated = $this->translator->translate($text, $locale, $this->sourceLocale($model, $field));
+        } catch (Throwable $e) {
+            Log::warning('Content translation failed', ['model' => $model::class, 'id' => $model->getKey(), 'error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        $model->contentTranslations()->updateOrCreate(
+            ['field' => $field, 'locale' => $locale],
+            ['text' => $translated, 'provider' => $this->translator->name(), 'source_hash' => hash('sha256', $text)],
+        );
+        $model->unsetRelation('contentTranslations');
+
+        return $translated;
+    }
+}
