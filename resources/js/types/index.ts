@@ -82,3 +82,10 @@ export interface Paginated<T> {
     links: { first: string | null; last: string | null; prev: string | null; next: string | null };
     meta: { current_page: number; last_page: number; total: number };
 }
+
+export interface Sidebar {
+    members: { id: number; name: string; avatar: string | null }[];
+    members_count: number;
+    groups: { name: string; slug: string; posts_count: number }[];
+    photos: { id: number; thumb: string; url: string }[];
+}

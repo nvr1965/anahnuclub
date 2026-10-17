@@ -1,6 +1,5 @@
 {
     ":count members": ":count members",
-    ":count posts": ":count posts",
     "A community without borders. Write in your language, read in yours.": "A community without borders. Write in your language, read in yours.",
     "A new verification link has been sent to the email address you provided during registration.": "A new verification link has been sent to the email address you provided during registration.",
     "A new verification link has been sent to your email address.": "A new verification link has been sent to your email address.",
@@ -8,6 +7,7 @@
     "Are you sure you want to delete your account?": "Are you sure you want to delete your account?",
     "Cancel": "Cancel",
     "Click here to re-send the verification email.": "Click here to re-send the verification email.",
+    "Collapse": "Collapse",
     "Confirm password": "Confirm password",
     "Confirm your password": "Confirm your password",
     "Create an account": "Create an account",
@@ -28,10 +28,12 @@
     "Full name": "Full name",
     "Groups": "Groups",
     "Join": "Join",
+    "Join us!": "Join us!",
     "Log in": "Log in",
     "Log in to your account": "Log in to your account",
     "Log out": "Log out",
     "Manage your profile and account settings": "Manage your profile and account settings",
+    "Members": "Members",
     "Name": "Name",
     "New password": "New password",
     "Newer": "Newer",
@@ -40,6 +42,7 @@
     "Older": "Older",
     "Or, return to": "Or, return to",
     "Password": "Password",
+    "Photos": "Photos",
     "Please enter your new password below": "Please enter your new password below",
     "Please proceed with caution, this cannot be undone.": "Please proceed with caution, this cannot be undone.",
     "Please verify your email address by clicking on the link we just emailed to you.": "Please verify your email address by clicking on the link we just emailed to you.",
@@ -47,6 +50,7 @@
     "Profile information": "Profile information",
     "Profile settings": "Profile settings",
     "Publish": "Publish",
+    "Read more": "Read more",
     "Register": "Register",
     "Remember me": "Remember me",
     "Reset password": "Reset password",
@@ -68,5 +72,8 @@
     "What is new?": "What is new?",
     "Write a comment…": "Write a comment…",
     "Your email address is unverified.": "Your email address is unverified.",
-    "Your old AnahnuClub password still works": "Your old AnahnuClub password still works"
+    "Your old AnahnuClub password still works": "Your old AnahnuClub password still works",
+    "new announcement": "new announcement",
+    "new discussion": "new discussion",
+    "new photo": "new photo"
 }

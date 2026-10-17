@@ -1,10 +1,11 @@
+import { CommunitySidebar } from '@/components/community-sidebar';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
-import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
-import { type Paginated, type Post } from '@/types';
+import { type Paginated, type Post, type Sidebar } from '@/types';
 import { Head, router } from '@inertiajs/react';
+import { Users } from 'lucide-react';
 
 interface Group {
     id: number;
@@ -16,29 +17,44 @@ interface Group {
     is_member: boolean;
 }
 
-export default function GroupShow({ group, posts }: { group: Group; posts: Paginated<Post> }) {
+export default function GroupShow({ group, posts, sidebar }: { group: Group; posts: Paginated<Post>; sidebar: Sidebar }) {
     const t = useT();
 
     return (
-        <AppLayout
-            breadcrumbs={[
-                { title: t('Groups'), href: route('groups.index') },
-                { title: group.name, href: route('groups.show', group.slug) },
-            ]}
-        >
+        <AppLayout aside={<CommunitySidebar sidebar={sidebar} />}>
             <Head title={group.name} />
-            <div className="mx-auto w-full max-w-2xl space-y-4 p-4">
-                {group.cover && <img src={group.cover} alt="" className="h-40 w-full rounded-xl object-cover" />}
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-xl font-semibold">{group.name}</h1>
-                        <p className="text-muted-foreground text-sm">{t(':count members', { count: group.members_count })}</p>
+            <div className="space-y-4">
+                <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-neutral-900 dark:ring-neutral-800">
+                    <div
+                        className="from-brand to-brand-dark h-36 bg-gradient-to-br bg-cover bg-center"
+                        style={group.cover ? { backgroundImage: `url(${group.cover})` } : undefined}
+                    />
+                    <div className="flex flex-wrap items-start justify-between gap-4 p-5">
+                        <div className="min-w-0">
+                            <h1 dir="auto" className="text-2xl font-semibold">
+                                {group.name}
+                            </h1>
+                            <p className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 text-sm">
+                                <Users className="size-4" /> {t(':count members', { count: group.members_count })}
+                            </p>
+                        </div>
+                        {!group.is_member && (
+                            <button
+                                onClick={() => router.post(route('groups.join', group.slug))}
+                                className="bg-cta hover:bg-cta-dark rounded-full px-5 py-2 text-sm font-medium text-white"
+                            >
+                                {t('Join')}
+                            </button>
+                        )}
                     </div>
-                    {!group.is_member && <Button onClick={() => router.post(route('groups.join', group.slug))}>{t('Join')}</Button>}
-                </div>
-                {group.description && (
-                    <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: group.description }} />
-                )}
+                    {group.description && (
+                        <div
+                            dir="auto"
+                            className="prose prose-sm prose-slate dark:prose-invert max-w-none px-5 pb-5"
+                            dangerouslySetInnerHTML={{ __html: group.description }}
+                        />
+                    )}
+                </section>
                 {group.is_member && <PostComposer groupId={group.id} />}
                 <PostList posts={posts} />
             </div>

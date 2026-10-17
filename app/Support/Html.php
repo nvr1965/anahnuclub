@@ -17,11 +17,15 @@ class Html
                 ->allowSafeElements()
                 ->allowLinkSchemes(['https', 'http', 'mailto'])
                 ->allowMediaSchemes(['https', 'http'])
+                ->allowRelativeMedias()
+                ->allowRelativeLinks()
                 ->forceAttribute('a', 'rel', 'noopener nofollow ugc')
                 ->forceAttribute('a', 'target', '_blank')
         );
 
         $html = (string) $html;
+        // Joomla wrote image paths relative to its root; those files now live in storage/joomla.
+        $html = preg_replace('~(src=["\'])/?images/~i', '$1/storage/joomla/images/', $html) ?? $html;
         if ($html === strip_tags($html)) {
             $html = self::fromPlainText($html);
         }

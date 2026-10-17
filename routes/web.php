@@ -8,13 +8,11 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\TranslationController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return auth()->check() ? to_route('dashboard') : Inertia::render('welcome');
-})->name('home');
+Route::get('/', [FeedController::class, 'welcome'])->name('home');
 
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
+Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
@@ -26,8 +24,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::post('posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
-
-    Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 });
 
 require __DIR__.'/settings.php';

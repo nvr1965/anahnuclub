@@ -1,6 +1,5 @@
 {
     ":count members": "חברים: :count",
-    ":count posts": "פוסטים: :count",
     "A community without borders. Write in your language, read in yours.": "קהילה ללא גבולות. כתבו בשפה שלכם, קראו בשפה שלכם.",
     "A new verification link has been sent to the email address you provided during registration.": "קישור אימות חדש נשלח לכתובת הדוא\"ל שציינתם בהרשמה.",
     "A new verification link has been sent to your email address.": "קישור אימות חדש נשלח לכתובת הדוא\"ל שלכם.",
@@ -8,6 +7,7 @@
     "Are you sure you want to delete your account?": "האם אתם בטוחים שברצונכם למחוק את החשבון?",
     "Cancel": "ביטול",
     "Click here to re-send the verification email.": "לחצו כאן לשליחה חוזרת של הודעת האימות.",
+    "Collapse": "צמצום",
     "Confirm password": "אימות סיסמה",
     "Confirm your password": "אשרו את הסיסמה",
     "Create an account": "יצירת חשבון",
@@ -28,10 +28,12 @@
     "Full name": "שם מלא",
     "Groups": "קבוצות",
     "Join": "הצטרפות",
+    "Join us!": "הצטרפו אלינו!",
     "Log in": "כניסה",
     "Log in to your account": "כניסה לחשבון",
     "Log out": "יציאה",
     "Manage your profile and account settings": "ניהול הפרופיל והגדרות החשבון",
+    "Members": "חברים",
     "Name": "שם",
     "New password": "סיסמה חדשה",
     "Newer": "חדשים יותר",
@@ -40,6 +42,7 @@
     "Older": "ישנים יותר",
     "Or, return to": "או לחזור אל",
     "Password": "סיסמה",
+    "Photos": "תמונות",
     "Please enter your new password below": "הזינו סיסמה חדשה",
     "Please proceed with caution, this cannot be undone.": "זהירות, לא ניתן לבטל פעולה זו.",
     "Please verify your email address by clicking on the link we just emailed to you.": "אמתו את כתובת הדוא\"ל דרך הקישור ששלחנו כעת.",
@@ -47,6 +50,7 @@
     "Profile information": "פרטי פרופיל",
     "Profile settings": "הגדרות פרופיל",
     "Publish": "פרסום",
+    "Read more": "קראו עוד",
     "Register": "הרשמה",
     "Remember me": "זכור אותי",
     "Reset password": "איפוס סיסמה",
@@ -68,5 +72,8 @@
     "What is new?": "מה חדש?",
     "Write a comment…": "כתבו תגובה…",
     "Your email address is unverified.": "כתובת הדוא\"ל לא אומתה.",
-    "Your old AnahnuClub password still works": "הסיסמה הישנה שלכם ל-AnahnuClub עדיין עובדת"
+    "Your old AnahnuClub password still works": "הסיסמה הישנה שלכם ל-AnahnuClub עדיין עובדת",
+    "new announcement": "הודעה חדשה",
+    "new discussion": "דיון חדש",
+    "new photo": "תמונה חדשה"
 }

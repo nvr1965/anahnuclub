@@ -1,6 +1,5 @@
 {
     ":count members": "Участников: :count",
-    ":count posts": "Постов: :count",
     "A community without borders. Write in your language, read in yours.": "Сообщество без границ. Пишите на своём языке, читайте на своём.",
     "A new verification link has been sent to the email address you provided during registration.": "Новая ссылка для подтверждения отправлена на адрес, указанный при регистрации.",
     "A new verification link has been sent to your email address.": "Новая ссылка для подтверждения отправлена на вашу почту.",
@@ -8,6 +7,7 @@
     "Are you sure you want to delete your account?": "Точно удалить аккаунт?",
     "Cancel": "Отмена",
     "Click here to re-send the verification email.": "Нажмите, чтобы отправить письмо ещё раз.",
+    "Collapse": "Свернуть",
     "Confirm password": "Подтвердите пароль",
     "Confirm your password": "Подтвердите пароль",
     "Create an account": "Создать аккаунт",
@@ -28,10 +28,12 @@
     "Full name": "Имя",
     "Groups": "Группы",
     "Join": "Вступить",
+    "Join us!": "Присоединяйтесь!",
     "Log in": "Войти",
     "Log in to your account": "Вход в аккаунт",
     "Log out": "Выйти",
     "Manage your profile and account settings": "Профиль и настройки аккаунта",
+    "Members": "Участники",
     "Name": "Имя",
     "New password": "Новый пароль",
     "Newer": "Новее",
@@ -40,6 +42,7 @@
     "Older": "Старее",
     "Or, return to": "Или вернуться к",
     "Password": "Пароль",
+    "Photos": "Фото",
     "Please enter your new password below": "Введите новый пароль",
     "Please proceed with caution, this cannot be undone.": "Осторожно, это нельзя отменить.",
     "Please verify your email address by clicking on the link we just emailed to you.": "Подтвердите почту по ссылке из письма, которое мы только что отправили.",
@@ -47,6 +50,7 @@
     "Profile information": "Данные профиля",
     "Profile settings": "Настройки профиля",
     "Publish": "Опубликовать",
+    "Read more": "Читать полностью",
     "Register": "Регистрация",
     "Remember me": "Запомнить меня",
     "Reset password": "Сбросить пароль",
@@ -68,5 +72,8 @@
     "What is new?": "Что нового?",
     "Write a comment…": "Напишите комментарий…",
     "Your email address is unverified.": "Ваша почта не подтверждена.",
-    "Your old AnahnuClub password still works": "Ваш старый пароль от AnahnuClub подходит"
+    "Your old AnahnuClub password still works": "Ваш старый пароль от AnahnuClub подходит",
+    "new announcement": "новое объявление",
+    "new discussion": "новое обсуждение",
+    "new photo": "новое фото"
 }

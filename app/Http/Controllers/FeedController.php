@@ -19,6 +19,26 @@ class FeedController extends Controller
 
         return Inertia::render('feed', [
             'posts' => PostResource::collection($posts),
+            'sidebar' => CommunitySidebar::for($request->user()),
+        ]);
+    }
+
+    /** Guests see the club's front page: who is here and the latest public posts. */
+    public function welcome(Request $request): Response|\Illuminate\Http\RedirectResponse
+    {
+        if ($request->user()) {
+            return to_route('dashboard');
+        }
+
+        $posts = self::postQuery($request)
+            ->whereDoesntHave('group', fn (Builder $q) => $q->where('is_private', true))
+            ->limit(10)
+            ->get();
+
+        return Inertia::render('welcome', [
+            'posts' => PostResource::collection($posts),
+            'sidebar' => CommunitySidebar::for(null),
+            'canResetPassword' => true,
         ]);
     }
 

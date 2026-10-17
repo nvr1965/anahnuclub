@@ -1,5 +1,4 @@
-import AppLogoIcon from '@/components/app-logo-icon';
-import { Link } from '@inertiajs/react';
+import ClubLayout from '@/layouts/club-layout';
 
 interface AuthLayoutProps {
     children: React.ReactNode;
@@ -10,25 +9,19 @@ interface AuthLayoutProps {
 
 export default function AuthSimpleLayout({ children, title, description }: AuthLayoutProps) {
     return (
-        <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
-
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-muted-foreground text-center text-sm">{description}</p>
-                        </div>
+        <ClubLayout>
+            <div className="mx-auto mt-6 w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-neutral-900 dark:ring-neutral-800">
+                <div className="bg-brand flex items-center justify-center py-6">
+                    <img src="/images/logo-banner.png" alt="anahnu.club" className="h-20 w-auto" />
+                </div>
+                <div className="space-y-6 p-6 sm:p-8">
+                    <div className="space-y-1 text-center">
+                        <h1 className="text-xl font-semibold">{title}</h1>
+                        <p className="text-muted-foreground text-sm">{description}</p>
                     </div>
                     {children}
                 </div>
             </div>
-        </div>
+        </ClubLayout>
     );
 }

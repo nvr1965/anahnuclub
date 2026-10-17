@@ -47,6 +47,7 @@ class GroupController extends Controller
                 'is_member' => $member,
             ],
             'posts' => PostResource::collection($posts),
+            'sidebar' => CommunitySidebar::for($request->user()),
         ]);
     }
 

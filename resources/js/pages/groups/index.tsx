@@ -1,6 +1,7 @@
 import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
+import { MessageSquare, Users } from 'lucide-react';
 
 interface GroupRow {
     id: number;
@@ -15,30 +16,40 @@ export default function GroupsIndex({ groups }: { groups: { data: GroupRow[]; ne
     const t = useT();
 
     return (
-        <AppLayout breadcrumbs={[{ title: t('Groups'), href: route('groups.index') }]}>
+        <AppLayout>
             <Head title={t('Groups')} />
-            <div className="mx-auto grid w-full max-w-4xl gap-3 p-4 sm:grid-cols-2">
+            <h1 className="mb-4 text-2xl font-semibold">{t('Groups')}</h1>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {groups.data.map((group) => (
                     <Link
                         key={group.id}
                         href={route('groups.show', group.slug)}
-                        className="border-sidebar-border/70 dark:border-sidebar-border hover:bg-accent flex items-center gap-3 rounded-xl border p-3"
+                        className="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-neutral-900 dark:ring-neutral-800"
                     >
                         {group.avatar ? (
-                            <img src={group.avatar} alt="" className="size-10 rounded-lg object-cover" />
+                            <img src={group.avatar} alt="" className="size-14 rounded-xl object-cover" />
                         ) : (
-                            <div className="bg-muted size-10 rounded-lg" />
+                            <div className="from-brand to-brand-dark flex size-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xl font-semibold text-white">
+                                {group.name.trim().charAt(0).toUpperCase()}
+                            </div>
                         )}
                         <div className="min-w-0">
-                            <div className="truncate font-medium">{group.name}</div>
-                            <div className="text-muted-foreground text-xs">
-                                {t(':count members', { count: group.members_count })} · {t(':count posts', { count: group.posts_count })}
+                            <div dir="auto" className="group-hover:text-brand truncate font-medium">
+                                {group.name}
+                            </div>
+                            <div className="text-muted-foreground mt-1 flex gap-3 text-xs">
+                                <span className="inline-flex items-center gap-1">
+                                    <Users className="size-3.5" /> {group.members_count}
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                    <MessageSquare className="size-3.5" /> {group.posts_count}
+                                </span>
                             </div>
                         </div>
                     </Link>
                 ))}
             </div>
-            <nav className="mx-auto flex w-full max-w-4xl justify-between p-4 text-sm">
+            <nav className="text-brand mt-6 flex justify-between text-sm font-medium">
                 {groups.prev_page_url ? <Link href={groups.prev_page_url}>{t('Previous')}</Link> : <span />}
                 {groups.next_page_url && <Link href={groups.next_page_url}>{t('Next')}</Link>}
             </nav>
