@@ -30,7 +30,7 @@ php artisan language:add fa Persian فارسی --rtl     # справа нале
 ```
 TRANSLATION_DRIVER=claude        # null | claude | deepl
 ANTHROPIC_API_KEY=...
-ANTHROPIC_TRANSLATION_MODEL=claude-opus-5-5
+ANTHROPIC_TRANSLATION_MODEL=claude-haiku-5-5
 # или
 TRANSLATION_DRIVER=deepl
 DEEPL_API_KEY=...

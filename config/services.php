@@ -42,7 +42,7 @@ return [
 
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
-        'translation_model' => env('ANTHROPIC_TRANSLATION_MODEL', 'claude-opus-5-5'),
+        'translation_model' => env('ANTHROPIC_TRANSLATION_MODEL', 'claude-haiku-5-5'),
     ],
 
     'deepl' => [
