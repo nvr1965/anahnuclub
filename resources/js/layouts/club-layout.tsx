@@ -1,20 +1,20 @@
 import { ClubHeader } from '@/components/club-header';
 import { type ReactNode } from 'react';
 
-/** Page frame: header, then content on a soft grey background. An optional side column sits at the start. */
-export default function ClubLayout({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
+/**
+ * Facebook-style frame: menu on the start side, content in the middle, people on the end side.
+ * Side columns stick while the feed scrolls and fold away on small screens.
+ */
+export default function ClubLayout({ children, left, right }: { children: ReactNode; left?: ReactNode; right?: ReactNode }) {
+    const columns = left && right ? 'lg:grid-cols-[280px_minmax(0,680px)] xl:grid-cols-[280px_minmax(0,680px)_300px]' : left ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : '';
+
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
+        <div className="min-h-screen bg-[#f0f2f5] text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
             <ClubHeader />
-            <main className="mx-auto max-w-6xl px-4 py-6">
-                {aside ? (
-                    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-                        <aside className="order-2 space-y-6 lg:order-1">{aside}</aside>
-                        <div className="order-1 min-w-0 lg:order-2">{children}</div>
-                    </div>
-                ) : (
-                    children
-                )}
+            <main className={`mx-auto grid max-w-[1320px] justify-center gap-6 px-3 py-4 sm:px-4 ${columns}`}>
+                {left && <aside className="sticky top-[76px] hidden max-h-[calc(100vh-90px)] self-start overflow-y-auto lg:block">{left}</aside>}
+                <div className="min-w-0">{children}</div>
+                {right && <aside className="sticky top-[76px] hidden max-h-[calc(100vh-90px)] self-start overflow-y-auto xl:block">{right}</aside>}
             </main>
         </div>
     );

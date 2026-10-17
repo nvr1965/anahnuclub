@@ -17,7 +17,7 @@ class CommunitySidebar
                 ->where('blocked', false)
                 ->whereNotNull('avatar_path')
                 ->orderByDesc('last_seen_at')
-                ->limit(12)
+                ->limit(20)
                 ->get()
                 ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar]),
             'members_count' => User::where('blocked', false)->count(),

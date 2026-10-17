@@ -1,5 +1,6 @@
 import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
+import { type Sidebar } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { MessageSquare, Users } from 'lucide-react';
 
@@ -12,19 +13,19 @@ interface GroupRow {
     posts_count: number;
 }
 
-export default function GroupsIndex({ groups }: { groups: { data: GroupRow[]; next_page_url: string | null; prev_page_url: string | null } }) {
+export default function GroupsIndex({ groups, sidebar }: { groups: { data: GroupRow[]; next_page_url: string | null; prev_page_url: string | null }; sidebar: Sidebar }) {
     const t = useT();
 
     return (
-        <AppLayout>
+        <AppLayout sidebar={sidebar}>
             <Head title={t('Groups')} />
             <h1 className="mb-4 text-2xl font-semibold">{t('Groups')}</h1>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
                 {groups.data.map((group) => (
                     <Link
                         key={group.id}
                         href={route('groups.show', group.slug)}
-                        className="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-neutral-900 dark:ring-neutral-800"
+                        className="group flex items-center gap-4 rounded-lg bg-white p-3 shadow-sm transition hover:shadow-md dark:bg-neutral-900"
                     >
                         {group.avatar ? (
                             <img src={group.avatar} alt="" className="size-14 rounded-xl object-cover" />

@@ -1,4 +1,3 @@
-import { CommunitySidebar } from '@/components/community-sidebar';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import { useT } from '@/lib/i18n';
@@ -21,12 +20,12 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
     const t = useT();
 
     return (
-        <AppLayout aside={<CommunitySidebar sidebar={sidebar} />}>
+        <AppLayout sidebar={sidebar}>
             <Head title={group.name} />
             <div className="space-y-4">
-                <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-neutral-900 dark:ring-neutral-800">
+                <section className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-neutral-900">
                     <div
-                        className="from-brand to-brand-dark h-36 bg-gradient-to-br bg-cover bg-center"
+                        className="from-brand to-header-to h-48 bg-gradient-to-br bg-cover bg-center"
                         style={group.cover ? { backgroundImage: `url(${group.cover})` } : undefined}
                     />
                     <div className="flex flex-wrap items-start justify-between gap-4 p-5">
@@ -41,7 +40,7 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                         {!group.is_member && (
                             <button
                                 onClick={() => router.post(route('groups.join', group.slug))}
-                                className="bg-cta hover:bg-cta-dark rounded-full px-5 py-2 text-sm font-medium text-white"
+                                className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold text-white"
                             >
                                 {t('Join')}
                             </button>

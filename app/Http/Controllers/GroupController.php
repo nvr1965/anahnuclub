@@ -26,7 +26,7 @@ class GroupController extends Controller
                 'posts_count' => $g->posts_count,
             ]);
 
-        return Inertia::render('groups/index', ['groups' => $groups]);
+        return Inertia::render('groups/index', ['groups' => $groups, 'sidebar' => CommunitySidebar::for($request->user())]);
     }
 
     public function show(Request $request, Group $group): Response

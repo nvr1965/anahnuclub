@@ -5,55 +5,84 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { Newspaper, Users } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { House, Search, Users } from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
 
-/** The indigo bar from the old anahnu.club, with navigation added. */
+/** Facebook-style top bar: logo and search at the start, section tabs in the middle, account at the end. */
 export function ClubHeader() {
     const t = useT();
     const getInitials = useInitials();
     const page = usePage<SharedData>();
     const { auth } = page.props;
+    const [q, setQ] = useState(() => new URLSearchParams(page.url.split('?')[1] ?? '').get('q') ?? '');
 
-    const links = [
-        { title: t('Feed'), href: route('dashboard'), match: '/feed', icon: Newspaper },
+    const tabs = [
+        { title: t('Feed'), href: route('dashboard'), match: '/feed', icon: House },
         { title: t('Groups'), href: route('groups.index'), match: '/groups', icon: Users },
     ];
 
-    return (
-        <header className="from-header-from to-header-to sticky top-0 z-40 bg-gradient-to-r text-white shadow-md">
-            <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
-                <Link href={auth.user ? route('dashboard') : route('home')} className="flex shrink-0 items-center gap-2">
-                    <img src="/images/logo-mark.png" alt="" className="size-8 rounded-md" />
-                    <span className="hidden text-sm font-semibold tracking-[0.2em] sm:inline">anahnu.club</span>
-                </Link>
+    const search: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (q.trim()) router.get(route('search'), { q: q.trim() });
+    };
 
-                {auth.user && (
-                    <nav className="flex items-center gap-1">
-                        {links.map((link) => {
-                            const active = page.url.startsWith(link.match);
+    return (
+        <header className="sticky top-0 z-40 bg-white shadow-sm dark:bg-neutral-900">
+            <div className="from-header-from via-brand to-header-to h-1 bg-gradient-to-r" />
+            <div className="grid h-14 grid-cols-[auto_1fr_auto] items-center gap-3 px-3 lg:grid-cols-[1fr_auto_1fr]">
+                <div className="flex items-center gap-2">
+                    <Link href={auth.user ? route('dashboard') : route('home')} className="shrink-0" aria-label="anahnu.club">
+                        <img src="/images/logo-mark.png" alt="" className="size-10 rounded-full" />
+                    </Link>
+                    {auth.user && (
+                        <Link
+                            href={route('search')}
+                            aria-label={t('Search')}
+                            className="flex size-10 items-center justify-center rounded-full bg-slate-100 sm:hidden dark:bg-neutral-800"
+                        >
+                            <Search className="size-5 text-slate-600" />
+                        </Link>
+                    )}
+                    {auth.user && (
+                        <form onSubmit={search} className="hidden sm:flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800">
+                            <Search className="text-muted-foreground size-4 shrink-0" />
+                            <input
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                                placeholder={t('Search anahnu.club')}
+                                className="w-40 bg-transparent text-sm outline-none lg:w-52"
+                            />
+                        </form>
+                    )}
+                </div>
+
+                <nav className="flex h-full items-stretch justify-center">
+                    {auth.user &&
+                        tabs.map((tab) => {
+                            const active = page.url.startsWith(tab.match);
                             return (
                                 <Link
-                                    key={link.match}
-                                    href={link.href}
-                                    className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition ${active ? 'bg-white/20 font-medium' : 'hover:bg-white/10'}`}
+                                    key={tab.match}
+                                    href={tab.href}
+                                    title={tab.title}
+                                    className={`relative flex w-12 items-center justify-center sm:w-24 lg:w-28 ${active ? 'text-brand' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-neutral-800'} rounded-lg`}
                                 >
-                                    <link.icon className="size-4" />
-                                    <span className="hidden sm:inline">{link.title}</span>
+                                    <tab.icon className="size-6" />
+                                    {active && <span className="bg-brand absolute inset-x-1 -bottom-0 h-[3px] rounded-full" />}
                                 </Link>
                             );
                         })}
-                    </nav>
-                )}
+                </nav>
 
-                <div className="ms-auto flex items-center gap-3">
-                    <LanguageSwitcher className="[&_select]:text-white [&_option]:text-black" />
+                <div className="flex items-center justify-end gap-2">
+                    <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800 [&>svg]:hidden sm:[&>svg]:block" />
                     {auth.user ? (
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="rounded-full ring-2 ring-white/40 outline-none">
-                                <Avatar className="size-8">
-                                    <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
-                                    <AvatarFallback className="bg-white/20 text-xs text-white">{getInitials(auth.user.name)}</AvatarFallback>
+                            <DropdownMenuTrigger className="rounded-full outline-none">
+                                <Avatar className="size-10">
+                                    <AvatarImage src={auth.user.avatar} alt={auth.user.name} className="object-cover" />
+                                    <AvatarFallback className="bg-brand-soft text-brand">{getInitials(auth.user.name)}</AvatarFallback>
                                 </Avatar>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end">
@@ -61,7 +90,7 @@ export function ClubHeader() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <Link href={route('login')} className="rounded-full bg-white/15 px-4 py-1.5 text-sm hover:bg-white/25">
+                        <Link href={route('login')} className="bg-brand hover:bg-brand-dark rounded-lg px-4 py-2 text-sm font-medium text-white">
                             {t('Log in')}
                         </Link>
                     )}

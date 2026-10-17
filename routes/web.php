@@ -6,6 +6,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TranslationController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,7 @@ Route::post('translations', TranslationController::class)->middleware('throttle:
 
 Route::middleware(['auth'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
+    Route::get('search', SearchController::class)->name('search');
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');
     Route::get('groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');

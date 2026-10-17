@@ -1,4 +1,3 @@
-import { CommunitySidebar } from '@/components/community-sidebar';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import { useT } from '@/lib/i18n';
@@ -10,7 +9,7 @@ export default function Feed({ posts, sidebar }: { posts: Paginated<Post>; sideb
     const t = useT();
 
     return (
-        <AppLayout aside={<CommunitySidebar sidebar={sidebar} />}>
+        <AppLayout sidebar={sidebar}>
             <Head title={t('Feed')} />
             <div className="space-y-4">
                 <PostComposer />
