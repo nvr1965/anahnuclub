@@ -16,6 +16,8 @@ class CommentController extends Controller
     public function store(Request $request, Post $post): RedirectResponse
     {
         $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
+        // No talking on the posts of someone you blocked or who blocked you.
+        abort_if($post->user && $request->user()->isBlockedWith($post->user), 403);
 
         $comment = $post->comments()->create([
             'user_id' => $request->user()->id,

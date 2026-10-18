@@ -133,7 +133,10 @@ class EventController extends Controller
 
         return Event::query()->where(fn (Builder $q) => $q
             ->whereNull('group_id')
-            ->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where(fn (Builder $p) => $p->where('is_private', false)->orWhereIn('id', $mine))));
+            ->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where(fn (Builder $p) => $p->where('is_private', false)->orWhereIn('id', $mine))))
+            ->when($request->user(), fn (Builder $q, $viewer) => $q
+                ->where(fn (Builder $q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $viewer->hiddenUserIds()))
+                ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereNotIn('group_id', $viewer->blockedGroupIds())));
     }
 
     private function validated(Request $request, ?Event $event = null): array

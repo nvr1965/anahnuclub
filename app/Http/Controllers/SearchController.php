@@ -21,9 +21,12 @@ class SearchController extends Controller
 
         $results = ['people' => [], 'groups' => [], 'posts' => []];
 
+        $viewer = $request->user();
+
         if (mb_strlen($q) >= 2) {
             $results['people'] = User::query()
                 ->where('blocked', false)
+                ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->hiddenUserIds()))
                 ->where(fn (Builder $w) => $w->where('name', $op, $like)->orWhere('username', $op, $like))
                 ->limit(12)->get()
                 ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar]);
@@ -31,6 +34,7 @@ class SearchController extends Controller
             $results['groups'] = Group::query()
                 ->where('published', true)->where('is_private', false)
                 ->where('name', $op, $like)
+                ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->blockedGroupIds()))
                 ->withCount('members')
                 ->limit(8)->get()
                 ->map(fn (Group $g) => ['name' => $g->name, 'slug' => $g->slug, 'members_count' => $g->members_count]);

@@ -46,7 +46,7 @@ class ClubActivity extends Notification
      */
     public static function send(?User $to, string $kind, User $actor, string $url, string $subject, ?string $excerpt = null): void
     {
-        if (! $to || $to->is($actor) || $to->blocked) {
+        if (! $to || $to->is($actor) || $to->blocked || $to->isBlockedWith($actor)) {
             return;
         }
         $key = "$kind:$subject:{$actor->id}";

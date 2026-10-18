@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\Photo;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 /** The side column shared by the welcome page, the feed and groups: members, groups, photos. */
 class CommunitySidebar
@@ -16,6 +15,7 @@ class CommunitySidebar
             'members' => User::query()
                 ->where('blocked', false)
                 ->whereNotNull('avatar_path')
+                ->when($user, fn ($q) => $q->whereNotIn('id', $user->hiddenUserIds()))
                 ->orderByDesc('last_seen_at')
                 ->limit(20)
                 ->get()
@@ -24,6 +24,7 @@ class CommunitySidebar
             'groups' => ($user ? $user->groups() : Group::query())
                 ->where('published', true)
                 ->where('is_private', false)
+                ->when($user, fn ($q) => $q->whereNotIn('groups.id', $user->blockedGroupIds()))
                 ->withCount('posts')
                 ->orderByDesc('posts_count')
                 ->limit(6)
@@ -31,7 +32,8 @@ class CommunitySidebar
                 ->map(fn (Group $g) => ['name' => $g->name, 'slug' => $g->slug, 'posts_count' => $g->posts_count]),
             'photos' => Photo::query()
                 ->whereNotNull('thumb_path')
-                ->whereHas('album', fn ($q) => $q->whereNull('group_id'))
+                ->whereHas('album', fn ($q) => $q->whereNull('group_id')
+                    ->when($user, fn ($q) => $q->where(fn ($q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $user->hiddenUserIds()))))
                 ->latest()
                 ->limit(6)
                 ->get()

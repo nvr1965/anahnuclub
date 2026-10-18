@@ -24,7 +24,7 @@ interface Message {
 
 interface Props {
     conversations: ConversationRow[];
-    conversation: { id: number; with: Person & { last_seen_at: string | null } } | null;
+    conversation: { id: number; with: Person & { last_seen_at: string | null }; blocked: 'by_me' | 'by_them' | null } | null;
     messages: Message[];
 }
 
@@ -170,25 +170,44 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                 ))}
             </div>
 
-            <form onSubmit={send} className="flex items-end gap-2 border-t border-slate-200 p-3 dark:border-neutral-800">
-                <textarea
-                    dir="auto"
-                    rows={1}
-                    autoFocus
-                    value={form.data.body}
-                    onChange={(e) => form.setData('body', e.target.value)}
-                    onKeyDown={onKeyDown}
-                    placeholder={t('Aa')}
-                    className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none rounded-2xl bg-slate-100 px-4 py-2 text-[15px] outline-none dark:bg-neutral-800"
-                />
-                <button
-                    className="text-brand rounded-full p-2 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
-                    disabled={form.processing || !form.data.body.trim()}
-                    aria-label={t('Send')}
-                >
-                    <SendHorizontal className="size-6 rtl:rotate-180" />
-                </button>
-            </form>
+            {conversation.blocked ? (
+                <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 p-4 text-center text-sm dark:border-neutral-800">
+                    {conversation.blocked === 'by_me' ? (
+                        <>
+                            {t('You blocked :name.', { name: conversation.with.name })}
+                            <button
+                                type="button"
+                                className="text-brand font-semibold hover:underline"
+                                onClick={() => router.delete(route('blocks.user.destroy', conversation.with.id), { preserveScroll: true })}
+                            >
+                                {t('Unblock')}
+                            </button>
+                        </>
+                    ) : (
+                        t('You can no longer reply in this chat.')
+                    )}
+                </div>
+            ) : (
+                <form onSubmit={send} className="flex items-end gap-2 border-t border-slate-200 p-3 dark:border-neutral-800">
+                    <textarea
+                        dir="auto"
+                        rows={1}
+                        autoFocus
+                        value={form.data.body}
+                        onChange={(e) => form.setData('body', e.target.value)}
+                        onKeyDown={onKeyDown}
+                        placeholder={t('Aa')}
+                        className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none rounded-2xl bg-slate-100 px-4 py-2 text-[15px] outline-none dark:bg-neutral-800"
+                    />
+                    <button
+                        className="text-brand rounded-full p-2 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
+                        disabled={form.processing || !form.data.body.trim()}
+                        aria-label={t('Send')}
+                    >
+                        <SendHorizontal className="size-6 rtl:rotate-180" />
+                    </button>
+                </form>
+            )}
         </section>
     );
 }

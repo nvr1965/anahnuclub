@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AlbumController;
+use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedController;
@@ -46,6 +47,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
     Route::post('people/{user}/friend', [FriendController::class, 'store'])->name('friends.store');
     Route::delete('people/{user}/friend', [FriendController::class, 'destroy'])->name('friends.destroy');
+    Route::post('people/{user}/block', [BlockController::class, 'blockUser'])->name('blocks.user');
+    Route::delete('people/{user}/block', [BlockController::class, 'unblockUser'])->name('blocks.user.destroy');
+    Route::post('groups/{group}/block', [BlockController::class, 'blockGroup'])->name('blocks.group');
+    Route::delete('groups/{group}/block', [BlockController::class, 'unblockGroup'])->name('blocks.group.destroy');
 
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');

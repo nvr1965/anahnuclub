@@ -47,18 +47,26 @@ class FeedController extends Controller
     public static function postQuery(Request $request): Builder
     {
         $locale = app()->getLocale();
+        $viewer = $request->user();
+        $hidden = $viewer?->hiddenUserIds() ?? collect();
 
         return Post::query()
             ->with([
                 'user', 'group', 'photos', 'video', 'event',
+                'comments' => fn ($q) => $q->where(fn ($q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)),
                 'comments.user',
                 'contentTranslations' => fn ($q) => $q->where('locale', $locale),
                 'comments.contentTranslations' => fn ($q) => $q->where('locale', $locale),
             ])
             // Posts of groups an administrator hid stay out of every feed.
             ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)))
+            // People blocked either way, and groups the reader blocked, are never shown.
+            ->when($hidden->isNotEmpty(), fn (Builder $q) => $q->where(fn (Builder $q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)))
+            ->when($viewer && $viewer->blockedGroupIds()->isNotEmpty(), fn (Builder $q) => $q->where(
+                fn (Builder $q) => $q->whereNull('group_id')->orWhereNotIn('group_id', $viewer->blockedGroupIds())
+            ))
             ->withCount('likes')
-            ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $request->user()?->id)])
+            ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $viewer?->id)])
             ->latest();
     }
 }

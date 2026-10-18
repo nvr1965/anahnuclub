@@ -26,7 +26,7 @@ class FriendController extends Controller
             'suggestions' => User::query()
                 ->where('blocked', false)
                 ->whereKeyNot($user->id)
-                ->whereNotIn('id', $friendIds->merge($pendingIds)->merge($user->friendRequesters()->pluck('id')))
+                ->whereNotIn('id', $friendIds->merge($pendingIds)->merge($user->friendRequesters()->pluck('id'))->merge($user->hiddenUserIds()))
                 ->whereNotNull('avatar_path')
                 ->orderByDesc('last_seen_at')
                 ->limit(12)
@@ -39,7 +39,7 @@ class FriendController extends Controller
     public function store(Request $request, User $user): RedirectResponse
     {
         $me = $request->user();
-        abort_if($me->is($user) || $user->blocked, 422);
+        abort_if($me->is($user) || $user->blocked || $me->isBlockedWith($user), 422);
 
         $url = route('people.show', $me);
         switch ($me->friendshipWith($user)) {

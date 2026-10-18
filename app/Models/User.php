@@ -131,12 +131,45 @@ class User extends Authenticatable
         };
     }
 
+    /** @var array<string, Collection>|null per-request memo of block lists */
+    private ?array $blockMemo = null;
+
+    /** Members this one blocked, plus members who blocked this one: either way they do not meet. */
+    public function hiddenUserIds(): Collection
+    {
+        return $this->blockMemo['users'] ??= DB::table('user_blocks')->where('user_id', $this->id)->pluck('blocked_id')
+            ->merge(DB::table('user_blocks')->where('blocked_id', $this->id)->pluck('user_id'))
+            ->unique()->values();
+    }
+
+    public function blockedGroupIds(): Collection
+    {
+        return $this->blockMemo['groups'] ??= DB::table('group_blocks')->where('user_id', $this->id)->pluck('group_id');
+    }
+
+    public function hasBlocked(User $other): bool
+    {
+        return DB::table('user_blocks')->where('user_id', $this->id)->where('blocked_id', $other->id)->exists();
+    }
+
+    /** Either of the two blocked the other. */
+    public function isBlockedWith(User $other): bool
+    {
+        return $this->hiddenUserIds()->contains($other->id);
+    }
+
+    public function forgetBlocks(): void
+    {
+        $this->blockMemo = null;
+    }
+
     public function unreadMessagesCount(): int
     {
         return Message::query()
             ->join('conversation_user as cu', fn ($j) => $j->on('cu.conversation_id', '=', 'messages.conversation_id')->where('cu.user_id', $this->id))
             ->where('messages.user_id', '!=', $this->id)
             ->where(fn ($q) => $q->whereNull('cu.last_read_at')->orWhereColumn('messages.created_at', '>', 'cu.last_read_at'))
+            ->whereNotIn('messages.user_id', $this->hiddenUserIds())
             ->count();
     }
 }

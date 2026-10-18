@@ -1,10 +1,10 @@
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { useT } from '@/lib/i18n';
 
 const sidebarNavItems: NavItem[] = [
     {
@@ -15,6 +15,11 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Password',
         url: '/settings/password',
+        icon: null,
+    },
+    {
+        title: 'Blocking',
+        url: '/settings/blocked',
         icon: null,
     },
     {
@@ -30,7 +35,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
     return (
         <div className="px-4 py-6">
-            <Heading title={t("Settings")} description={t("Manage your profile and account settings")} />
+            <Heading title={t('Settings')} description={t('Manage your profile and account settings')} />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
@@ -46,7 +51,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                                 })}
                             >
                                 <Link href={item.url} prefetch>
-                                    {item.title}
+                                    {t(item.title)}
                                 </Link>
                             </Button>
                         ))}

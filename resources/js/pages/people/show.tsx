@@ -12,7 +12,23 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Paginated, type Person, type PhotoItem, type Post, type SharedData, type VideoItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Cake, Camera, Check, Clock, Globe, Images, MapPin, MessageCircle, Pencil, Plus, UserCheck, UserPlus, UserX } from 'lucide-react';
+import {
+    Ban,
+    Cake,
+    Camera,
+    Check,
+    Clock,
+    Ellipsis,
+    Globe,
+    Images,
+    MapPin,
+    MessageCircle,
+    Pencil,
+    Plus,
+    UserCheck,
+    UserPlus,
+    UserX,
+} from 'lucide-react';
 import { type FormEventHandler, type ReactNode, useRef, useState } from 'react';
 
 interface Profile {
@@ -33,6 +49,7 @@ interface Profile {
     posts_count: number;
     is_me: boolean;
     friendship: 'none' | 'friends' | 'sent' | 'received' | null;
+    blocked_by_me: boolean;
 }
 
 type Photo = PhotoItem;
@@ -131,6 +148,10 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                 <button type="button" className={secondary} onClick={() => setEditing(true)}>
                                     <Pencil className="size-4" /> {t('Edit profile')}
                                 </button>
+                            ) : profile.blocked_by_me ? (
+                                <button type="button" className={secondary} onClick={() => router.delete(route('blocks.user.destroy', profile.id))}>
+                                    <Ban className="size-4" /> {t('Unblock')}
+                                </button>
                             ) : (
                                 <>
                                     <FriendButton profile={profile} />
@@ -141,12 +162,31 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                     >
                                         <MessageCircle className="size-4" /> {t('Message')}
                                     </button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger className={secondary} aria-label={t('More')}>
+                                            <Ellipsis className="size-4" />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onSelect={() =>
+                                                    window.confirm(
+                                                        t('Block :name? You will stop seeing each other in the club.', { name: profile.name }),
+                                                    ) && router.post(route('blocks.user', profile.id))
+                                                }
+                                            >
+                                                <Ban className="size-4" /> {t('Block')}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </>
                             )}
                         </div>
                     </div>
 
-                    <nav className="mx-4 flex gap-1 overflow-x-auto border-t border-slate-200 sm:mx-8 dark:border-neutral-800">
+                    <nav
+                        data-blocked={profile.blocked_by_me}
+                        className="mx-4 flex gap-1 overflow-x-auto border-t border-slate-200 data-[blocked=true]:hidden sm:mx-8 dark:border-neutral-800"
+                    >
                         {tabs.map((item) => (
                             <Link
                                 key={item.key}
@@ -161,7 +201,13 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                     </nav>
                 </section>
 
-                {tab === 'posts' && (
+                {profile.blocked_by_me && (
+                    <section className={`${card} text-muted-foreground text-center text-[15px]`}>
+                        {t('You blocked :name. You do not see each other’s posts, comments or messages.', { name: profile.name })}
+                    </section>
+                )}
+
+                {tab === 'posts' && !profile.blocked_by_me && (
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
                         <div className="space-y-4 lg:sticky lg:top-[76px] lg:self-start">
                             <section className={card}>
@@ -194,7 +240,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                     </div>
                 )}
 
-                {tab === 'about' && (
+                {tab === 'about' && !profile.blocked_by_me && (
                     <section className={card}>
                         <h2 className="mb-4 text-xl font-bold">{t('About')}</h2>
                         <Details profile={profile} locale={locale} />
@@ -206,14 +252,14 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                     </section>
                 )}
 
-                {tab === 'friends' && (
+                {tab === 'friends' && !profile.blocked_by_me && (
                     <section className={card}>
                         <h2 className="mb-4 text-xl font-bold">{t('Friends')}</h2>
                         <FriendGrid friends={friends} />
                     </section>
                 )}
 
-                {tab === 'photos' && (
+                {tab === 'photos' && !profile.blocked_by_me && (
                     <section className={card}>
                         <div className="mb-4 flex items-center justify-between gap-2">
                             <h2 className="text-xl font-bold">{t('Albums')}</h2>
@@ -258,7 +304,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                     </section>
                 )}
 
-                {tab === 'videos' && (
+                {tab === 'videos' && !profile.blocked_by_me && (
                     <section className={card}>
                         <div className="mb-4 flex items-center justify-between gap-2">
                             <h2 className="text-xl font-bold">{t('Videos')}</h2>

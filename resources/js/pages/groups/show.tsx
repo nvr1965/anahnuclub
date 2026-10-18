@@ -1,10 +1,10 @@
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
-import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { type Paginated, type Post, type Sidebar } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Users } from 'lucide-react';
+import { Ban, Users } from 'lucide-react';
 
 interface Group {
     id: number;
@@ -14,7 +14,11 @@ interface Group {
     cover: string | null;
     members_count: number;
     is_member: boolean;
+    blocked: boolean;
 }
+
+const secondary =
+    'inline-flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700';
 
 export default function GroupShow({ group, posts, sidebar }: { group: Group; posts: Paginated<Post>; sidebar: Sidebar }) {
     const t = useT();
@@ -37,14 +41,36 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                                 <Users className="size-4" /> {t(':count members', { count: group.members_count })}
                             </p>
                         </div>
-                        {!group.is_member && (
-                            <button
-                                onClick={() => router.post(route('groups.join', group.slug))}
-                                className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold text-white"
-                            >
-                                {t('Join')}
-                            </button>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                            {group.blocked ? (
+                                <button type="button" className={secondary} onClick={() => router.delete(route('blocks.group.destroy', group.slug))}>
+                                    <Ban className="size-4" /> {t('Unblock')}
+                                </button>
+                            ) : (
+                                <>
+                                    {!group.is_member && (
+                                        <button
+                                            onClick={() => router.post(route('groups.join', group.slug))}
+                                            className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold text-white"
+                                        >
+                                            {t('Join')}
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className={secondary}
+                                        title={t('Block group')}
+                                        aria-label={t('Block group')}
+                                        onClick={() =>
+                                            window.confirm(t('Block this group? You will leave it and stop seeing its posts.')) &&
+                                            router.post(route('blocks.group', group.slug))
+                                        }
+                                    >
+                                        <Ban className="size-4" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                     {group.description && (
                         <div
@@ -54,8 +80,16 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                         />
                     )}
                 </section>
-                {group.is_member && <PostComposer groupId={group.id} />}
-                <PostList posts={posts} />
+                {group.blocked ? (
+                    <section className="text-muted-foreground rounded-lg bg-white p-4 text-center text-[15px] shadow-sm dark:bg-neutral-900">
+                        {t('You blocked this group. Its posts are hidden from you.')}
+                    </section>
+                ) : (
+                    <>
+                        {group.is_member && <PostComposer groupId={group.id} />}
+                        <PostList posts={posts} />
+                    </>
+                )}
             </div>
         </AppLayout>
     );

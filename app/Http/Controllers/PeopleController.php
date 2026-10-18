@@ -23,15 +23,18 @@ class PeopleController extends Controller
         $viewer = $request->user();
         $me = $viewer->is($user);
         abort_if($user->blocked && ! $me && ! $viewer->is_admin, 404);
+        // Someone who blocked the viewer is simply not there; someone the viewer blocked shows only a way back.
+        $blockedByMe = ! $me && $viewer->hasBlocked($user);
+        abort_if(! $me && ! $blockedByMe && ! $viewer->is_admin && $viewer->isBlockedWith($user), 404);
 
         $tab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'posts';
-        $friends = $user->friends()->where('blocked', false)->orderByDesc('last_seen_at');
+        $friends = $user->friends()->where('blocked', false)->whereNotIn('id', $viewer->hiddenUserIds())->orderByDesc('last_seen_at');
         $photos = Photo::query()->where('user_id', $user->id)->whereNotNull('thumb_path')
             ->whereDoesntHave('album', fn (Builder $q) => $q->whereNotNull('group_id'))
             ->latest('id');
 
         $posts = null;
-        if ($tab === 'posts') {
+        if ($tab === 'posts' && ! $blockedByMe) {
             $posts = FeedController::postQuery($request)
                 ->where('user_id', $user->id)
                 // Posts in private groups stay inside those groups.
@@ -59,14 +62,15 @@ class PeopleController extends Controller
                 'posts_count' => $user->posts()->count(),
                 'is_me' => $me,
                 'friendship' => $me ? null : $viewer->friendshipWith($user),
+                'blocked_by_me' => $blockedByMe,
             ],
             'tab' => $tab,
             'posts' => $posts ? PostResource::collection($posts) : null,
-            'friends' => (clone $friends)->limit($tab === 'friends' ? 500 : 9)->get()->map(fn (User $u) => self::card($u)),
-            'photos' => (clone $photos)->limit($tab === 'photos' ? 120 : 9)->get()
+            'friends' => $blockedByMe ? [] : (clone $friends)->limit($tab === 'friends' ? 500 : 9)->get()->map(fn (User $u) => self::card($u)),
+            'photos' => $blockedByMe ? [] : (clone $photos)->limit($tab === 'photos' ? 120 : 9)->get()
                 ->map(fn (Photo $p) => $p->card() + ['album_id' => $p->album_id]),
-            'albums' => $tab === 'photos' ? AlbumController::listFor($user, $me) : [],
-            'videos' => $tab === 'videos' ? VideoController::visible($request)->where('user_id', $user->id)->latest()->limit(60)->get()->map->card() : [],
+            'albums' => $tab === 'photos' && ! $blockedByMe ? AlbumController::listFor($user, $me) : [],
+            'videos' => $tab === 'videos' && ! $blockedByMe ? VideoController::visible($request)->where('user_id', $user->id)->latest()->limit(60)->get()->map->card() : [],
         ]);
     }
 

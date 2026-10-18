@@ -139,7 +139,10 @@ class VideoController extends Controller
     /** Videos outside private and hidden groups. */
     public static function visible(Request $request): Builder
     {
-        return Video::query()->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where('is_private', false)));
+        return Video::query()->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where('is_private', false)))
+            ->when($request->user(), fn (Builder $q, $viewer) => $q
+                ->where(fn (Builder $q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $viewer->hiddenUserIds()))
+                ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereNotIn('group_id', $viewer->blockedGroupIds())));
     }
 
     /** Title and picture from the video site, when it answers quickly. */

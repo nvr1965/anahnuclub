@@ -15,6 +15,7 @@ class GroupController extends Controller
     {
         $groups = Group::query()
             ->where('published', true)
+            ->when($request->user(), fn ($q, $viewer) => $q->whereNotIn('id', $viewer->blockedGroupIds()))
             ->withCount(['members', 'posts'])
             ->orderByDesc('posts_count')
             ->paginate(30)
@@ -47,6 +48,7 @@ class GroupController extends Controller
                 'cover' => $group->cover_path ? asset('storage/'.$group->cover_path) : null,
                 'members_count' => $group->members()->count(),
                 'is_member' => $member,
+                'blocked' => (bool) $request->user()?->blockedGroupIds()->contains($group->id),
             ],
             'posts' => PostResource::collection($posts),
             'sidebar' => CommunitySidebar::for($request->user()),
@@ -55,6 +57,7 @@ class GroupController extends Controller
 
     public function join(Request $request, Group $group)
     {
+        abort_if($request->user()->blockedGroupIds()->contains($group->id), 422);
         $group->members()->syncWithoutDetaching([$request->user()->id => ['approved' => ! $group->is_private]]);
 
         return back();

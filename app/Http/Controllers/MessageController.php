@@ -53,7 +53,12 @@ class MessageController extends Controller
 
         return Inertia::render('messages/index', [
             'conversations' => $this->conversations($user),
-            'conversation' => ['id' => $conversation->id, 'with' => PeopleController::card($other) + ['last_seen_at' => $other->last_seen_at?->toIso8601String()]],
+            'conversation' => [
+                'id' => $conversation->id,
+                'with' => PeopleController::card($other) + ['last_seen_at' => $other->last_seen_at?->toIso8601String()],
+                // A block either way closes the chat; only the one who blocked is told why.
+                'blocked' => $user->isBlockedWith($other) ? ($user->hasBlocked($other) ? 'by_me' : 'by_them') : null,
+            ],
             'messages' => $messages,
         ]);
     }
@@ -63,6 +68,7 @@ class MessageController extends Controller
         $user = $request->user();
         abort_unless($conversation->users()->whereKey($user->id)->exists(), 404);
         $body = $request->validate(['body' => ['required', 'string', 'max:5000']])['body'];
+        abort_if($conversation->users()->whereKeyNot($user->id)->whereIn('users.id', $user->hiddenUserIds())->exists(), 403);
 
         $message = $conversation->messages()->create([
             'user_id' => $user->id,
@@ -82,9 +88,10 @@ class MessageController extends Controller
     /** Opens the chat with a member, starting one if needed. */
     public function start(Request $request, User $user): RedirectResponse
     {
-        abort_if($user->blocked, 404);
+        $me = $request->user();
+        abort_if($user->blocked || ($me->isBlockedWith($user) && ! $me->hasBlocked($user)), 404);
 
-        return to_route('messages.show', Conversation::between($request->user(), $user));
+        return to_route('messages.show', Conversation::between($me, $user));
     }
 
     private function conversations(User $user): array
@@ -92,6 +99,7 @@ class MessageController extends Controller
         return $user->conversations()
             ->with(['users', 'latestMessage'])
             ->whereNotNull('last_message_at')
+            ->whereDoesntHave('users', fn ($q) => $q->whereIn('users.id', $user->hiddenUserIds()))
             ->orderByDesc('last_message_at')
             ->limit(100)
             ->get()
