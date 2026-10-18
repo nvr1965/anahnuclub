@@ -1,6 +1,6 @@
 import '../css/app.css';
 
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
@@ -18,12 +18,24 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
+        syncDocumentLanguage(props.initialPage.props);
+
         root.render(<App {...props} />);
     },
     progress: {
         color: '#4B5563',
     },
 });
+
+// Inertia visits (e.g. switching language) don't reload the page, so keep <html lang/dir> in sync.
+function syncDocumentLanguage(pageProps: Record<string, unknown>) {
+    const { locale, dir } = pageProps as { locale?: string; dir?: string };
+    if (locale) document.documentElement.lang = locale;
+    if (dir) document.documentElement.dir = dir;
+}
+
+router.on('navigate', (event) => syncDocumentLanguage(event.detail.page.props));
+router.on('success', (event) => syncDocumentLanguage(event.detail.page.props));
 
 // This will set light / dark mode on load...
 initializeTheme();
