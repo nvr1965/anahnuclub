@@ -76,7 +76,7 @@ export default function AdminPages({ languages, pages, edit, donate_url, can_tra
                 >
                     <h2 className="font-semibold">{t('Donation button')}</h2>
                     <p className="text-muted-foreground text-sm">
-                        {t('Link of the “Support the club” button in the footer. Leave empty to hide the button.')}
+                        {t('Link of the “Support Anahnu Club” button in the footer. Leave empty to hide the button.')}
                     </p>
                     <div className="flex flex-wrap gap-2">
                         <input

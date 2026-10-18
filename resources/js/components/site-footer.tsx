@@ -26,7 +26,7 @@ export function SiteFooter() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[13px] font-semibold text-slate-900 shadow-sm transition hover:bg-amber-300"
                 >
-                    <Heart className="size-4 fill-current text-rose-600" /> {t('Support the club')}
+                    <Heart className="size-4 fill-current text-rose-600" /> {t('Support Anahnu Club')}
                 </a>
             )}
             <span>© {new Date().getFullYear()} Anahnu.Club</span>
