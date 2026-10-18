@@ -1,7 +1,7 @@
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { FileText, Gauge, Languages, Users, UsersRound } from 'lucide-react';
+import { FileText, Gauge, Inbox, Languages, ScrollText, Users, UsersRound } from 'lucide-react';
 import { type ReactNode } from 'react';
 
 /** Admin pages: the club frame with the admin sections as the start-side menu. */
@@ -13,6 +13,8 @@ export default function AdminLayout({ title, children, actions }: { title: strin
         { title: t('Users'), href: route('admin.users.index'), match: (u: string) => u.startsWith('/admin/users'), icon: Users },
         { title: t('Posts'), href: route('admin.posts.index'), match: (u: string) => u.startsWith('/admin/posts'), icon: FileText },
         { title: t('Groups'), href: route('admin.groups.index'), match: (u: string) => u.startsWith('/admin/groups'), icon: UsersRound },
+        { title: t('Pages and footer'), href: route('admin.pages.index'), match: (u: string) => u.startsWith('/admin/pages'), icon: ScrollText },
+        { title: t('Feedback'), href: route('admin.contact.index'), match: (u: string) => u.startsWith('/admin/contact'), icon: Inbox },
         { title: t('Languages'), href: route('admin.languages.index'), match: (u: string) => u.startsWith('/admin/languages'), icon: Languages },
     ];
 

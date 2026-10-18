@@ -29,6 +29,7 @@ export interface SharedData {
     translations: Record<string, string>;
     auth: Auth;
     counts: { messages: number; friend_requests: number; notifications: number } | null;
+    footer: { pages: { slug: string; title: string }[]; donate_url: string | null };
     [key: string]: unknown;
 }
 

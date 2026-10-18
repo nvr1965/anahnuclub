@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FriendController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
@@ -26,6 +28,10 @@ Route::post('translations', TranslationController::class)->middleware('throttle:
 
 // Open to anyone with the link, so posts can be shared outside the club.
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
+
+Route::get('p/{page}', [PageController::class, 'show'])->name('pages.show');
+Route::get('contact', [ContactController::class, 'create'])->name('contact');
+Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:10,1')->name('contact.store');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
@@ -99,7 +105,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('groups/{group:id}', [Admin\GroupController::class, 'update'])->name('groups.update');
     Route::delete('groups/{group:id}', [Admin\GroupController::class, 'destroy'])->name('groups.destroy');
     Route::get('languages', [Admin\LanguageController::class, 'index'])->name('languages.index');
+    Route::post('languages', [Admin\LanguageController::class, 'store'])->name('languages.store');
     Route::patch('languages/{language}', [Admin\LanguageController::class, 'update'])->name('languages.update');
+    Route::post('languages/{language}/refill', [Admin\LanguageController::class, 'refill'])->name('languages.refill');
+    Route::delete('languages/{language}', [Admin\LanguageController::class, 'destroy'])->name('languages.destroy');
+    Route::get('pages', [Admin\PageController::class, 'index'])->name('pages.index');
+    Route::post('pages', [Admin\PageController::class, 'store'])->name('pages.store');
+    Route::put('pages/{page}', [Admin\PageController::class, 'update'])->name('pages.update');
+    Route::delete('pages/{page}', [Admin\PageController::class, 'destroy'])->name('pages.destroy');
+    Route::post('pages/{page}/translate', [Admin\PageController::class, 'translate'])->name('pages.translate');
+    Route::patch('site-settings', [Admin\PageController::class, 'settings'])->name('settings.update');
+    Route::get('contact', [Admin\ContactController::class, 'index'])->name('contact.index');
+    Route::patch('contact/{message}', [Admin\ContactController::class, 'update'])->name('contact.update');
+    Route::delete('contact/{message}', [Admin\ContactController::class, 'destroy'])->name('contact.destroy');
 });
 
 require __DIR__.'/settings.php';

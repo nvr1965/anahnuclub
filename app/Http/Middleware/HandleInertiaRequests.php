@@ -3,6 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Models\Language;
+use App\Models\Page;
+use App\Models\Setting;
+use App\Translation\InterfaceStrings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -46,6 +49,12 @@ class HandleInertiaRequests extends Middleware
             'dir' => $languages->firstWhere('code', $locale)?->rtl ? 'rtl' : 'ltr',
             'languages' => $languages->map->only('code', 'native_name', 'rtl')->values(),
             'translations' => fn () => $this->uiStrings($locale),
+            // Links at the bottom of every page.
+            'footer' => fn () => [
+                'pages' => Page::query()->where('published', true)->where('in_footer', true)->orderBy('sort')->orderBy('id')->get()
+                    ->map(fn (Page $p) => ['slug' => $p->slug, 'title' => $p->in($locale)['title']])->values(),
+                'donate_url' => Setting::get('donate_url'),
+            ],
             'auth' => [
                 'user' => $request->user(),
             ],
@@ -61,10 +70,6 @@ class HandleInertiaRequests extends Middleware
     /** @return array<string, string> */
     private function uiStrings(string $locale): array
     {
-        $read = fn (string $code) => is_file($path = lang_path($code.'.json'))
-            ? json_decode(file_get_contents($path), true) ?? []
-            : [];
-
-        return array_merge($read(config('app.fallback_locale')), $read($locale));
+        return array_merge(InterfaceStrings::read(config('app.fallback_locale')), InterfaceStrings::read($locale));
     }
 }
