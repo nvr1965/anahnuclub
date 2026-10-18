@@ -21,7 +21,7 @@ class CommentController extends Controller
             'locale' => LanguageGuesser::guess($data['body']) ?? $request->user()->locale,
         ]);
 
-        TranslateContent::dispatch($comment);
+        TranslateContent::dispatchAfterResponse($comment);
 
         return back();
     }

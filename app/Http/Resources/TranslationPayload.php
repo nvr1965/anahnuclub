@@ -30,8 +30,9 @@ class TranslationPayload
             }
         }
 
-        // Without on-demand translation the page shows the original until the background job gets to it.
-        $pending = $pending && config('services.translation.on_demand');
+        // Old content is shown as written; only content just published waits for its translation
+        // (being made right after publishing), unless translating while the reader waits is turned on.
+        $pending = $pending && (config('services.translation.on_demand') || self::isFresh($model));
 
         if (! $pending && $fields === []) {
             return null;
@@ -39,4 +40,12 @@ class TranslationPayload
 
         return ['type' => $model->getMorphClass(), 'pending' => $pending, 'fields' => $fields];
     }
+
+    /** Published so recently that its translation may still be on the way. */
+    public static function isFresh(Model $model): bool
+    {
+        return $model->getAttribute('created_at')?->gt(now()->subMinutes(self::FRESH_MINUTES)) ?? false;
+    }
+
+    public const FRESH_MINUTES = 10;
 }

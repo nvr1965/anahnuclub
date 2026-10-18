@@ -17,7 +17,8 @@ class FillTranslationsTest extends TestCase
         $fake = new FakeTranslator;
         $this->app->instance(Translator::class, $fake);
         $reader = User::factory()->create(['locale' => 'en']);
-        Post::create(['user_id' => $reader->id, 'body' => 'Привет из Хайфы']);
+        $post = Post::create(['user_id' => $reader->id, 'body' => 'Привет из Хайфы']);
+        $post->forceFill(['created_at' => now()->subYear()])->save();
 
         $this->actingAs($reader)->get('/feed')->assertInertia(fn ($page) => $page
             ->where('posts.data.0.translation', null));

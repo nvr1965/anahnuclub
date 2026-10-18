@@ -31,7 +31,8 @@ class PostController extends Controller
             'locale' => LanguageGuesser::guess($data['body']) ?? $request->user()->locale,
         ]);
 
-        TranslateContent::dispatch($post);
+        // Translated right after the response is sent, so readers get it within seconds.
+        TranslateContent::dispatchAfterResponse($post);
 
         return back();
     }

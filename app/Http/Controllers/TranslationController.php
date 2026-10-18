@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TranslationPayload;
 use App\Support\Html;
 use App\Translation\ContentTranslator;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -9,8 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Translates posts and comments the page could not show translated yet.
- * The page sends a few at a time, so one slow provider call never blocks the whole feed.
+ * Returns translations of posts and comments the page could not show translated yet.
+ * Normally it only reads translations made after publishing (the page asks again until
+ * they are there); with on-demand translation on it also asks the provider.
  */
 class TranslationController extends Controller
 {
@@ -30,9 +32,15 @@ class TranslationController extends Controller
             if (! $model) {
                 continue;
             }
+            $onDemand = config('services.translation.on_demand');
+            if (! $onDemand && ! TranslationPayload::isFresh($model)) {
+                continue;
+            }
             $fields = [];
             foreach ($model->translatableFields() as $field) {
-                $text = $translator->translate($model, $field, $locale);
+                $text = $onDemand
+                    ? $translator->translate($model, $field, $locale)
+                    : ($translator->needsTranslation($model, $field, $locale) ? $model->cachedTranslation($field, $locale) : null);
                 if ($text !== null) {
                     $fields[$field] = $field === 'title' || $field === 'name' ? $text : Html::clean($text);
                 }

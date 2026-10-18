@@ -6,9 +6,14 @@ type Fields = Record<string, string>;
 
 const keyOf = (type: string, id: number): Key => `${type}:${id}`;
 
+/** How often and how long the page asks again for translations still being made after publishing. */
+const RETRY_MS = 3000;
+const MAX_ATTEMPTS = 40;
+
 /**
- * Fetches translations the server did not have cached yet, a few items per request,
- * and returns them keyed by "type:id". Items already translated are not requested again.
+ * Fetches translations the page did not get with the feed, a few items per request,
+ * and asks again until they are there, so a fresh post's translation appears on its own.
+ * Returns them keyed by "type:id".
  */
 export function useAutoTranslate(items: Translatable[], locale: string) {
     const [translated, setTranslated] = useState<Record<Key, Fields>>({});
@@ -20,16 +25,19 @@ export function useAutoTranslate(items: Translatable[], locale: string) {
     }, [locale]);
 
     useEffect(() => {
-        const pending = items.filter((item) => item.translation?.pending && !requested.current.has(keyOf(item.translation.type, item.id)));
-        if (pending.length === 0) return;
+        let waiting = items.filter((item) => item.translation?.pending && !requested.current.has(keyOf(item.translation.type, item.id)));
+        if (waiting.length === 0) return;
 
-        pending.forEach((item) => requested.current.add(keyOf(item.translation!.type, item.id)));
+        waiting.forEach((item) => requested.current.add(keyOf(item.translation!.type, item.id)));
         let cancelled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let attempts = 0;
 
-        (async () => {
+        const round = async () => {
             const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-            for (let i = 0; i < pending.length && !cancelled; i += 5) {
-                const chunk = pending.slice(i, i + 5).map((item) => ({ type: item.translation!.type, id: item.id }));
+            const found = new Set<Key>();
+            for (let i = 0; i < waiting.length && !cancelled; i += 5) {
+                const chunk = waiting.slice(i, i + 5).map((item) => ({ type: item.translation!.type, id: item.id }));
                 try {
                     const response = await fetch(route('translations'), {
                         method: 'POST',
@@ -39,19 +47,29 @@ export function useAutoTranslate(items: Translatable[], locale: string) {
                     if (!response.ok) continue;
                     const data: { results: { type: string; id: number; fields: Fields }[] } = await response.json();
                     if (cancelled) return;
-                    setTranslated((current) => {
-                        const next = { ...current };
-                        data.results.forEach((r) => (next[keyOf(r.type, r.id)] = r.fields));
-                        return next;
-                    });
+                    const ready = data.results.filter((r) => Object.keys(r.fields).length > 0);
+                    ready.forEach((r) => found.add(keyOf(r.type, r.id)));
+                    if (ready.length > 0) {
+                        setTranslated((current) => {
+                            const next = { ...current };
+                            ready.forEach((r) => (next[keyOf(r.type, r.id)] = r.fields));
+                            return next;
+                        });
+                    }
                 } catch {
                     // Network trouble: the original text stays on screen.
                 }
             }
-        })();
+            waiting = waiting.filter((item) => !found.has(keyOf(item.translation!.type, item.id)));
+            if (!cancelled && waiting.length > 0 && ++attempts < MAX_ATTEMPTS) {
+                timer = setTimeout(round, RETRY_MS);
+            }
+        };
+        round();
 
         return () => {
             cancelled = true;
+            clearTimeout(timer);
         };
     }, [items, locale]);
 
