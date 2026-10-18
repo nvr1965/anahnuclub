@@ -8,6 +8,7 @@ use App\Translation\InterfaceStrings;
 use App\Translation\Translator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +33,7 @@ class LanguageController extends AdminController
     }
 
     /** Adds a language and has its interface and pages machine-translated; it switches on when ready. */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, Translator $translator): RedirectResponse
     {
         $data = $request->validate([
             'code' => ['required', 'string', 'regex:/^[a-z]{2,3}$/', 'unique:languages,code'],
@@ -40,6 +41,10 @@ class LanguageController extends AdminController
             'native_name' => ['required', 'string', 'max:60'],
             'rtl' => ['boolean'],
         ]);
+
+        if (method_exists($translator, 'supports') && ! $translator->supports($data['code'])) {
+            throw ValidationException::withMessages(['code' => __('DeepL does not translate into this language. Add ANTHROPIC_API_KEY to .env and Claude will translate it.')]);
+        }
 
         Language::create($data + ['rtl' => false, 'enabled' => false, 'sort' => (Language::max('sort') ?? 0) + 1]);
         TranslateInterface::dispatch($data['code'], true);

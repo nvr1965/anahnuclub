@@ -86,6 +86,7 @@
     "Create an account": "Создать аккаунт",
     "Create event": "Создать событие",
     "Current password": "Текущий пароль",
+    "DeepL does not translate into this language. Add ANTHROPIC_API_KEY to .env and Claude will translate it.": "DeepL не переводит на этот язык. Впишите ANTHROPIC_API_KEY в .env, и переводить будет Claude.",
     "Delete": "Удалить",
     "Delete :count posts? This cannot be undone.": "Удалить постов: :count? Это нельзя отменить.",
     "Delete account": "Удалить аккаунт",

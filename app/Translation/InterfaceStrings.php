@@ -43,7 +43,7 @@ class InterfaceStrings
         $added = self::file(self::addedPath($code));
         foreach (array_chunk($missing, 40, true) as $chunk) {
             $texts = array_map(self::protect(...), array_values($chunk));
-            $done = $translator instanceof DeepLTranslator
+            $done = method_exists($translator, 'translateMany')
                 ? $translator->translateMany($texts, $code, 'en')
                 : array_map(fn ($t) => $translator->translate($t, $code, 'en'), $texts);
             foreach (array_keys($chunk) as $i => $key) {

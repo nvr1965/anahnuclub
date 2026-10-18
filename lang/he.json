@@ -86,6 +86,7 @@
     "Create an account": "יצירת חשבון",
     "Create event": "יצירת אירוע",
     "Current password": "סיסמה נוכחית",
+    "DeepL does not translate into this language. Add ANTHROPIC_API_KEY to .env and Claude will translate it.": "DeepL לא מתרגם לשפה הזו. הוסיפו ANTHROPIC_API_KEY לקובץ ‎.env ו-Claude יתרגם אותה.",
     "Delete": "מחיקה",
     "Delete :count posts? This cannot be undone.": "למחוק :count פוסטים? לא ניתן לבטל.",
     "Delete account": "מחיקת חשבון",

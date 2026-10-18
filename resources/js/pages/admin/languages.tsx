@@ -15,7 +15,7 @@ interface Row {
     built_in: boolean;
 }
 
-/** Languages the machine translator handles well; anything else can be typed in by hand. */
+/** Common choices; anything else can be typed in by hand. Languages DeepL lacks need the Claude key. */
 const PRESETS: [code: string, name: string, native: string, rtl?: boolean][] = [
     ['de', 'German', 'Deutsch'],
     ['fr', 'French', 'Français'],
@@ -23,6 +23,14 @@ const PRESETS: [code: string, name: string, native: string, rtl?: boolean][] = [
     ['it', 'Italian', 'Italiano'],
     ['pt', 'Portuguese', 'Português'],
     ['uk', 'Ukrainian', 'Українська'],
+    ['uz', 'Uzbek', 'Oʻzbekcha'],
+    ['kk', 'Kazakh', 'Қазақша'],
+    ['ky', 'Kyrgyz', 'Кыргызча'],
+    ['tg', 'Tajik', 'Тоҷикӣ'],
+    ['az', 'Azerbaijani', 'Azərbaycanca'],
+    ['ka', 'Georgian', 'ქართული'],
+    ['hy', 'Armenian', 'Հայերեն'],
+    ['fa', 'Persian', 'فارسی', true],
     ['pl', 'Polish', 'Polski'],
     ['tr', 'Turkish', 'Türkçe'],
     ['nl', 'Dutch', 'Nederlands'],
@@ -44,6 +52,9 @@ const PRESETS: [code: string, name: string, native: string, rtl?: boolean][] = [
     ['ja', 'Japanese', '日本語'],
     ['ko', 'Korean', '한국어'],
     ['zh', 'Chinese', '中文'],
+    ['vi', 'Vietnamese', 'Tiếng Việt'],
+    ['th', 'Thai', 'ไทย'],
+    ['hi', 'Hindi', 'हिन्दी'],
 ];
 
 export default function AdminLanguages({ languages, total, can_translate }: { languages: Row[]; total: number; can_translate: boolean }) {

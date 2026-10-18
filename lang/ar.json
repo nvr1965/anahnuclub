@@ -86,6 +86,7 @@
     "Create an account": "إنشاء حساب",
     "Create event": "إنشاء فعالية",
     "Current password": "كلمة المرور الحالية",
+    "DeepL does not translate into this language. Add ANTHROPIC_API_KEY to .env and Claude will translate it.": "لا يترجم DeepL إلى هذه اللغة. أضف ANTHROPIC_API_KEY إلى ‎.env وسيترجمها Claude.",
     "Delete": "حذف",
     "Delete :count posts? This cannot be undone.": "حذف :count منشورات؟ لا يمكن التراجع.",
     "Delete account": "حذف الحساب",

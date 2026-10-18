@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Video;
 use App\Translation\ClaudeTranslator;
 use App\Translation\DeepLTranslator;
+use App\Translation\FallbackTranslator;
 use App\Translation\NullTranslator;
 use App\Translation\Translator;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -25,12 +26,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $claude = fn () => new ClaudeTranslator(
+            new Client(apiKey: config('services.anthropic.key')),
+            config('services.anthropic.translation_model'),
+        );
+
         $this->app->singleton(Translator::class, fn () => match (config('services.translation.driver')) {
-            'claude' => new ClaudeTranslator(
-                new Client(apiKey: config('services.anthropic.key')),
-                config('services.anthropic.translation_model'),
+            'claude' => $claude(),
+            // Languages DeepL does not know (Uzbek, Georgian, ...) go to Claude when its key is set.
+            'deepl' => new FallbackTranslator(
+                new DeepLTranslator(config('services.deepl.key')),
+                config('services.anthropic.key') ? $claude() : null,
             ),
-            'deepl' => new DeepLTranslator(config('services.deepl.key')),
             default => new NullTranslator,
         });
     }
