@@ -25,6 +25,9 @@ use Throwable;
 /** Videos: YouTube and Vimeo links, or files uploaded here. */
 class VideoController extends Controller
 {
+    /** Formats people upload, including what phones and browsers record (MP4, MOV, WebM). */
+    public const FILE_TYPES = 'video/mp4,video/webm,video/quicktime,video/x-m4v,video/x-matroska';
+
     public function index(Request $request): Response
     {
         $author = $request->integer('user') ? User::find($request->integer('user')) : null;
@@ -69,7 +72,7 @@ class VideoController extends Controller
     {
         $data = $request->validate([
             'url' => ['required_without:file', 'nullable', 'url', 'max:500'],
-            'file' => ['required_without:url', 'nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime,video/x-m4v', 'max:204800'],
+            'file' => ['required_without:url', 'nullable', 'file', 'mimetypes:'.self::FILE_TYPES, 'max:204800'],
             'thumb' => ['nullable', 'image', 'max:5120'],
             'title' => ['nullable', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:5000'],

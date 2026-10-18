@@ -7,10 +7,13 @@ use App\Jobs\TranslateContent;
 use App\Models\Album;
 use App\Models\Group;
 use App\Models\Post;
+use App\Models\Video;
 use App\Support\Html;
+use App\Support\ImageStore;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,22 +22,41 @@ class PostController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'body' => ['required_without:images', 'nullable', 'string', 'max:20000'],
+            'body' => ['required_without_all:images,video', 'nullable', 'string', 'max:20000'],
             'group_id' => ['nullable', 'integer', 'exists:groups,id'],
             'images' => ['nullable', 'array', 'max:'.AlbumController::MAX_PHOTOS],
             'images.*' => ['image', 'max:15360'],
+            'video' => ['nullable', 'file', 'mimetypes:'.VideoController::FILE_TYPES, 'max:204800'],
+            'video_thumb' => ['nullable', 'image', 'max:5120'],
         ]);
         $text = (string) ($data['body'] ?? '');
         $images = $request->file('images', []);
+        $file = $request->file('video');
+        abort_if($text === '' && ! $images && ! $file, 422);
 
         if ($data['group_id'] ?? null) {
             abort_unless(Group::find($data['group_id'])->members()->whereKey($request->user()->id)->exists(), 403);
         }
 
+        // A clip attached here (often straight from the camera) also goes to the member's videos.
+        $video = null;
+        if ($file) {
+            $video = Video::create([
+                'user_id' => $request->user()->id,
+                'group_id' => $data['group_id'] ?? null,
+                'provider' => 'file',
+                'path' => $file->storeAs('videos', Str::random(24).'.'.($file->extension() ?: 'mp4'), 'public'),
+                'thumb_path' => $request->hasFile('video_thumb') ? ImageStore::save($request->file('video_thumb'), 'videos/thumbs', 960) : null,
+                'title' => Str::limit(trim(strtok($text, "\n") ?: '') ?: __('Video').' · '.$request->user()->name, 190, '…'),
+                'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
+            ]);
+        }
+
         $post = Post::create([
             'user_id' => $request->user()->id,
             'group_id' => $data['group_id'] ?? null,
-            'type' => $text === '' && $images ? 'photo' : 'status',
+            'type' => $text === '' ? ($video ? 'video' : 'photo') : 'status',
+            'video_id' => $video?->id,
             'body' => Html::fromPlainText($text),
             'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
         ]);

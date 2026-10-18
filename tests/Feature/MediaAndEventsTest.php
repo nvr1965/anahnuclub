@@ -43,6 +43,26 @@ class MediaAndEventsTest extends TestCase
         $this->assertSame(0, Photo::count());
     }
 
+    public function test_a_post_can_carry_a_video_shot_with_the_camera()
+    {
+        $member = User::factory()->create();
+
+        $this->actingAs($member)->post('/posts', [
+            'body' => "Шаббат шалом\nиз Хайфы",
+            'video' => UploadedFile::fake()->create('video-1.webm', 800, 'video/webm'),
+            'video_thumb' => UploadedFile::fake()->image('thumb.jpg', 640, 360),
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $post = Post::with('video')->firstOrFail();
+        $this->assertSame('Шаббат шалом', $post->video->title);
+        $this->assertSame('file', $post->video->provider);
+        Storage::disk('public')->assertExists($post->video->path);
+        $this->assertNotNull($post->video->thumb_path);
+        $this->get('/feed')->assertInertia(fn ($page) => $page->where('posts.data.0.video.id', $post->video_id));
+
+        $this->post('/posts', ['video' => UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf')])->assertSessionHasErrors('video');
+    }
+
     public function test_members_make_albums_upload_and_delete_photos()
     {
         $member = User::factory()->create();

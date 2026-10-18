@@ -1,68 +1,111 @@
+import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
-import { shrinkImage } from '@/lib/shrink-image';
+import { shrinkImage, videoFrame } from '@/lib/shrink-image';
 import { type SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
-import { ImagePlus, X } from 'lucide-react';
+import { Camera, ImagePlus, X } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 
 const MAX_PHOTOS = 20;
 
-/** "What's on your mind?" box: a pill that opens into a text area, with pictures if wanted. */
+/** "What's on your mind?" box: a pill that opens into a text area, with pictures or a video, picked or shot with the camera. */
 export function PostComposer({ groupId }: { groupId?: number }) {
     const t = useT();
     const getInitials = useInitials();
     const { auth } = usePage<SharedData>().props;
     const [open, setOpen] = useState(false);
     const [preparing, setPreparing] = useState(false);
+    const [shooting, setShooting] = useState(false);
     const picker = useRef<HTMLInputElement>(null);
-    const form = useForm<{ body: string; group_id: number | null; images: File[] }>({ body: '', group_id: groupId ?? null, images: [] });
+    const nativeCamera = useRef<HTMLInputElement>(null);
+    const form = useForm<{ body: string; group_id: number | null; images: File[]; video: File | null; video_thumb: File | null }>({
+        body: '',
+        group_id: groupId ?? null,
+        images: [],
+        video: null,
+        video_thumb: null,
+    });
     const firstName = auth.user?.name.split(' ')[0] ?? '';
     const previews = useMemo(() => form.data.images.map((file) => URL.createObjectURL(file)), [form.data.images]);
 
-    useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
+    const videoPreview = useMemo(() => (form.data.video ? URL.createObjectURL(form.data.video) : null), [form.data.video]);
 
-    const addPictures = async (files: FileList | null) => {
-        if (!files?.length) return;
+    useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
+    useEffect(() => () => void (videoPreview && URL.revokeObjectURL(videoPreview)), [videoPreview]);
+
+    /** Pictures join the post; a video (one per post) takes the video slot with a still for lists. */
+    const addFiles = async (files: FileList | File[] | null) => {
+        const all = Array.from(files ?? []);
+        if (!all.length) return;
         setOpen(true);
         setPreparing(true);
+        const video = all.find((file) => file.type.startsWith('video/'));
         const shrunk = await Promise.all(
-            Array.from(files)
+            all
+                .filter((file) => file.type.startsWith('image/'))
                 .slice(0, MAX_PHOTOS)
                 .map((file) => shrinkImage(file)),
         );
-        form.setData('images', [...form.data.images, ...shrunk].slice(0, MAX_PHOTOS));
+        const thumb = video ? await videoFrame(video) : null;
+        form.setData((data) => ({
+            ...data,
+            images: [...data.images, ...shrunk].slice(0, MAX_PHOTOS),
+            ...(video ? { video, video_thumb: thumb } : {}),
+        }));
         setPreparing(false);
         if (picker.current) picker.current.value = '';
+        if (nativeCamera.current) nativeCamera.current.value = '';
     };
+
+    // In-page camera over HTTPS; elsewhere the phone's own camera app through a file field.
+    const openCamera = () => (cameraAvailable() ? setShooting(true) : nativeCamera.current?.click());
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         form.post(route('posts.store'), {
             preserveScroll: true,
-            forceFormData: form.data.images.length > 0,
+            forceFormData: form.data.images.length > 0 || form.data.video !== null,
             onSuccess: () => {
-                form.reset('body', 'images');
+                form.reset('body', 'images', 'video', 'video_thumb');
                 setOpen(false);
             },
         });
     };
 
-    const empty = !form.data.body.trim() && form.data.images.length === 0;
+    const empty = !form.data.body.trim() && form.data.images.length === 0 && !form.data.video;
+    const tool =
+        'text-muted-foreground inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800';
     const photoButton = (
-        <button
-            type="button"
-            onClick={() => picker.current?.click()}
-            className="text-muted-foreground inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
-        >
-            <ImagePlus className="size-5 text-green-600" /> {t('Photo')}
-        </button>
+        <div className="flex">
+            <button type="button" onClick={() => picker.current?.click()} className={tool} title={t('Photo/video')} aria-label={t('Photo/video')}>
+                <ImagePlus className="size-5 text-green-600" /> <span className={open ? 'hidden sm:inline' : ''}>{t('Photo/video')}</span>
+            </button>
+            <button type="button" onClick={openCamera} className={tool} title={t('Camera')} aria-label={t('Camera')}>
+                <Camera className="size-5 text-rose-500" /> <span className={open ? 'hidden sm:inline' : ''}>{t('Camera')}</span>
+            </button>
+        </div>
     );
 
     return (
         <form onSubmit={submit} className="rounded-lg bg-white px-4 py-3 shadow-sm dark:bg-neutral-900">
-            <input ref={picker} type="file" accept="image/*" multiple className="hidden" onChange={(e) => addPictures(e.target.files)} />
+            <input ref={picker} type="file" accept="image/*,video/*" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
+            <input
+                ref={nativeCamera}
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => addFiles(e.target.files)}
+            />
+            {shooting && (
+                <CameraCapture
+                    onClose={() => setShooting(false)}
+                    onPhoto={(file) => (setShooting(false), addFiles([file]))}
+                    onVideo={(file) => (setShooting(false), addFiles([file]))}
+                />
+            )}
             <div className="flex items-start gap-2">
                 <Avatar className="size-10">
                     <AvatarImage src={auth.user?.avatar} alt="" className="object-cover" />
@@ -111,6 +154,20 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                     ))}
                 </div>
             )}
+            {videoPreview && (
+                <div className="relative mt-3">
+                    <video src={videoPreview} controls playsInline className="max-h-80 w-full rounded-lg bg-black" />
+                    <button
+                        type="button"
+                        aria-label={t('Remove')}
+                        onClick={() => form.setData((data) => ({ ...data, video: null, video_thumb: null }))}
+                        className="absolute end-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
+                    >
+                        <X className="size-4" />
+                    </button>
+                </div>
+            )}
+            {form.errors.video && <p className="mt-2 text-sm text-red-600">{form.errors.video}</p>}
             {form.errors.images && <p className="mt-2 text-sm text-red-600">{form.errors.images}</p>}
             {Object.keys(form.errors).some((k) => k.startsWith('images.')) && (
                 <p className="mt-2 text-sm text-red-600">{t('One of the pictures could not be used.')}</p>
@@ -122,14 +179,14 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={() => (form.reset('body', 'images'), setOpen(false))}
-                            className="text-muted-foreground rounded-md px-4 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            onClick={() => (form.reset('body', 'images', 'video', 'video_thumb'), setOpen(false))}
+                            className="text-muted-foreground rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap hover:bg-slate-100 dark:hover:bg-neutral-800"
                         >
                             {t('Cancel')}
                         </button>
                         <button
                             disabled={form.processing || preparing || empty}
-                            className="bg-brand hover:bg-brand-dark rounded-md px-6 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                            className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold whitespace-nowrap text-white disabled:opacity-40"
                         >
                             {form.processing ? `${form.progress?.percentage ?? 0}%` : t('Publish')}
                         </button>
