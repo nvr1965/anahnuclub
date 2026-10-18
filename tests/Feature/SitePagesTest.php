@@ -28,7 +28,7 @@ class SitePagesTest extends TestCase
                 ->component('pages/show')
                 ->where('page.title', $title)
                 ->where('footer.pages.1.slug', 'privacy')
-                ->where('footer.donate_url', 'https://www.paypal.com/donate/?hosted_button_id=9K3YLUVSY8K72')
+                ->where('footer.donate.0.url', 'https://www.paypal.com/donate/?hosted_button_id=9K3YLUVSY8K72')
             );
         }
     }
@@ -61,8 +61,12 @@ class SitePagesTest extends TestCase
         $this->assertSame('[he] Правила', $content['he']['title']);
         $this->assertTrue($content['en']['auto']);
 
-        $this->patch('/admin/site-settings', ['donate_url' => ''])->assertRedirect();
-        $this->get('/p/rules')->assertInertia(fn ($page) => $page->where('footer.donate_url', ''));
+        $links = [['label' => 'PayPal', 'url' => 'https://paypal.me/x'], ['label' => 'Ko-fi', 'url' => 'https://ko-fi.com/x']];
+        $this->patch('/admin/site-settings', ['donate_links' => $links])->assertRedirect();
+        $this->get('/p/rules')->assertInertia(fn ($page) => $page->where('footer.donate', $links));
+        $this->patch('/admin/site-settings', ['donate_links' => [['label' => 'Bad', 'url' => 'not a link']]])->assertSessionHasErrors('donate_links.0.url');
+        $this->patch('/admin/site-settings', ['donate_links' => []])->assertRedirect();
+        $this->get('/p/rules')->assertInertia(fn ($page) => $page->where('footer.donate', []));
     }
 
     public function test_a_new_language_gets_its_interface_translated_and_switches_on()

@@ -18,7 +18,7 @@ interface Props {
     languages: Language[];
     pages: { slug: string; title: string; published: boolean; in_footer: boolean; languages: string[] }[];
     edit: { slug: string | null; content: Content; in_footer: boolean; published: boolean; sort: number } | null;
-    donate_url: string | null;
+    donate_links: { label: string; url: string }[];
     can_translate: boolean;
 }
 
@@ -28,9 +28,15 @@ const primary = 'bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-
 const secondary =
     'inline-flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300 disabled:opacity-40 dark:bg-neutral-800 dark:hover:bg-neutral-700';
 
-export default function AdminPages({ languages, pages, edit, donate_url, can_translate }: Props) {
+export default function AdminPages({ languages, pages, edit, donate_links, can_translate }: Props) {
     const t = useT();
-    const settings = useForm({ donate_url: donate_url ?? '' });
+    const settings = useForm<{ donate_links: { label: string; url: string }[] }>({ donate_links: donate_links });
+    const links = settings.data.donate_links;
+    const setLink = (i: number, key: 'label' | 'url', value: string) =>
+        settings.setData(
+            'donate_links',
+            links.map((l, j) => (j === i ? { ...l, [key]: value } : l)),
+        );
 
     return (
         <AdminLayout
@@ -76,21 +82,59 @@ export default function AdminPages({ languages, pages, edit, donate_url, can_tra
                 >
                     <h2 className="font-semibold">{t('Donation button')}</h2>
                     <p className="text-muted-foreground text-sm">
-                        {t('Link of the “Support Anahnu Club” button in the footer. Leave empty to hide the button.')}
+                        {t(
+                            'Ways to donate under the “Support Anahnu Club” button in the footer. With several, the button opens a menu. Remove all to hide it.',
+                        )}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                        <input
-                            type="url"
-                            className={`${field} min-w-0 flex-1`}
-                            value={settings.data.donate_url}
-                            onChange={(e) => settings.setData('donate_url', e.target.value)}
-                            placeholder="https://www.paypal.com/donate/?hosted_button_id=…"
-                        />
-                        <button className={primary} disabled={settings.processing || !settings.isDirty}>
+                    {links.map((link, i) => (
+                        <div key={i} className="flex flex-wrap gap-2">
+                            <input
+                                className={`${field.replace('w-full', '')} w-36`}
+                                placeholder="Ko-fi"
+                                value={link.label}
+                                onChange={(e) => setLink(i, 'label', e.target.value)}
+                            />
+                            <input
+                                type="url"
+                                className={`${field.replace('w-full', '')} min-w-0 flex-1`}
+                                placeholder="https://ko-fi.com/…"
+                                value={link.url}
+                                onChange={(e) => setLink(i, 'url', e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                className={secondary}
+                                aria-label={t('Delete')}
+                                onClick={() =>
+                                    settings.setData(
+                                        'donate_links',
+                                        links.filter((_, j) => j !== i),
+                                    )
+                                }
+                            >
+                                <Trash2 className="size-4" />
+                            </button>
+                            {(settings.errors as Record<string, string>)[`donate_links.${i}.url`] && (
+                                <p className="w-full text-sm text-red-600">{(settings.errors as Record<string, string>)[`donate_links.${i}.url`]}</p>
+                            )}
+                        </div>
+                    ))}
+                    <div className="flex flex-wrap justify-between gap-2">
+                        <button
+                            type="button"
+                            className={secondary}
+                            disabled={links.length >= 10}
+                            onClick={() => settings.setData('donate_links', [...links, { label: '', url: '' }])}
+                        >
+                            <Plus className="size-4" /> {t('Add a way to donate')}
+                        </button>
+                        <button
+                            className={primary}
+                            disabled={settings.processing || !settings.isDirty || links.some((l) => !l.label.trim() || !l.url.trim())}
+                        >
                             {t('Save')}
                         </button>
                     </div>
-                    {settings.errors.donate_url && <p className="text-sm text-red-600">{settings.errors.donate_url}</p>}
                 </form>
             </div>
         </AdminLayout>

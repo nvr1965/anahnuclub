@@ -39,7 +39,7 @@ class PageController extends AdminController
                 'published' => $edit->published,
                 'sort' => $edit->sort ?? 0,
             ] : null,
-            'donate_url' => Setting::get('donate_url'),
+            'donate_links' => Setting::donateLinks(),
             'can_translate' => app(Translator::class)->name() !== 'null',
         ]);
     }
@@ -76,8 +76,13 @@ class PageController extends AdminController
 
     public function settings(Request $request): RedirectResponse
     {
-        $data = $request->validate(['donate_url' => ['nullable', 'url:https,http', 'max:500']]);
-        Setting::put('donate_url', $data['donate_url'] ?: '');
+        $data = $request->validate([
+            'donate_links' => ['present', 'array', 'max:10'],
+            'donate_links.*.label' => ['required', 'string', 'max:40'],
+            'donate_links.*.url' => ['required', 'url:https,http', 'max:500'],
+        ]);
+        $links = array_map(fn ($l) => ['label' => trim($l['label']), 'url' => trim($l['url'])], $data['donate_links']);
+        Setting::put('donate_links', json_encode(array_values($links), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         return back();
     }

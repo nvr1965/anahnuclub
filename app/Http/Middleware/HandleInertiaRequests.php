@@ -53,7 +53,7 @@ class HandleInertiaRequests extends Middleware
             'footer' => fn () => [
                 'pages' => Page::query()->where('published', true)->where('in_footer', true)->orderBy('sort')->orderBy('id')->get()
                     ->map(fn (Page $p) => ['slug' => $p->slug, 'title' => $p->in($locale)['title']])->values(),
-                'donate_url' => Setting::get('donate_url'),
+                'donate' => Setting::donateLinks(),
             ],
             'auth' => [
                 'user' => $request->user(),
