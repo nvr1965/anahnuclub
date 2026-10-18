@@ -53,6 +53,7 @@ class HandleInertiaRequests extends Middleware
             'counts' => fn () => $request->user() ? [
                 'messages' => $request->user()->unreadMessagesCount(),
                 'friend_requests' => $request->user()->friendRequesters()->where('blocked', false)->count(),
+                'notifications' => $request->user()->unreadNotifications()->count(),
             ] : null,
         ]);
     }

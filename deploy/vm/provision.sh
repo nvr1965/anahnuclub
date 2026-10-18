@@ -32,8 +32,8 @@ if ! command -v composer >/dev/null; then
     curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer >/dev/null
 fi
 
-# Members upload profile pictures and covers straight from their phones.
-printf 'upload_max_filesize = 12M\npost_max_size = 14M\n' > "/etc/php/$PHP_VERSION/fpm/conf.d/99-anahnuclub.ini"
+# Members upload photos and videos (up to 200 MB) straight from their phones.
+printf 'upload_max_filesize = 210M\npost_max_size = 220M\nmemory_limit = 256M\nmax_file_uploads = 25\n' > "/etc/php/$PHP_VERSION/fpm/conf.d/99-anahnuclub.ini"
 
 start postgresql
 start mariadb
@@ -85,7 +85,7 @@ server {
     server_name _;
     root $APP_DIR/public;
     index index.php;
-    client_max_body_size 32m;
+    client_max_body_size 220m;
 
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;

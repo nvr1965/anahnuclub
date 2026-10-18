@@ -1,3 +1,4 @@
+import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { ShareMenu } from '@/components/share-menu';
 import { TranslatedText } from '@/components/translated-text';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +17,8 @@ const actions: Record<string, string> = {
     discussion: 'new discussion',
     announcement: 'new announcement',
     photo: 'new photo',
+    video: 'new video',
+    event: 'new event',
 };
 
 export function PostCard({ post, translated, full = false }: { post: Post; translated: Lookup; full?: boolean }) {
@@ -37,6 +40,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
         if (window.confirm(t('Delete this post?'))) router.delete(route('posts.destroy', post.id), { preserveScroll: true });
     };
 
+    const hasText = Boolean(post.title) || post.body.replace(/<br\s*\/?>|&nbsp;|\s/g, '') !== '';
     const profile = (id?: number) => (id ? route('people.show', id) : undefined);
     const plainTitle =
         post.title ??
@@ -116,43 +120,61 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 )}
             </header>
 
-            <div className="px-4 pt-3 pb-2">
-                {editing ? (
-                    <form onSubmit={saveEdit} className="space-y-2">
-                        <textarea
-                            dir="auto"
-                            autoFocus
-                            rows={5}
-                            className="w-full resize-y rounded-xl bg-slate-100 px-4 py-2.5 text-[15px] outline-none dark:bg-neutral-800"
-                            value={edit.data.body}
-                            onChange={(e) => edit.setData('body', e.target.value)}
+            {(editing || hasText) && (
+                <div className="px-4 pt-3 pb-2">
+                    {editing ? (
+                        <form onSubmit={saveEdit} className="space-y-2">
+                            <textarea
+                                dir="auto"
+                                autoFocus
+                                rows={5}
+                                className="w-full resize-y rounded-xl bg-slate-100 px-4 py-2.5 text-[15px] outline-none dark:bg-neutral-800"
+                                value={edit.data.body}
+                                onChange={(e) => edit.setData('body', e.target.value)}
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditing(false)}
+                                    className="text-muted-foreground rounded-md px-4 py-1.5 text-sm font-semibold hover:bg-slate-100"
+                                >
+                                    {t('Cancel')}
+                                </button>
+                                <button
+                                    disabled={edit.processing || (post.type === 'status' && !edit.data.body.trim())}
+                                    className="bg-brand hover:bg-brand-dark rounded-md px-5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                                >
+                                    {t('Save')}
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <TranslatedText
+                            item={post}
+                            fetched={translated('post', post.id)}
+                            original={{ title: post.title, body: post.body }}
+                            clamp={!full}
+                            titleClassName="text-lg leading-snug font-semibold"
                         />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setEditing(false)}
-                                className="text-muted-foreground rounded-md px-4 py-1.5 text-sm font-semibold hover:bg-slate-100"
-                            >
-                                {t('Cancel')}
-                            </button>
-                            <button
-                                disabled={edit.processing || !edit.data.body.trim()}
-                                className="bg-brand hover:bg-brand-dark rounded-md px-5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
-                            >
-                                {t('Save')}
-                            </button>
-                        </div>
-                    </form>
-                ) : (
-                    <TranslatedText
-                        item={post}
-                        fetched={translated('post', post.id)}
-                        original={{ title: post.title, body: post.body }}
-                        clamp={!full}
-                        titleClassName="text-lg leading-snug font-semibold"
-                    />
-                )}
-            </div>
+                    )}
+                </div>
+            )}
+            {post.photos.length > 0 && (
+                <div className="mt-2">
+                    <PostPhotos photos={post.photos} />
+                </div>
+            )}
+            {post.video && (
+                <div className="mt-2">
+                    <PostVideo video={post.video} />
+                </div>
+            )}
+            {post.event && (
+                <div className="mt-2">
+                    <EventCard event={post.event} />
+                </div>
+            )}
+            <div className="pb-2" />
 
             {(post.likes_count > 0 || post.comments.length > 0) && (
                 <div className="text-muted-foreground flex items-center justify-between px-4 pb-2 text-[15px]">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Controllers\EventController;
 use App\Models\Post;
 use App\Support\Html;
 use App\Translation\ContentTranslator;
@@ -31,7 +32,10 @@ class PostResource extends JsonResource
             'url' => route('posts.show', $this->id),
             'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin),
             // The text as the author typed it, for editing (only posts written here, not imported HTML).
-            'editable_text' => $request->user()?->id === $this->user_id && $this->type === 'status' && $this->legacy_source === null
+            'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
+            'video' => $this->whenLoaded('video', fn () => $this->video?->card()),
+            'event' => $this->whenLoaded('event', fn () => $this->event ? EventController::card($this->event) : null),
+            'editable_text' => $request->user()?->id === $this->user_id && in_array($this->type, ['status', 'photo', 'video'], true) && $this->legacy_source === null
                 ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)
                 : null,
         ];

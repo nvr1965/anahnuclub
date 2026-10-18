@@ -3,7 +3,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { House, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
+import { CalendarDays, Clapperboard, House, Images, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
@@ -46,6 +46,26 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                     <Users className="size-5" />
                 </span>
                 {t('Groups')}
+            </Link>
+            {auth.user && (
+                <Link href={route('people.show', { user: auth.user.id, tab: 'photos' })} className={row}>
+                    <span className="flex size-9 items-center justify-center rounded-full bg-green-500 text-white">
+                        <Images className="size-5" />
+                    </span>
+                    {t('Photos')}
+                </Link>
+            )}
+            <Link href={route('videos.index')} className={row}>
+                <span className="flex size-9 items-center justify-center rounded-full bg-rose-500 text-white">
+                    <Clapperboard className="size-5" />
+                </span>
+                {t('Videos')}
+            </Link>
+            <Link href={route('events.index')} className={row}>
+                <span className="flex size-9 items-center justify-center rounded-full bg-red-500 text-white">
+                    <CalendarDays className="size-5" />
+                </span>
+                {t('Events')}
             </Link>
             <Link href={route('profile.edit')} className={row}>
                 <span className="flex size-9 items-center justify-center rounded-full bg-slate-300 text-slate-700 dark:bg-neutral-700 dark:text-neutral-200">

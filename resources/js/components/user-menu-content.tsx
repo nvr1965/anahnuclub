@@ -5,7 +5,7 @@ import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { useT } from '@/lib/i18n';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LogOut, Settings, Shield, UserRound } from 'lucide-react';
+import { CalendarDays, Clapperboard, Images, LogOut, Settings, Shield, UserRound } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -34,6 +34,19 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                         {t('My profile')}
                     </Link>
                 </DropdownMenuItem>
+                {/* The side menu is hidden on phones, so its sections are reachable from here. */}
+                {[
+                    { href: route('people.show', { user: user.id, tab: 'photos' }), icon: Images, label: t('Photos') },
+                    { href: route('videos.index'), icon: Clapperboard, label: t('Videos') },
+                    { href: route('events.index'), icon: CalendarDays, label: t('Events') },
+                ].map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="lg:hidden">
+                        <Link className="block w-full" href={item.href} as="button" onClick={cleanup}>
+                            <item.icon className="me-2" />
+                            {item.label}
+                        </Link>
+                    </DropdownMenuItem>
+                ))}
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
                         <Settings className="me-2" />

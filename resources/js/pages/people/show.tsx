@@ -1,14 +1,18 @@
+import { AlbumForm } from '@/components/album-form';
+import { PhotoViewer } from '@/components/photo-viewer';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
+import { VideoGrid } from '@/components/video-grid';
 import ClubLayout from '@/layouts/club-layout';
+import { albumName } from '@/lib/albums';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
-import { type Paginated, type Person, type Post, type SharedData } from '@/types';
+import { type Paginated, type Person, type PhotoItem, type Post, type SharedData, type VideoItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Cake, Camera, Check, Clock, Globe, MapPin, MessageCircle, Pencil, UserCheck, UserPlus, UserX } from 'lucide-react';
+import { Cake, Camera, Check, Clock, Globe, Images, MapPin, MessageCircle, Pencil, Plus, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { type FormEventHandler, type ReactNode, useRef, useState } from 'react';
 
 interface Profile {
@@ -31,14 +35,17 @@ interface Profile {
     friendship: 'none' | 'friends' | 'sent' | 'received' | null;
 }
 
-type Photo = { id: number; thumb: string; url: string };
+type Photo = PhotoItem;
+type Album = { id: number; name: string; kind: string | null; photos_count: number; cover: string | null };
 
 interface Props {
     profile: Profile;
-    tab: 'posts' | 'about' | 'friends' | 'photos';
+    tab: 'posts' | 'about' | 'friends' | 'photos' | 'videos';
     posts: Paginated<Post> | null;
     friends: Person[];
     photos: Photo[];
+    albums: Album[];
+    videos: VideoItem[];
 }
 
 const card = 'rounded-lg bg-white p-4 shadow-sm dark:bg-neutral-900';
@@ -46,15 +53,17 @@ const button = 'inline-flex items-center justify-center gap-2 rounded-md px-4 py
 const primary = `${button} bg-brand hover:bg-brand-dark text-white`;
 const secondary = `${button} bg-slate-200 text-slate-900 hover:bg-slate-300 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700`;
 
-export default function PersonShow({ profile, tab, posts, friends, photos }: Props) {
+export default function PersonShow({ profile, tab, posts, friends, photos, albums, videos }: Props) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
     const [editing, setEditing] = useState(false);
+    const [creatingAlbum, setCreatingAlbum] = useState(false);
     const tabs: { key: Props['tab']; label: string }[] = [
         { key: 'posts', label: t('Posts') },
         { key: 'about', label: t('About') },
         { key: 'friends', label: t('Friends') },
         { key: 'photos', label: t('Photos') },
+        { key: 'videos', label: t('Videos') },
     ];
     const tabHref = (key: Props['tab']) => route('people.show', { user: profile.id, ...(key === 'posts' ? {} : { tab: key }) });
 
@@ -206,17 +215,70 @@ export default function PersonShow({ profile, tab, posts, friends, photos }: Pro
 
                 {tab === 'photos' && (
                     <section className={card}>
-                        <h2 className="mb-4 text-xl font-bold">{t('Photos')}</h2>
-                        {photos.length === 0 ? (
-                            <p className="text-muted-foreground text-[15px]">{t('No photos yet.')}</p>
+                        <div className="mb-4 flex items-center justify-between gap-2">
+                            <h2 className="text-xl font-bold">{t('Albums')}</h2>
+                            {profile.is_me && (
+                                <button type="button" className={secondary} onClick={() => setCreatingAlbum(true)}>
+                                    <Plus className="size-4" /> {t('New album')}
+                                </button>
+                            )}
+                        </div>
+                        {albums.length === 0 ? (
+                            <p className="text-muted-foreground text-[15px]">{t('No albums yet.')}</p>
                         ) : (
-                            <PhotoGrid photos={photos} className="grid-cols-3 sm:grid-cols-5" />
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                                {albums.map((album) => (
+                                    <Link key={album.id} href={route('albums.show', album.id)} className="group min-w-0">
+                                        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-slate-100 dark:bg-neutral-800">
+                                            {album.cover ? (
+                                                <img
+                                                    src={album.cover}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    className="size-full object-cover transition group-hover:scale-105"
+                                                />
+                                            ) : (
+                                                <Images className="text-muted-foreground size-10" />
+                                            )}
+                                        </div>
+                                        <div dir="auto" className="mt-1 truncate text-[15px] font-semibold">
+                                            {albumName(album, t)}
+                                        </div>
+                                        <div className="text-muted-foreground text-[13px]">{t(':count photos', { count: album.photos_count })}</div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+                {tab === 'photos' && photos.length > 0 && (
+                    <section className={card}>
+                        <h2 className="mb-4 text-xl font-bold">{t('All photos')}</h2>
+                        <PhotoGrid photos={photos} className="grid-cols-3 sm:grid-cols-5" />
+                    </section>
+                )}
+
+                {tab === 'videos' && (
+                    <section className={card}>
+                        <div className="mb-4 flex items-center justify-between gap-2">
+                            <h2 className="text-xl font-bold">{t('Videos')}</h2>
+                            {profile.is_me && (
+                                <Link href={route('videos.index', { add: 1 })} className={secondary}>
+                                    <Plus className="size-4" /> {t('Add video')}
+                                </Link>
+                            )}
+                        </div>
+                        {videos.length === 0 ? (
+                            <p className="text-muted-foreground text-[15px]">{t('No videos yet.')}</p>
+                        ) : (
+                            <VideoGrid videos={videos} />
                         )}
                     </section>
                 )}
             </div>
 
             {profile.is_me && <EditProfile profile={profile} open={editing} onClose={() => setEditing(false)} />}
+            {profile.is_me && <AlbumForm open={creatingAlbum} onClose={() => setCreatingAlbum(false)} />}
         </ClubLayout>
     );
 }
@@ -317,10 +379,13 @@ function FriendPicture({ friend }: { friend: Person }) {
 }
 
 function PhotoGrid({ photos, className }: { photos: Photo[]; className: string }) {
+    const [open, setOpen] = useState<number | null>(null);
+
     return (
         <div className={`grid gap-1 ${className}`}>
-            {photos.map((photo) => (
-                <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="block overflow-hidden">
+            <PhotoViewer photos={photos} index={open} onClose={() => setOpen(null)} />
+            {photos.map((photo, i) => (
+                <button key={photo.id} type="button" onClick={() => setOpen(i)} className="block overflow-hidden">
                     <img
                         src={photo.thumb}
                         alt=""
@@ -328,7 +393,7 @@ function PhotoGrid({ photos, className }: { photos: Photo[]; className: string }
                         onError={(e) => ((e.currentTarget.parentElement as HTMLElement).style.display = 'none')}
                         className="aspect-square w-full object-cover transition hover:opacity-90"
                     />
-                </a>
+                </button>
             ))}
         </div>
     );

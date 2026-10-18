@@ -28,7 +28,7 @@ export interface SharedData {
     languages: { code: string; native_name: string; rtl: boolean }[];
     translations: Record<string, string>;
     auth: Auth;
-    counts: { messages: number; friend_requests: number } | null;
+    counts: { messages: number; friend_requests: number; notifications: number } | null;
     [key: string]: unknown;
 }
 
@@ -80,6 +80,42 @@ export interface Post extends Translatable {
     url: string;
     can_delete: boolean;
     editable_text: string | null;
+    photos: PhotoItem[];
+    video: VideoItem | null;
+    event: EventItem | null;
+}
+
+export interface PhotoItem {
+    id: number;
+    thumb: string;
+    url: string;
+    caption: string | null;
+    likes_count?: number;
+    liked?: boolean;
+    post_url?: string | null;
+    album_id?: number | null;
+}
+
+export interface VideoItem {
+    id: number;
+    title: string;
+    provider: 'youtube' | 'vimeo' | 'file';
+    embed_url: string | null;
+    file_url: string | null;
+    thumb: string | null;
+    created_at: string | null;
+    author?: Person | null;
+}
+
+export interface EventItem {
+    id: number;
+    title: string;
+    location: string | null;
+    starts_at: string | null;
+    ends_at: string | null;
+    cover: string | null;
+    going_count: number;
+    my_status: 'going' | 'interested' | null;
 }
 
 export interface Person {

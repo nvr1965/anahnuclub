@@ -4,10 +4,13 @@ namespace App\Providers;
 
 use Anthropic\Client;
 use App\Models\Comment;
+use App\Models\Event;
 use App\Models\Group;
 use App\Models\Message;
+use App\Models\Photo;
 use App\Models\Post;
 use App\Models\User;
+use App\Models\Video;
 use App\Translation\ClaudeTranslator;
 use App\Translation\DeepLTranslator;
 use App\Translation\NullTranslator;
@@ -43,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
             'group' => Group::class,
             'user' => User::class,
             'message' => Message::class,
+            'video' => Video::class,
+            'event' => Event::class,
+            'photo' => Photo::class,
         ]);
     }
 }

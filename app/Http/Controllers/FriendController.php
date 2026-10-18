@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Notifications\ClubActivity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,11 +41,18 @@ class FriendController extends Controller
         $me = $request->user();
         abort_if($me->is($user) || $user->blocked, 422);
 
-        match ($me->friendshipWith($user)) {
-            'none' => DB::table('friendships')->insert(['user_id' => $me->id, 'friend_id' => $user->id, 'accepted' => false, 'created_at' => now(), 'updated_at' => now()]),
-            'received' => DB::table('friendships')->where('user_id', $user->id)->where('friend_id', $me->id)->update(['accepted' => true, 'updated_at' => now()]),
-            default => null,
-        };
+        $url = route('people.show', $me);
+        switch ($me->friendshipWith($user)) {
+            case 'none':
+                DB::table('friendships')->insert(['user_id' => $me->id, 'friend_id' => $user->id, 'accepted' => false, 'created_at' => now(), 'updated_at' => now()]);
+                ClubActivity::send($user, 'friend_request', $me, route('friends.index'), 'user:'.$user->id);
+                break;
+            case 'received':
+                DB::table('friendships')->where('user_id', $user->id)->where('friend_id', $me->id)->update(['accepted' => true, 'updated_at' => now()]);
+                ClubActivity::retract($me, 'friend_request', $user, 'user:'.$me->id);
+                ClubActivity::send($user, 'friend_accepted', $me, $url, 'user:'.$user->id);
+                break;
+        }
 
         return back();
     }
@@ -57,6 +65,7 @@ class FriendController extends Controller
             ->where(fn ($q) => $q->where('user_id', $me->id)->where('friend_id', $user->id))
             ->orWhere(fn ($q) => $q->where('user_id', $user->id)->where('friend_id', $me->id))
             ->delete();
+        ClubActivity::retract($user, 'friend_request', $me, 'user:'.$user->id);
 
         return back();
     }

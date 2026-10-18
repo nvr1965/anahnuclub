@@ -20,7 +20,7 @@ class TranslationController extends Controller
     {
         $items = $request->validate([
             'items' => ['required', 'array', 'max:5'],
-            'items.*.type' => ['required', 'in:post,comment,group'],
+            'items.*.type' => ['required', 'in:post,comment,group,event,video'],
             'items.*.id' => ['required', 'integer'],
         ])['items'];
 
@@ -29,7 +29,12 @@ class TranslationController extends Controller
 
         foreach ($items as $item) {
             $model = Relation::getMorphedModel($item['type'])::find($item['id']);
-            if (! $model) {
+            $hidden = match ($item['type']) {
+                'event' => ! EventController::visible($request)->whereKey($item['id'])->exists(),
+                'video' => ! VideoController::visible($request)->whereKey($item['id'])->exists(),
+                default => false,
+            };
+            if (! $model || $hidden) {
                 continue;
             }
             $onDemand = config('services.translation.on_demand');

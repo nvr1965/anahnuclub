@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
 use App\Jobs\TranslateContent;
+use App\Models\Album;
 use App\Models\Group;
 use App\Models\Post;
 use App\Support\Html;
@@ -18,9 +19,13 @@ class PostController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'body' => ['required', 'string', 'max:20000'],
+            'body' => ['required_without:images', 'nullable', 'string', 'max:20000'],
             'group_id' => ['nullable', 'integer', 'exists:groups,id'],
+            'images' => ['nullable', 'array', 'max:'.AlbumController::MAX_PHOTOS],
+            'images.*' => ['image', 'max:15360'],
         ]);
+        $text = (string) ($data['body'] ?? '');
+        $images = $request->file('images', []);
 
         if ($data['group_id'] ?? null) {
             abort_unless(Group::find($data['group_id'])->members()->whereKey($request->user()->id)->exists(), 403);
@@ -29,10 +34,14 @@ class PostController extends Controller
         $post = Post::create([
             'user_id' => $request->user()->id,
             'group_id' => $data['group_id'] ?? null,
-            'type' => 'status',
-            'body' => Html::fromPlainText($data['body']),
-            'locale' => LanguageGuesser::guess($data['body']) ?? $request->user()->locale,
+            'type' => $text === '' && $images ? 'photo' : 'status',
+            'body' => Html::fromPlainText($text),
+            'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
         ]);
+
+        if ($images) {
+            AlbumController::savePhotos($images, Album::timelineOf($request->user()), $request->user(), $post);
+        }
 
         // Translated right after the response is sent, so readers get it within seconds.
         TranslateContent::dispatchAfterResponse($post);
@@ -68,8 +77,8 @@ class PostController extends Controller
     /** Authors can rewrite what they typed; the new text is translated again. */
     public function update(Request $request, Post $post): RedirectResponse
     {
-        abort_unless($post->user_id === $request->user()->id && $post->type === 'status', 403);
-        $body = $request->validate(['body' => ['required', 'string', 'max:20000']])['body'];
+        abort_unless($post->user_id === $request->user()->id && in_array($post->type, ['status', 'photo', 'video'], true) && $post->legacy_source === null, 403);
+        $body = (string) $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000']])['body'];
 
         $post->update(['body' => Html::fromPlainText($body), 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
         TranslateContent::dispatchAfterResponse($post);
@@ -80,6 +89,8 @@ class PostController extends Controller
     public function destroy(Request $request, Post $post): RedirectResponse
     {
         abort_unless($post->user_id === $request->user()->id || $request->user()->is_admin, 403);
+        // Pictures added with the post go with it; ones uploaded to an album stay there.
+        $post->photos()->whereHas('album', fn ($q) => $q->where('kind', 'timeline'))->get()->each(fn ($photo) => AlbumController::deletePhoto($photo));
         $post->delete();
 
         return back();

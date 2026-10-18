@@ -15,6 +15,9 @@ class TranslateContent implements ShouldQueue
 
     public int $tries = 3;
 
+    /** A post deleted before its translation ran needs none. */
+    public bool $deleteWhenMissingModels = true;
+
     /** @param  list<string>|null  $locales  only these languages; all enabled ones when null */
     public function __construct(public Model $model, public ?array $locales = null) {}
 

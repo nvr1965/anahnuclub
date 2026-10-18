@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { NotificationBell } from '@/components/notification-bell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
@@ -91,6 +92,12 @@ export function ClubHeader() {
                     <LanguageSwitcher
                         className={`rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800 [&>svg]:hidden sm:[&>svg]:block ${auth.user ? 'max-sm:hidden' : ''}`}
                     />
+                    {auth.user && (
+                        <NotificationBell
+                            className="relative flex size-10 items-center justify-center rounded-full bg-slate-100 outline-none dark:bg-neutral-800"
+                            badge={<Badge count={counts?.notifications ?? 0} className="-end-1 -top-1" />}
+                        />
+                    )}
                     {auth.user && (
                         <Link
                             href={route('messages.index')}

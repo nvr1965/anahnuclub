@@ -14,7 +14,7 @@ class Post extends Model
 
     protected array $translatable = ['title', 'body'];
 
-    protected $fillable = ['user_id', 'group_id', 'type', 'title', 'body', 'locale', 'legacy_source', 'legacy_id', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'locale', 'legacy_source', 'legacy_id', 'created_at', 'updated_at'];
 
     public function user(): BelongsTo
     {
@@ -29,6 +29,21 @@ class Post extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class)->oldest();
+    }
+
+    public function video(): BelongsTo
+    {
+        return $this->belongsTo(Video::class);
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(Photo::class)->orderBy('id');
     }
 
     public function likes(): MorphMany

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Jobs\TranslateContent;
 use App\Models\Post;
+use App\Models\User;
+use App\Notifications\ClubActivity;
 use App\Support\Html;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +24,17 @@ class CommentController extends Controller
         ]);
 
         TranslateContent::dispatchAfterResponse($comment);
+
+        // The author hears about every comment; others who commented hear that the talk goes on.
+        $me = $request->user();
+        $url = route('posts.show', $post);
+        $subject = 'post:'.$post->id;
+        ClubActivity::send($post->user, 'post_commented', $me, $url, $subject, $data['body']);
+        User::query()
+            ->whereIn('id', $post->comments()->whereNotNull('user_id')->select('user_id'))
+            ->whereKeyNot([$me->id, $post->user_id ?? 0])
+            ->get()
+            ->each(fn (User $other) => ClubActivity::send($other, 'comment_also', $me, $url, $subject, $data['body']));
 
         return back();
     }

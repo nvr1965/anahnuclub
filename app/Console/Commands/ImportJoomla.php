@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Post;
+use App\Models\Video;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,11 @@ class ImportJoomla extends Command
             DB::transaction(function () use ($only) {
                 in_array('profiles', $only, true) && $this->importProfileFields();
                 in_array('friends', $only, true) && $this->importFriends();
+                if (in_array('media', $only, true)) {
+                    $this->importPhotos();
+                    $this->importVideos();
+                    $this->importEvents();
+                }
             });
             $this->info('Done.');
 
@@ -63,6 +69,7 @@ class ImportJoomla extends Command
             $this->importComments();
             $this->importLikes();
             $this->importPhotos();
+            $this->importVideos();
             $this->importEvents();
             $this->resetSequences();
         });
@@ -327,6 +334,11 @@ class ImportJoomla extends Command
                 'group_id' => $row->groupid ?: null,
                 'name' => $row->name ?: 'Album',
                 'description' => $row->description ?: null,
+                'kind' => match (strtolower((string) $row->type)) {
+                    'profile.avatar', 'group.avatar' => 'avatar',
+                    'profile.cover', 'group.cover', 'event.cover' => 'cover',
+                    default => null,
+                },
                 'created_at' => $this->date($row->created) ?? now(),
                 'updated_at' => now(),
             ]);
@@ -363,7 +375,44 @@ class ImportJoomla extends Command
                 'updated_at' => now(),
             ]);
         }
-        $this->line('Events: '.count($rows));
+
+        // JomSocial answers: 1 attending, 3 maybe.
+        $answers = $this->old->table('community_events_members')->whereIn('status', [1, 3])->get();
+        foreach ($answers as $row) {
+            if ($this->user($row->memberid) && $rows->contains('id', $row->eventid)) {
+                DB::table('event_user')->updateOrInsert(
+                    ['event_id' => $row->eventid, 'user_id' => $row->memberid],
+                    ['status' => (int) $row->status === 1 ? 'going' : 'interested', 'created_at' => $this->date($row->created) ?? now(), 'updated_at' => now()],
+                );
+            }
+        }
+        $this->line('Events: '.count($rows).', answers: '.count($answers));
+    }
+
+    private function importVideos(): void
+    {
+        $rows = $this->old->table('community_videos')->where('published', 1)->orderBy('id')->get();
+        $count = 0;
+        foreach ($rows as $row) {
+            $parsed = Video::parseUrl((string) $row->path) ?? (in_array($row->type, ['youtube', 'vimeo'], true) && $row->video_id ? [$row->type, $row->video_id] : null);
+            if (! $parsed) {
+                continue;
+            }
+            $groupId = $row->groupid && DB::table('groups')->where('id', $row->groupid)->exists() ? $row->groupid : null;
+            Video::updateOrCreate(['legacy_source' => 'jomsocial_video', 'legacy_id' => $row->id], [
+                'user_id' => $this->user($row->creator),
+                'group_id' => $groupId,
+                'title' => Str::limit($row->title ?: 'Video', 195),
+                'description' => $row->description ?: null,
+                'provider' => $parsed[0],
+                'provider_id' => $parsed[1],
+                'url' => $row->path,
+                'created_at' => $this->date($row->created) ?? now(),
+                'updated_at' => now(),
+            ]);
+            $count++;
+        }
+        $this->line('Videos: '.$count);
     }
 
     private function post(string $source, int $legacyId, array $attributes): int

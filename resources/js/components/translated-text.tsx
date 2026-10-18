@@ -10,10 +10,12 @@ interface Props {
     /** Long texts start folded, with "Read more". */
     clamp?: boolean;
     titleClassName?: string;
+    /** The translated field shown as the body: "body" for posts, "description" for events and videos. */
+    bodyField?: string;
 }
 
 /** Shows content in the reader's language, with a switch back to the original. */
-export function TranslatedText({ item, fetched, original, clamp = false, titleClassName = 'font-semibold' }: Props) {
+export function TranslatedText({ item, fetched, original, clamp = false, titleClassName = 'font-semibold', bodyField = 'body' }: Props) {
     const t = useT();
     const [showOriginal, setShowOriginal] = useState(false);
     const [expanded, setExpanded] = useState(false);
@@ -22,7 +24,7 @@ export function TranslatedText({ item, fetched, original, clamp = false, titleCl
     const waiting = item.translation?.pending && !fetched;
 
     const title = !showOriginal && fields.title ? fields.title : original.title;
-    const body = !showOriginal && fields.body ? fields.body : original.body;
+    const body = !showOriginal && fields[bodyField] ? fields[bodyField] : original.body;
     const long = clamp && body.length > 600;
     const bodyRef = useRef<HTMLDivElement>(null);
 
