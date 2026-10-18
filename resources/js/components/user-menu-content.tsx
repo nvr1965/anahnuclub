@@ -3,7 +3,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, Shield } from 'lucide-react';
 import { useT } from '@/lib/i18n';
 
 interface UserMenuContentProps {
@@ -29,6 +29,14 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                         {t("Settings")}
                     </Link>
                 </DropdownMenuItem>
+                {Boolean(user.is_admin) && (
+                    <DropdownMenuItem asChild>
+                        <Link className="block w-full" href={route('admin.index')} as="button" onClick={cleanup}>
+                            <Shield className="me-2" />
+                            {t('Administration')}
+                        </Link>
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

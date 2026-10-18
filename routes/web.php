@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\GroupController;
@@ -26,6 +27,20 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::post('posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', Admin\DashboardController::class)->name('index');
+    Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
+    Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+    Route::post('users/{user}/purge', [Admin\UserController::class, 'purge'])->name('users.purge');
+    Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
+    Route::delete('posts', [Admin\PostController::class, 'destroy'])->name('posts.destroy');
+    Route::get('groups', [Admin\GroupController::class, 'index'])->name('groups.index');
+    Route::patch('groups/{group:id}', [Admin\GroupController::class, 'update'])->name('groups.update');
+    Route::delete('groups/{group:id}', [Admin\GroupController::class, 'destroy'])->name('groups.destroy');
+    Route::get('languages', [Admin\LanguageController::class, 'index'])->name('languages.index');
+    Route::patch('languages/{language}', [Admin\LanguageController::class, 'update'])->name('languages.update');
 });
 
 require __DIR__.'/settings.php';

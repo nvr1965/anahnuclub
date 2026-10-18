@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
 use App\Models\Group;
+use App\Support\Html;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,6 +33,7 @@ class GroupController extends Controller
     public function show(Request $request, Group $group): Response
     {
         $member = $request->user() && $group->members()->whereKey($request->user()->id)->exists();
+        abort_if(! $group->published && ! $request->user()?->is_admin, 404);
         abort_if($group->is_private && ! $member && ! $request->user()?->is_admin, 403);
 
         $posts = FeedController::postQuery($request)->where('group_id', $group->id)->paginate(20);
@@ -41,7 +43,7 @@ class GroupController extends Controller
                 'id' => $group->id,
                 'name' => $group->name,
                 'slug' => $group->slug,
-                'description' => \App\Support\Html::clean($group->description),
+                'description' => Html::clean($group->description),
                 'cover' => $group->cover_path ? asset('storage/'.$group->cover_path) : null,
                 'members_count' => $group->members()->count(),
                 'is_member' => $member,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +25,7 @@ class FeedController extends Controller
     }
 
     /** Guests see the club's front page: who is here and the latest public posts. */
-    public function welcome(Request $request): Response|\Illuminate\Http\RedirectResponse
+    public function welcome(Request $request): Response|RedirectResponse
     {
         if ($request->user()) {
             return to_route('dashboard');
@@ -54,6 +55,8 @@ class FeedController extends Controller
                 'contentTranslations' => fn ($q) => $q->where('locale', $locale),
                 'comments.contentTranslations' => fn ($q) => $q->where('locale', $locale),
             ])
+            // Posts of groups an administrator hid stay out of every feed.
+            ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)))
             ->withCount('likes')
             ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $request->user()?->id)])
             ->latest();

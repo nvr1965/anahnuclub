@@ -3,7 +3,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { House, Settings, Users } from 'lucide-react';
+import { House, Settings, Shield, Users } from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
@@ -41,6 +41,14 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                 </span>
                 {t('Settings')}
             </Link>
+            {Boolean(auth.user?.is_admin) && (
+                <Link href={route('admin.index')} className={row}>
+                    <span className="bg-ink flex size-9 items-center justify-center rounded-full text-white">
+                        <Shield className="size-5" />
+                    </span>
+                    {t('Administration')}
+                </Link>
+            )}
 
             {groups && groups.length > 0 && (
                 <>
