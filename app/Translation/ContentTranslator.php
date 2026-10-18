@@ -2,7 +2,6 @@
 
 namespace App\Translation;
 
-use App\Models\ContentTranslation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -12,6 +11,9 @@ use Throwable;
  */
 class ContentTranslator
 {
+    /** Characters sent to the provider by this instance, to keep within a provider's quota. */
+    public int $charsSent = 0;
+
     public function __construct(private Translator $translator) {}
 
     public function enabled(): bool
@@ -26,9 +28,15 @@ class ContentTranslator
 
     public function needsTranslation(Model $model, string $field, string $locale): bool
     {
+        return $this->enabled() && $this->isForeign($model, $field, $locale);
+    }
+
+    /** Whether the field has text written in a language other than $locale. */
+    public function isForeign(Model $model, string $field, string $locale): bool
+    {
         $text = (string) $model->getAttribute($field);
 
-        return $this->enabled() && trim(strip_tags($text)) !== '' && $this->sourceLocale($model, $field) !== $locale;
+        return trim(strip_tags($text)) !== '' && $this->sourceLocale($model, $field) !== $locale;
     }
 
     public function translate(Model $model, string $field, string $locale): ?string
@@ -42,6 +50,7 @@ class ContentTranslator
         }
 
         $text = (string) $model->getAttribute($field);
+        $this->charsSent += mb_strlen($text);
 
         try {
             $translated = $this->translator->translate($text, $locale, $this->sourceLocale($model, $field));

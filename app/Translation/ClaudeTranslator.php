@@ -27,6 +27,10 @@ class ClaudeTranslator implements Translator
         if ($message->stopReason === 'refusal') {
             throw new RuntimeException('Translation refused');
         }
+        if ($message->stopReason === 'max_tokens') {
+            // Never store a translation cut off halfway; the post stays in its original language.
+            throw new RuntimeException('Translation too long');
+        }
 
         foreach ($message->content as $block) {
             if ($block->type === 'text') {

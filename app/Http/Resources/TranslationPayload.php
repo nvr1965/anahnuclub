@@ -30,6 +30,9 @@ class TranslationPayload
             }
         }
 
+        // Without on-demand translation the page shows the original until the background job gets to it.
+        $pending = $pending && config('services.translation.on_demand');
+
         if (! $pending && $fields === []) {
             return null;
         }

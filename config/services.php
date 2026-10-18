@@ -38,6 +38,11 @@ return [
     'translation' => [
         // null | claude | deepl
         'driver' => env('TRANSLATION_DRIVER', 'null'),
+        // Translate while the reader waits (slow); off = only show translations prepared in the background.
+        'on_demand' => (bool) env('TRANSLATION_ON_DEMAND', false),
+        // Characters the nightly translations:fill may send to the provider; 0 = no limit.
+        // DeepL API Free allows 500,000 a month, so about 15000 a day keeps within it.
+        'daily_chars' => (int) env('TRANSLATION_DAILY_CHARS', 0),
     ],
 
     'anthropic' => [

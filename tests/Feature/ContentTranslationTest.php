@@ -19,6 +19,7 @@ class ContentTranslationTest extends TestCase
         parent::setUp();
         $this->fake = new FakeTranslator;
         $this->app->instance(Translator::class, $this->fake);
+        config(['services.translation.on_demand' => true]);
     }
 
     public function test_posts_are_translated_into_the_readers_language_and_cached()
@@ -61,22 +62,5 @@ class ContentTranslationTest extends TestCase
         $post->update(['body' => 'Вторая версия']);
         $this->postJson('/translations', ['items' => [['type' => 'post', 'id' => $post->id]]])
             ->assertJsonPath('results.0.fields.body', '[he] Вторая версия');
-    }
-}
-
-class FakeTranslator implements Translator
-{
-    public int $calls = 0;
-
-    public function translate(string $text, string $targetLocale, ?string $sourceLocale = null): string
-    {
-        $this->calls++;
-
-        return "[$targetLocale] $text";
-    }
-
-    public function name(): string
-    {
-        return 'fake';
     }
 }
