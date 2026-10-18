@@ -2,14 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Album;
 use App\Models\Comment;
-use App\Models\Event;
-use App\Models\Group;
 use App\Models\Like;
-use App\Models\Photo;
 use App\Models\Post;
-use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +18,8 @@ use Illuminate\Support\Str;
 class ImportJoomla extends Command
 {
     protected $signature = 'import:joomla
-        {--files= : Path to the old public_html folder, to copy avatars, covers and photos}';
+        {--files= : Path to the old public_html folder, to copy avatars, covers and photos}
+        {--only=* : Import just these parts, e.g. --only=friends --only=profiles}';
 
     protected $description = 'Import users, groups, posts, comments and photos from the old Joomla/JomSocial database';
 
@@ -45,8 +41,21 @@ class ImportJoomla extends Command
     {
         $this->old = DB::connection('joomla');
 
+        if ($only = $this->option('only')) {
+            $this->userIds = DB::table('users')->pluck('id')->flip()->map(fn () => true)->all();
+            DB::transaction(function () use ($only) {
+                in_array('profiles', $only, true) && $this->importProfileFields();
+                in_array('friends', $only, true) && $this->importFriends();
+            });
+            $this->info('Done.');
+
+            return self::SUCCESS;
+        }
+
         DB::transaction(function () {
             $this->importUsers();
+            $this->importProfileFields();
+            $this->importFriends();
             $this->importGroups();
             $this->importDiscussions();
             $this->importBulletins();
@@ -73,8 +82,11 @@ class ImportJoomla extends Command
         $admins = $this->old->table('user_usergroup_map')->where('group_id', 8)->pluck('user_id')->flip();
 
         $rows = $this->old->table('users')->orderBy('id')->get();
+        $existing = DB::table('users')->get(['id', 'avatar_path', 'cover_path'])->keyBy('id');
         foreach ($rows as $row) {
             $profile = $profiles->get($row->id);
+            // Pictures a member has since uploaded here are kept on a re-run.
+            $mine = fn (string $column) => ($value = $existing->get($row->id)?->{$column}) && ! str_starts_with($value, 'joomla/') ? $value : null;
             $params = json_decode($row->params ?: '{}', true) ?: [];
             $locale = isset($params['language']) ? substr($params['language'], 0, 2) : 'ru';
 
@@ -85,8 +97,8 @@ class ImportJoomla extends Command
                 // Joomla stores bcrypt ($2y$) hashes, which Laravel checks natively.
                 'password' => $row->password,
                 'locale' => in_array($locale, ['ru', 'en', 'he', 'ar'], true) ? $locale : 'ru',
-                'avatar_path' => $this->filePath($profile?->avatar),
-                'cover_path' => $this->filePath($profile?->cover),
+                'avatar_path' => $mine('avatar_path') ?? $this->filePath($profile?->avatar),
+                'cover_path' => $mine('cover_path') ?? $this->filePath($profile?->cover),
                 'status' => $profile?->status ?: null,
                 'blocked' => (bool) $row->block,
                 'is_admin' => $admins->has($row->id),
@@ -99,6 +111,78 @@ class ImportJoomla extends Command
         }
 
         $this->line('Users: '.count($rows));
+    }
+
+    /** JomSocial's profile fields; only fills what a member has not written here yet. */
+    private function importProfileFields(): void
+    {
+        $codes = $this->old->table('community_fields')->pluck('fieldcode', 'id');
+        $values = $this->old->table('community_fields_values')->where('value', '!=', '')->get()->groupBy('user_id');
+        $count = 0;
+
+        foreach ($values as $userId => $fields) {
+            if (! $this->user($userId)) {
+                continue;
+            }
+            $byCode = $fields->mapWithKeys(fn ($f) => [$codes[$f->field_id] ?? '' => trim($f->value)]);
+            $location = $byCode->get('FIELD_LOCATION');
+            if ($location && str_starts_with($location, '{')) {
+                $location = json_decode($location, true)['name'] ?? null;
+            }
+            // The dump lost the backslashes of JSON escapes: "u041au0438" was "\u041a\u0438".
+            $location = $location ? trim(preg_replace_callback('/u([0-9a-f]{4})/i', fn ($m) => mb_chr(hexdec($m[1])), $location)) : null;
+            $gender = match (strtoupper((string) $byCode->get('FIELD_GENDER'))) {
+                'COM_COMMUNITY_MALE', 'MALE' => 'male',
+                'COM_COMMUNITY_FEMALE', 'FEMALE' => 'female',
+                default => null,
+            };
+            $birthdate = $byCode->get('FIELD_BIRTHDATE');
+            $birthdate = $birthdate && strtotime($birthdate) && strtotime($birthdate) < time() ? date('Y-m-d', strtotime($birthdate)) : null;
+            $website = $byCode->get('FIELD_WEBSITE');
+
+            $current = DB::table('users')->where('id', $userId)->first(['about', 'location', 'website', 'birthdate', 'gender']);
+            $update = array_filter([
+                'about' => $current->about ? null : $byCode->get('FIELD_ABOUTME'),
+                'location' => $current->location ? null : ($location ? Str::limit($location, 250) : null),
+                'website' => $current->website ? null : ($website && filter_var($website, FILTER_VALIDATE_URL) ? $website : null),
+                'birthdate' => $current->birthdate ? null : $birthdate,
+                'gender' => $current->gender ? null : $gender,
+            ]);
+            if ($update) {
+                DB::table('users')->where('id', $userId)->update($update);
+                $count++;
+            }
+        }
+
+        $this->line('Profiles with details: '.$count);
+    }
+
+    /** JomSocial keeps two rows per friendship; here it is one row per pair. */
+    private function importFriends(): void
+    {
+        $rows = $this->old->table('community_connection')->orderBy('connection_id')->get();
+        $pairs = [];
+        foreach ($rows as $row) {
+            [$from, $to] = [$this->user($row->connect_from), $this->user($row->connect_to)];
+            if (! $from || ! $to || $from === $to) {
+                continue;
+            }
+            $key = min($from, $to).'-'.max($from, $to);
+            $pairs[$key] ??= ['user_id' => $from, 'friend_id' => $to, 'accepted' => false, 'created_at' => $this->date($row->created) ?? now(), 'updated_at' => now()];
+            $pairs[$key]['accepted'] = $pairs[$key]['accepted'] || (int) $row->status === 1;
+        }
+
+        foreach ($pairs as $pair) {
+            $exists = DB::table('friendships')
+                ->where(fn ($q) => $q->where('user_id', $pair['user_id'])->where('friend_id', $pair['friend_id']))
+                ->orWhere(fn ($q) => $q->where('user_id', $pair['friend_id'])->where('friend_id', $pair['user_id']))
+                ->exists();
+            if (! $exists) {
+                DB::table('friendships')->insert($pair);
+            }
+        }
+
+        $this->line('Friendships: '.count($pairs));
     }
 
     private function importGroups(): void

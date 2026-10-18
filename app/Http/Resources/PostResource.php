@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Post;
 use App\Support\Html;
 use App\Translation\ContentTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Post */
+/** @mixin Post */
 class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -27,6 +28,12 @@ class PostResource extends JsonResource
             'liked' => (bool) ($this->liked ?? false),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
             'translation' => TranslationPayload::for($this->resource, $locale, $translator),
+            'url' => route('posts.show', $this->id),
+            'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin),
+            // The text as the author typed it, for editing (only posts written here, not imported HTML).
+            'editable_text' => $request->user()?->id === $this->user_id && $this->type === 'status' && $this->legacy_source === null
+                ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)
+                : null,
         ];
     }
 }

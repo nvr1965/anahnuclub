@@ -1,0 +1,82 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Group;
+use App\Models\Post;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+class ProfileAndFriendsTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_a_profile_shows_the_member_and_their_posts_but_not_private_group_posts()
+    {
+        $member = User::factory()->create(['about' => 'Люблю Хайфу', 'location' => 'Haifa']);
+        $private = Group::create(['name' => 'Secret', 'slug' => 'secret', 'is_private' => true]);
+        Post::create(['user_id' => $member->id, 'body' => 'Public post']);
+        Post::create(['user_id' => $member->id, 'group_id' => $private->id, 'body' => 'Private post']);
+
+        $this->actingAs(User::factory()->create())->get("/people/{$member->id}")->assertOk()->assertInertia(fn ($page) => $page
+            ->component('people/show')
+            ->where('profile.about', 'Люблю Хайфу')
+            ->where('profile.friendship', 'none')
+            ->has('posts.data', 1)
+            ->where('posts.data.0.body', 'Public post')
+        );
+    }
+
+    public function test_members_edit_their_details_and_upload_pictures()
+    {
+        Storage::fake('public');
+        $member = User::factory()->create();
+
+        $this->actingAs($member)->patch('/profile/about', ['name' => 'Ника', 'about' => 'Привет', 'location' => 'Тель-Авив', 'website' => 'https://example.com', 'birthdate' => '1990-05-01', 'gender' => 'female'])->assertRedirect();
+        $this->assertSame('Тель-Авив', $member->fresh()->location);
+        $this->assertSame('1990-05-01', $member->fresh()->birthdate->format('Y-m-d'));
+
+        $this->post('/profile/avatar', ['image' => UploadedFile::fake()->image('me.jpg', 1200, 900)])->assertRedirect();
+        $path = $member->fresh()->avatar_path;
+        Storage::disk('public')->assertExists($path);
+        $this->assertSame([400, 400], array_slice(getimagesizefromstring(Storage::disk('public')->get($path)), 0, 2));
+
+        $this->post('/profile/cover', ['image' => UploadedFile::fake()->image('cover.png', 2000, 600)])->assertRedirect();
+        $this->assertNotNull($member->fresh()->cover_path);
+
+        $this->post('/profile/avatar', ['remove' => true])->assertRedirect();
+        $this->assertNull($member->fresh()->avatar_path);
+        Storage::disk('public')->assertMissing($path);
+
+        $this->post('/profile/avatar', ['image' => UploadedFile::fake()->create('virus.exe', 10)])->assertSessionHasErrors('image');
+    }
+
+    public function test_friend_requests_can_be_sent_accepted_and_ended()
+    {
+        [$anna, $boris] = User::factory()->count(2)->create();
+
+        $this->actingAs($anna)->post("/people/{$boris->id}/friend")->assertRedirect();
+        $this->assertSame('sent', $anna->friendshipWith($boris));
+        $this->assertSame('received', $boris->friendshipWith($anna));
+
+        $this->actingAs($boris)->get('/feed')->assertInertia(fn ($page) => $page->where('counts.friend_requests', 1));
+        $this->get('/friends')->assertInertia(fn ($page) => $page->where('requests.0.id', $anna->id));
+
+        $this->post("/people/{$anna->id}/friend")->assertRedirect();
+        $this->assertSame('friends', $anna->friendshipWith($boris));
+        $this->assertEquals([$boris->id], $anna->friendIds()->all());
+        $this->assertEquals([$anna->id], $boris->friendIds()->all());
+
+        $this->actingAs($anna)->delete("/people/{$boris->id}/friend")->assertRedirect();
+        $this->assertSame('none', $boris->friendshipWith($anna));
+    }
+
+    public function test_nobody_can_befriend_themselves()
+    {
+        $anna = User::factory()->create();
+        $this->actingAs($anna)->post("/people/{$anna->id}/friend")->assertStatus(422);
+    }
+}

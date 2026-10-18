@@ -3,7 +3,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { House, Settings, Shield, Users } from 'lucide-react';
+import { House, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
@@ -15,7 +15,7 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
     return (
         <nav className="space-y-1">
             {auth.user && (
-                <Link href={route('profile.edit')} className={row}>
+                <Link href={route('people.show', auth.user.id)} className={row}>
                     <Avatar className="size-9">
                         <AvatarImage src={auth.user.avatar} alt="" className="object-cover" />
                         <AvatarFallback className="bg-brand-soft text-brand text-sm">{getInitials(auth.user.name)}</AvatarFallback>
@@ -28,6 +28,18 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                     <House className="size-5" />
                 </span>
                 {t('Feed')}
+            </Link>
+            <Link href={route('friends.index')} className={row}>
+                <span className="flex size-9 items-center justify-center rounded-full bg-sky-500 text-white">
+                    <UserRound className="size-5" />
+                </span>
+                {t('Friends')}
+            </Link>
+            <Link href={route('messages.index')} className={row}>
+                <span className="flex size-9 items-center justify-center rounded-full bg-violet-500 text-white">
+                    <MessageCircle className="size-5" />
+                </span>
+                {t('Messages')}
             </Link>
             <Link href={route('groups.index')} className={row}>
                 <span className="bg-header-from flex size-9 items-center justify-center rounded-full text-white">

@@ -49,6 +49,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Badges in the top bar; the page asks for just these again now and then.
+            'counts' => fn () => $request->user() ? [
+                'messages' => $request->user()->unreadMessagesCount(),
+                'friend_requests' => $request->user()->friendRequesters()->where('blocked', false)->count(),
+            ] : null,
         ]);
     }
 

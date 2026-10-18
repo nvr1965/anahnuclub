@@ -32,9 +32,13 @@ if ! command -v composer >/dev/null; then
     curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer >/dev/null
 fi
 
+# Members upload profile pictures and covers straight from their phones.
+printf 'upload_max_filesize = 12M\npost_max_size = 14M\n' > "/etc/php/$PHP_VERSION/fpm/conf.d/99-anahnuclub.ini"
+
 start postgresql
 start mariadb
 start "php$PHP_VERSION-fpm"
+reload "php$PHP_VERSION-fpm"
 start cron
 
 echo "==> PostgreSQL database"

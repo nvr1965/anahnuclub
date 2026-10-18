@@ -6,6 +6,21 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        @isset($meta)
+            {{-- Read by Facebook, Telegram, WhatsApp and others when a link to this page is shared. --}}
+            <meta property="og:site_name" content="anahnu.club">
+            <meta property="og:type" content="article">
+            <meta property="og:url" content="{{ $meta['url'] }}">
+            <meta property="og:title" content="{{ $meta['title'] }}">
+            <meta property="og:description" content="{{ $meta['description'] }}">
+            <meta name="description" content="{{ $meta['description'] }}">
+            @if ($meta['image'])
+                <meta property="og:image" content="{{ $meta['image'] }}">
+                <meta name="twitter:card" content="summary_large_image">
+            @else
+                <meta name="twitter:card" content="summary">
+            @endif
+        @endisset
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=rubik:400,500,600,700|noto-sans-arabic:400,500,600,700" rel="stylesheet" />

@@ -3,9 +3,12 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TranslationController;
@@ -15,6 +18,9 @@ Route::get('/', [FeedController::class, 'welcome'])->name('home');
 
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
+
+// Open to anyone with the link, so posts can be shared outside the club.
+Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
@@ -26,6 +32,22 @@ Route::middleware(['auth'])->group(function () {
     Route::post('posts', [PostController::class, 'store'])->name('posts.store');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+
+    Route::get('people/{user}', [PeopleController::class, 'show'])->name('people.show');
+    Route::patch('profile/about', [PeopleController::class, 'update'])->name('people.update');
+    Route::post('profile/avatar', [PeopleController::class, 'avatar'])->name('people.avatar');
+    Route::post('profile/cover', [PeopleController::class, 'cover'])->name('people.cover');
+
+    Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
+    Route::post('people/{user}/friend', [FriendController::class, 'store'])->name('friends.store');
+    Route::delete('people/{user}/friend', [FriendController::class, 'destroy'])->name('friends.destroy');
+
+    Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
+    Route::post('people/{user}/message', [MessageController::class, 'start'])->name('messages.start');
+
     Route::post('posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
 });
 

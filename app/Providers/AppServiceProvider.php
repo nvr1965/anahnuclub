@@ -5,6 +5,7 @@ namespace App\Providers;
 use Anthropic\Client;
 use App\Models\Comment;
 use App\Models\Group;
+use App\Models\Message;
 use App\Models\Post;
 use App\Models\User;
 use App\Translation\ClaudeTranslator;
@@ -41,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
             'comment' => Comment::class,
             'group' => Group::class,
             'user' => User::class,
+            'message' => Message::class,
         ]);
     }
 }

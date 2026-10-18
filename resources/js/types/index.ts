@@ -28,6 +28,7 @@ export interface SharedData {
     languages: { code: string; native_name: string; rtl: boolean }[];
     translations: Record<string, string>;
     auth: Auth;
+    counts: { messages: number; friend_requests: number } | null;
     [key: string]: unknown;
 }
 
@@ -76,6 +77,15 @@ export interface Post extends Translatable {
     likes_count: number;
     liked: boolean;
     comments: Comment[];
+    url: string;
+    can_delete: boolean;
+    editable_text: string | null;
+}
+
+export interface Person {
+    id: number;
+    name: string;
+    avatar: string | null;
 }
 
 export interface Paginated<T> {

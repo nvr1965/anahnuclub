@@ -1,10 +1,11 @@
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { useT } from '@/lib/i18n';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LogOut, Settings, Shield } from 'lucide-react';
-import { useT } from '@/lib/i18n';
+import { LogOut, Settings, Shield, UserRound } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -22,11 +23,21 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {/* On phones the language choice lives here, the top bar has no room for it. */}
+            <div className="px-2 py-1.5 sm:hidden" onKeyDown={(e) => e.stopPropagation()}>
+                <LanguageSwitcher className="w-full rounded-md bg-slate-100 px-3 py-2 dark:bg-neutral-800" />
+            </div>
             <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                    <Link className="block w-full" href={route('people.show', user.id)} as="button" onClick={cleanup}>
+                        <UserRound className="me-2" />
+                        {t('My profile')}
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
                         <Settings className="me-2" />
-                        {t("Settings")}
+                        {t('Settings')}
                     </Link>
                 </DropdownMenuItem>
                 {Boolean(user.is_admin) && (
@@ -42,7 +53,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuItem asChild>
                 <Link className="block w-full" method="post" href={route('logout')} as="button" onClick={cleanup}>
                     <LogOut className="me-2" />
-                    {t("Log out")}
+                    {t('Log out')}
                 </Link>
             </DropdownMenuItem>
         </>

@@ -50,7 +50,7 @@ export default function SearchPage({ q, results, sidebar }: { q: string; results
                         <h2 className="mb-3 font-semibold">{t('People')}</h2>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {results.people.map((person) => (
-                                <div key={person.id} className="flex items-center gap-2 rounded-lg p-1.5">
+                                <Link key={person.id} href={route('people.show', person.id)} className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 dark:hover:bg-neutral-800">
                                     <Avatar className="size-10">
                                         <AvatarImage src={person.avatar ?? undefined} alt="" className="object-cover" />
                                         <AvatarFallback className="bg-brand-soft text-brand">{getInitials(person.name)}</AvatarFallback>
@@ -58,7 +58,7 @@ export default function SearchPage({ q, results, sidebar }: { q: string; results
                                     <span dir="auto" className="truncate text-[15px] font-medium">
                                         {person.name}
                                     </span>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </section>

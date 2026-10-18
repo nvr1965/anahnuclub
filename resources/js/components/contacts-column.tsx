@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
+import { Link } from '@inertiajs/react';
 
 /** Right column like Facebook's contacts: recently active members, then photos. */
 export function ContactsColumn({ sidebar }: { sidebar: Sidebar }) {
@@ -35,7 +36,7 @@ export function ContactsColumn({ sidebar }: { sidebar: Sidebar }) {
                     <span className="font-normal">{sidebar.members_count}</span>
                 </h3>
                 {sidebar.members.map((member) => (
-                    <div key={member.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[15px] hover:bg-black/5 dark:hover:bg-white/10">
+                    <Link key={member.id} href={route('people.show', member.id)} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[15px] hover:bg-black/5 dark:hover:bg-white/10">
                         <Avatar className="size-9">
                             <AvatarImage src={member.avatar ?? undefined} alt="" className="object-cover" />
                             <AvatarFallback className="bg-brand-soft text-brand text-sm">{getInitials(member.name)}</AvatarFallback>
@@ -43,7 +44,7 @@ export function ContactsColumn({ sidebar }: { sidebar: Sidebar }) {
                         <span dir="auto" className="truncate">
                             {member.name}
                         </span>
-                    </div>
+                    </Link>
                 ))}
             </section>
         </div>
