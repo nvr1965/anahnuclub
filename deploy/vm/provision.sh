@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Sets up a test server for AnahnuClub on a fresh Ubuntu 24.04 machine:
-# nginx + PHP 8.3 + PostgreSQL (the app) + MariaDB (only to read the old Joomla dump) + Node 22.
+# Sets up a test server for AnahnuClub on a fresh Ubuntu 24.04 or 26.04 machine:
+# nginx + PHP (the release's default, 8.2+) + PostgreSQL (the app) + MariaDB (only to read the old Joomla dump) + Node 22.
 #
 #   sudo bash deploy/vm/provision.sh                       # app from this checkout
 #   sudo JOOMLA_SQL=/home/ubuntu/old.sql JOOMLA_FILES=/home/ubuntu/public_html bash deploy/vm/provision.sh
@@ -20,8 +20,9 @@ reload() { if command -v systemctl >/dev/null && [ -d /run/systemd/system ]; the
 echo "==> Packages"
 apt-get update -qq
 apt-get install -y -qq ca-certificates curl git unzip nginx postgresql mariadb-server cron \
-    php8.3-fpm php8.3-cli php8.3-pgsql php8.3-mysql php8.3-mbstring php8.3-xml php8.3-curl \
-    php8.3-zip php8.3-intl php8.3-gd php8.3-bcmath >/dev/null
+    php-fpm php-cli php-pgsql php-mysql php-mbstring php-xml php-curl \
+    php-zip php-intl php-gd php-bcmath >/dev/null
+PHP_VERSION="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
 
 if ! command -v node >/dev/null || [ "$(node -v | cut -c2-3)" -lt 20 ]; then
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
@@ -33,7 +34,7 @@ fi
 
 start postgresql
 start mariadb
-start php8.3-fpm
+start "php$PHP_VERSION-fpm"
 start cron
 
 echo "==> PostgreSQL database"
@@ -88,7 +89,7 @@ server {
 
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/run/php/php$PHP_VERSION-fpm.sock;
     }
 
     location ~ /\.(?!well-known) {
