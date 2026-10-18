@@ -165,5 +165,7 @@
 
     body {
         @apply bg-background text-foreground;
+        /* Members paste long links into posts and profiles; they wrap instead of running off the card. */
+        overflow-wrap: anywhere;
     }
 }
