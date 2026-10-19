@@ -107,6 +107,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('languages', [Admin\LanguageController::class, 'index'])->name('languages.index');
     Route::post('languages', [Admin\LanguageController::class, 'store'])->name('languages.store');
     Route::patch('languages/{language}', [Admin\LanguageController::class, 'update'])->name('languages.update');
+    Route::get('languages/{language}/texts', [Admin\LanguageController::class, 'texts'])->name('languages.texts');
+    Route::put('languages/{language}/texts', [Admin\LanguageController::class, 'correct'])->name('languages.correct');
+    Route::post('languages/{language}/retranslate', [Admin\LanguageController::class, 'retranslate'])->name('languages.retranslate');
     Route::post('languages/{language}/refill', [Admin\LanguageController::class, 'refill'])->name('languages.refill');
     Route::delete('languages/{language}', [Admin\LanguageController::class, 'destroy'])->name('languages.destroy');
     Route::get('pages', [Admin\PageController::class, 'index'])->name('pages.index');

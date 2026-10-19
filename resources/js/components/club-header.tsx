@@ -90,7 +90,7 @@ export function ClubHeader() {
 
                 <div className="flex items-center justify-end gap-1.5 sm:gap-2">
                     <LanguageSwitcher
-                        className={`rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800 [&>svg]:hidden sm:[&>svg]:block ${auth.user ? 'max-sm:hidden' : ''}`}
+                        className={`rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block ${auth.user ? 'max-sm:hidden' : ''}`}
                     />
                     {auth.user && (
                         <NotificationBell

@@ -14,6 +14,7 @@ use App\Models\Video;
 use App\Translation\ClaudeTranslator;
 use App\Translation\DeepLTranslator;
 use App\Translation\FallbackTranslator;
+use App\Translation\GeminiTranslator;
 use App\Translation\NullTranslator;
 use App\Translation\Translator;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -31,12 +32,19 @@ class AppServiceProvider extends ServiceProvider
             config('services.anthropic.translation_model'),
         );
 
+        $gemini = fn () => new GeminiTranslator(config('services.gemini.key'), config('services.gemini.translation_model'));
+
         $this->app->singleton(Translator::class, fn () => match (config('services.translation.driver')) {
             'claude' => $claude(),
-            // Languages DeepL does not know (Uzbek, Georgian, ...) go to Claude when its key is set.
+            'gemini' => $gemini(),
+            // Languages DeepL does not know (Uzbek, Georgian, ...) go to Gemini or Claude, whichever has a key.
             'deepl' => new FallbackTranslator(
                 new DeepLTranslator(config('services.deepl.key')),
-                config('services.anthropic.key') ? $claude() : null,
+                match (true) {
+                    (bool) config('services.gemini.key') => $gemini(),
+                    (bool) config('services.anthropic.key') => $claude(),
+                    default => null,
+                },
             ),
             default => new NullTranslator,
         });

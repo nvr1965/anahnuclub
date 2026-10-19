@@ -36,7 +36,7 @@ return [
     ],
 
     'translation' => [
-        // null | claude | deepl
+        // null | claude | gemini | deepl (DeepL hands the languages it lacks to Gemini or Claude)
         'driver' => env('TRANSLATION_DRIVER', 'null'),
         // Translate while the reader waits (slow); off = only show translations prepared in the background.
         'on_demand' => (bool) env('TRANSLATION_ON_DEMAND', false),
@@ -48,6 +48,11 @@ return [
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
         'translation_model' => env('ANTHROPIC_TRANSLATION_MODEL', 'claude-haiku-5-5'),
+    ],
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'translation_model' => env('GEMINI_TRANSLATION_MODEL', 'gemini-flash-lite-latest'),
     ],
 
     'deepl' => [

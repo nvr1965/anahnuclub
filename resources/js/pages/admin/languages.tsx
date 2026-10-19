@@ -1,8 +1,8 @@
 import { Badge, card, send } from '@/components/admin-ui';
 import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
-import { router, useForm } from '@inertiajs/react';
-import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Link, router, useForm } from '@inertiajs/react';
+import { Languages, Plus, RefreshCw, Repeat, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface Row {
@@ -116,6 +116,28 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
                                     onClick={() => send('post', route('admin.languages.refill', language.code))}
                                 >
                                     <RefreshCw className="size-4" />
+                                </button>
+                            )}
+                            <Link
+                                href={route('admin.languages.texts', language.code)}
+                                title={t('Interface texts')}
+                                aria-label={t('Interface texts')}
+                                className="text-muted-foreground rounded-md p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            >
+                                <Languages className="size-4" />
+                            </Link>
+                            {!language.built_in && can_translate && language.missing === 0 && (
+                                <button
+                                    type="button"
+                                    title={t('Translate the interface again (texts corrected by hand stay)')}
+                                    aria-label={t('Translate the interface again (texts corrected by hand stay)')}
+                                    className="text-muted-foreground rounded-md p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    onClick={() =>
+                                        window.confirm(t('Translate the interface again (texts corrected by hand stay)') + '?') &&
+                                        send('post', route('admin.languages.retranslate', language.code))
+                                    }
+                                >
+                                    <Repeat className="size-4" />
                                 </button>
                             )}
                             {!language.built_in && (

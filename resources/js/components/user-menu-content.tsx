@@ -25,7 +25,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuSeparator />
             {/* On phones the language choice lives here, the top bar has no room for it. */}
             <div className="px-2 py-1.5 sm:hidden" onKeyDown={(e) => e.stopPropagation()}>
-                <LanguageSwitcher className="w-full rounded-md bg-slate-100 px-3 py-2 dark:bg-neutral-800" />
+                <LanguageSwitcher compact className="w-full rounded-md bg-slate-100 px-3 py-2 dark:bg-neutral-800" />
             </div>
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
