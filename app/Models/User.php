@@ -29,6 +29,7 @@ class User extends Authenticatable
         'email',
         'locale',
         'ui_locale',
+        'messages_from',
         'password',
         'avatar_path',
         'cover_path',
@@ -164,13 +165,50 @@ class User extends Authenticatable
         $this->blockMemo = null;
     }
 
+    /** Whether either of the two shut the messenger to the other (a full block counts too). */
+    public function messengerBlockedWith(User $other): bool
+    {
+        return $this->isBlockedWith($other) || DB::table('message_blocks')
+            ->where(fn ($q) => $q->where('user_id', $this->id)->where('blocked_id', $other->id))
+            ->orWhere(fn ($q) => $q->where('user_id', $other->id)->where('blocked_id', $this->id))
+            ->exists();
+    }
+
+    public function hasMessengerBlocked(User $other): bool
+    {
+        return DB::table('message_blocks')->where('user_id', $this->id)->where('blocked_id', $other->id)->exists();
+    }
+
+    /** Whether this member may write to $other: no block, and $other takes messages from them. */
+    public function canMessage(User $other): bool
+    {
+        if ($this->is($other)) {
+            return true;
+        }
+
+        return ! $other->blocked
+            && ! $this->messengerBlockedWith($other)
+            && ($other->messages_from !== 'friends' || $this->friendshipWith($other) === 'friends');
+    }
+
+    /** People whose messages this member does not see: blocked either way, fully or in the messenger. */
+    public function messengerHiddenIds(): Collection
+    {
+        return $this->blockMemo['messenger'] ??= $this->hiddenUserIds()
+            ->merge(DB::table('message_blocks')->where('user_id', $this->id)->pluck('blocked_id'))
+            ->merge(DB::table('message_blocks')->where('blocked_id', $this->id)->pluck('user_id'))
+            ->unique()->values();
+    }
+
     public function unreadMessagesCount(): int
     {
         return Message::query()
             ->join('conversation_user as cu', fn ($j) => $j->on('cu.conversation_id', '=', 'messages.conversation_id')->where('cu.user_id', $this->id))
             ->where('messages.user_id', '!=', $this->id)
             ->where(fn ($q) => $q->whereNull('cu.last_read_at')->orWhereColumn('messages.created_at', '>', 'cu.last_read_at'))
-            ->whereNotIn('messages.user_id', $this->hiddenUserIds())
+            ->whereNotIn('messages.user_id', $this->messengerHiddenIds())
+            // Requests from non-friends wait in their own list and do not light up the badge.
+            ->whereNotNull('cu.accepted_at')
             ->count();
     }
 }

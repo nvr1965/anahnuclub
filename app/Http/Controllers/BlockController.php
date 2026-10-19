@@ -24,6 +24,12 @@ class BlockController extends Controller
                 ->orderBy('name')
                 ->get()
                 ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar]),
+            'messenger' => User::query()
+                ->whereIn('id', DB::table('message_blocks')->where('user_id', $user->id)->select('blocked_id'))
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar]),
+            'messages_from' => $user->messages_from,
             'groups' => Group::query()
                 ->whereIn('id', $user->blockedGroupIds())
                 ->orderBy('name')
@@ -55,6 +61,34 @@ class BlockController extends Controller
     {
         DB::table('user_blocks')->where('user_id', $request->user()->id)->where('blocked_id', $user->id)->delete();
         $request->user()->forgetBlocks();
+
+        return back();
+    }
+
+    /** Shuts the messenger only: profiles, posts and friendship stay as they are. */
+    public function blockMessages(Request $request, User $user): RedirectResponse
+    {
+        $me = $request->user();
+        abort_if($me->is($user), 422);
+
+        DB::table('message_blocks')->insertOrIgnore(['user_id' => $me->id, 'blocked_id' => $user->id, 'created_at' => now(), 'updated_at' => now()]);
+        $me->forgetBlocks();
+
+        return back();
+    }
+
+    public function unblockMessages(Request $request, User $user): RedirectResponse
+    {
+        DB::table('message_blocks')->where('user_id', $request->user()->id)->where('blocked_id', $user->id)->delete();
+        $request->user()->forgetBlocks();
+
+        return back();
+    }
+
+    /** Who may start a chat: everyone (non-friends land in requests) or friends only. */
+    public function messagesFrom(Request $request): RedirectResponse
+    {
+        $request->user()->update($request->validate(['messages_from' => ['required', 'in:everyone,friends']]));
 
         return back();
     }

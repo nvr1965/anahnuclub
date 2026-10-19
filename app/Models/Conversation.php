@@ -19,7 +19,7 @@ class Conversation extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withPivot('last_read_at');
+        return $this->belongsToMany(User::class)->withPivot('last_read_at', 'accepted_at', 'declined_at');
     }
 
     public function messages(): HasMany
@@ -32,7 +32,10 @@ class Conversation extends Model
         return $this->hasOne(Message::class)->latestOfMany();
     }
 
-    /** The chat between two members, started if they have none yet. */
+    /**
+     * The chat between two members, started by $a if they have none yet. For a non-friend $b it is a
+     * request that waits apart until $b accepts or answers it.
+     */
     public static function between(User $a, User $b): self
     {
         $existing = self::query()
@@ -46,7 +49,10 @@ class Conversation extends Model
         }
 
         $conversation = self::create();
-        $conversation->users()->attach(array_unique([$a->id, $b->id]));
+        $conversation->users()->attach($a->id, ['accepted_at' => now()]);
+        if (! $a->is($b)) {
+            $conversation->users()->attach($b->id, ['accepted_at' => $a->friendshipWith($b) === 'friends' ? now() : null]);
+        }
 
         return $conversation;
     }

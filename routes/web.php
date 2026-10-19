@@ -62,6 +62,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
     Route::post('people/{user}/message', [MessageController::class, 'start'])->name('messages.start');
+    Route::post('messages/{conversation}/accept', [MessageController::class, 'accept'])->name('messages.accept');
+    Route::post('messages/{conversation}/decline', [MessageController::class, 'decline'])->name('messages.decline');
+    Route::post('people/{user}/message-block', [BlockController::class, 'blockMessages'])->name('blocks.messages.store');
+    Route::delete('people/{user}/message-block', [BlockController::class, 'unblockMessages'])->name('blocks.messages.destroy');
+    Route::put('settings/messages', [BlockController::class, 'messagesFrom'])->name('settings.messages');
 
     Route::get('albums/{album}', [AlbumController::class, 'show'])->name('albums.show');
     Route::post('albums', [AlbumController::class, 'store'])->name('albums.store');

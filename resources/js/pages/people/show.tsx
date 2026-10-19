@@ -23,6 +23,7 @@ import {
     Images,
     MapPin,
     MessageCircle,
+    MessageCircleOff,
     Pencil,
     Plus,
     UserCheck,
@@ -50,6 +51,8 @@ interface Profile {
     is_me: boolean;
     friendship: 'none' | 'friends' | 'sent' | 'received' | null;
     blocked_by_me: boolean;
+    messages_blocked_by_me: boolean;
+    can_message: boolean;
 }
 
 type Photo = PhotoItem;
@@ -155,13 +158,15 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             ) : (
                                 <>
                                     <FriendButton profile={profile} />
-                                    <button
-                                        type="button"
-                                        className={profile.friendship === 'friends' ? primary : secondary}
-                                        onClick={() => router.post(route('messages.start', profile.id))}
-                                    >
-                                        <MessageCircle className="size-4" /> {t('Message')}
-                                    </button>
+                                    {profile.can_message && (
+                                        <button
+                                            type="button"
+                                            className={profile.friendship === 'friends' ? primary : secondary}
+                                            onClick={() => router.post(route('messages.start', profile.id))}
+                                        >
+                                            <MessageCircle className="size-4" /> {t('Message')}
+                                        </button>
+                                    )}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger className={secondary} aria-label={t('More')}>
                                             <Ellipsis className="size-4" />
@@ -175,6 +180,18 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                                 }
                                             >
                                                 <Ban className="size-4" /> {t('Block')}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onSelect={() =>
+                                                    profile.messages_blocked_by_me
+                                                        ? router.delete(route('blocks.messages.destroy', profile.id), { preserveScroll: true })
+                                                        : window.confirm(
+                                                              t('Block messages from :name? Everything else stays as it is.', { name: profile.name }),
+                                                          ) && router.post(route('blocks.messages.store', profile.id), {}, { preserveScroll: true })
+                                                }
+                                            >
+                                                <MessageCircleOff className="size-4" />{' '}
+                                                {profile.messages_blocked_by_me ? t('Unblock messages') : t('Block messages only')}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>

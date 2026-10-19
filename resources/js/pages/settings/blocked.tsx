@@ -10,10 +10,12 @@ import { type ReactNode } from 'react';
 
 interface Props {
     people: Person[];
+    messenger: Person[];
+    messages_from: 'everyone' | 'friends';
     groups: { id: number; name: string; slug: string }[];
 }
 
-export default function Blocked({ people, groups }: Props) {
+export default function Blocked({ people, messenger, messages_from, groups }: Props) {
     const t = useT();
     const unblock = (url: string) => router.delete(url, { preserveScroll: true });
 
@@ -34,6 +36,29 @@ export default function Blocked({ people, groups }: Props) {
         <AppLayout breadcrumbs={[{ title: t('Blocking'), href: '/settings/blocked' }]}>
             <Head title={t('Blocking')} />
             <SettingsLayout>
+                <div className="space-y-4">
+                    <HeadingSmall
+                        title={t('Who can write to me')}
+                        description={t('Chats from people who are not your friends wait under “Requests” in the messenger.')}
+                    />
+                    {(
+                        [
+                            ['everyone', t('Everyone (non-friends go to requests)')],
+                            ['friends', t('Friends only')],
+                        ] as const
+                    ).map(([value, label]) => (
+                        <label key={value} className="flex items-center gap-2 text-sm">
+                            <input
+                                type="radio"
+                                name="messages_from"
+                                className="accent-brand size-4"
+                                checked={messages_from === value}
+                                onChange={() => router.put(route('settings.messages'), { messages_from: value }, { preserveScroll: true })}
+                            />
+                            {label}
+                        </label>
+                    ))}
+                </div>
                 <div className="space-y-6">
                     <HeadingSmall
                         title={t('Blocked people')}
@@ -53,6 +78,30 @@ export default function Blocked({ people, groups }: Props) {
                                         </span>
                                     </Link>,
                                     route('blocks.user.destroy', person.id),
+                                ),
+                            )}
+                        </ul>
+                    )}
+                </div>
+                <div className="space-y-6">
+                    <HeadingSmall
+                        title={t('Blocked in the messenger')}
+                        description={t('They cannot write to you; everything else stays as it is.')}
+                    />
+                    {messenger.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">{t('Nobody is blocked in the messenger.')}</p>
+                    ) : (
+                        <ul className="divide-y divide-slate-200 dark:divide-neutral-800">
+                            {messenger.map((person) =>
+                                row(
+                                    person.id,
+                                    <Link href={route('people.show', person.id)} className="flex min-w-0 items-center gap-3">
+                                        <UserAvatar person={person} className="size-9" />
+                                        <span dir="auto" className="truncate font-medium">
+                                            {person.name}
+                                        </span>
+                                    </Link>,
+                                    route('blocks.messages.destroy', person.id),
                                 ),
                             )}
                         </ul>

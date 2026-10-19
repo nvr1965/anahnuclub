@@ -1,10 +1,11 @@
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Person, type SharedData, type TranslationInfo } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Languages, MessageCircle, SendHorizontal } from 'lucide-react';
+import { ArrowLeft, Ban, Check, Ellipsis, Languages, MessageCircle, MessageCircleOff, SendHorizontal, Trash2 } from 'lucide-react';
 import { type FormEventHandler, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 interface ConversationRow {
@@ -12,6 +13,7 @@ interface ConversationRow {
     with: Person;
     last: { body: string; mine: boolean; created_at: string | null } | null;
     unread: boolean;
+    request: boolean;
 }
 
 interface Message {
@@ -24,21 +26,31 @@ interface Message {
 
 interface Props {
     conversations: ConversationRow[];
-    conversation: { id: number; with: Person & { last_seen_at: string | null }; blocked: 'by_me' | 'by_them' | null } | null;
+    /** Chats non-friends started that wait to be accepted, as on Facebook. */
+    requests: ConversationRow[];
+    conversation: {
+        id: number;
+        with: Person & { last_seen_at: string | null };
+        blocked: 'by_me' | 'messages_by_me' | 'by_them' | 'friends_only' | null;
+        request: boolean;
+        friends: boolean;
+    } | null;
     messages: Message[];
 }
 
 /** How often an open chat asks for new messages (there is no live connection on shared hosting). */
 const POLL_MS = 4000;
 
-export default function Messages({ conversations, conversation, messages }: Props) {
+export default function Messages({ conversations, requests, conversation, messages }: Props) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
+    const [showRequests, setShowRequests] = useState(Boolean(conversation?.request));
+    const rows = showRequests ? requests : conversations;
 
     useEffect(() => {
         const timer = setInterval(
             () => {
-                if (document.visibilityState === 'visible') router.reload({ only: ['conversations', 'messages', 'counts'] });
+                if (document.visibilityState === 'visible') router.reload({ only: ['conversations', 'requests', 'messages', 'counts'] });
             },
             conversation ? POLL_MS : POLL_MS * 3,
         );
@@ -53,13 +65,33 @@ export default function Messages({ conversations, conversation, messages }: Prop
                     className={`flex min-h-0 flex-col border-slate-200 md:border-e dark:border-neutral-800 ${conversation ? 'hidden md:flex' : 'flex'}`}
                 >
                     <h1 className="px-4 pt-4 pb-2 text-2xl font-bold">{t('Messages')}</h1>
+                    <div className="flex gap-1 px-3 pb-2">
+                        {[
+                            { on: false, label: t('Chats'), count: 0 },
+                            { on: true, label: t('Requests'), count: requests.length },
+                        ].map((tab) => (
+                            <button
+                                key={tab.label}
+                                type="button"
+                                aria-pressed={showRequests === tab.on}
+                                onClick={() => setShowRequests(tab.on)}
+                                className="aria-pressed:bg-brand-soft aria-pressed:text-brand rounded-full px-3 py-1.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            >
+                                {tab.label}
+                                {tab.count > 0 && ` (${tab.count})`}
+                            </button>
+                        ))}
+                    </div>
                     <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
-                        {conversations.length === 0 && (
+                        {showRequests && (
+                            <p className="text-muted-foreground px-2 pb-2 text-[13px]">{t('Messages from people who are not your friends.')}</p>
+                        )}
+                        {rows.length === 0 && (
                             <p className="text-muted-foreground px-2 py-6 text-center text-[15px]">
-                                {t('No conversations yet. Open a member’s profile and press “Message”.')}
+                                {showRequests ? t('No requests.') : t('No conversations yet. Open a member’s profile and press “Message”.')}
                             </p>
                         )}
-                        {conversations.map((row) => (
+                        {rows.map((row) => (
                             <Link
                                 key={row.id}
                                 href={route('messages.show', row.id)}
@@ -153,6 +185,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                         </span>
                     </span>
                 </Link>
+                <ChatMenu conversation={conversation} />
             </header>
 
             <div ref={scroller} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-4">
@@ -170,19 +203,33 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                 ))}
             </div>
 
+            {conversation.request && !conversation.blocked && <RequestBar conversation={conversation} />}
+
             {conversation.blocked ? (
                 <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 p-4 text-center text-sm dark:border-neutral-800">
-                    {conversation.blocked === 'by_me' ? (
+                    {conversation.blocked === 'by_me' || conversation.blocked === 'messages_by_me' ? (
                         <>
-                            {t('You blocked :name.', { name: conversation.with.name })}
+                            {conversation.blocked === 'by_me'
+                                ? t('You blocked :name.', { name: conversation.with.name })
+                                : t('You blocked messages from :name.', { name: conversation.with.name })}
                             <button
                                 type="button"
                                 className="text-brand font-semibold hover:underline"
-                                onClick={() => router.delete(route('blocks.user.destroy', conversation.with.id), { preserveScroll: true })}
+                                onClick={() =>
+                                    router.delete(
+                                        route(
+                                            conversation.blocked === 'by_me' ? 'blocks.user.destroy' : 'blocks.messages.destroy',
+                                            conversation.with.id,
+                                        ),
+                                        { preserveScroll: true },
+                                    )
+                                }
                             >
                                 {t('Unblock')}
                             </button>
                         </>
+                    ) : conversation.blocked === 'friends_only' ? (
+                        t(':name takes messages from friends only.', { name: conversation.with.name })
                     ) : (
                         t('You can no longer reply in this chat.')
                     )}
@@ -209,6 +256,89 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                 </form>
             )}
         </section>
+    );
+}
+
+/** A chat a non-friend started: let it in, turn it down, or shut the messenger to them. */
+function RequestBar({ conversation }: { conversation: NonNullable<Props['conversation']> }) {
+    const t = useT();
+    const button = 'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold';
+
+    return (
+        <div className="space-y-2 border-t border-slate-200 bg-slate-50 p-3 text-center dark:border-neutral-800 dark:bg-neutral-950">
+            <p className="text-sm">
+                {t(':name is not your friend and wants to write to you. Answer to accept, or choose:', { name: conversation.with.name })}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+                <button
+                    type="button"
+                    className={`${button} bg-brand hover:bg-brand-dark text-white`}
+                    onClick={() => router.post(route('messages.accept', conversation.id), {}, { preserveScroll: true })}
+                >
+                    <Check className="size-4" /> {t('Accept')}
+                </button>
+                <button
+                    type="button"
+                    className={`${button} bg-slate-200 hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700`}
+                    onClick={() => router.post(route('messages.decline', conversation.id))}
+                >
+                    <Trash2 className="size-4" /> {t('Delete')}
+                </button>
+                <button
+                    type="button"
+                    className={`${button} bg-slate-200 hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700`}
+                    onClick={() => router.post(route('blocks.messages.store', conversation.with.id), {}, { preserveScroll: true })}
+                >
+                    <MessageCircleOff className="size-4" /> {t('Block messages')}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function ChatMenu({ conversation }: { conversation: NonNullable<Props['conversation']> }) {
+    const t = useT();
+    const name = conversation.with.name;
+    const messagesBlocked = conversation.blocked === 'messages_by_me';
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                className="ms-auto rounded-full p-2 outline-none hover:bg-slate-100 dark:hover:bg-neutral-800"
+                aria-label={t('More')}
+            >
+                <Ellipsis className="size-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                {conversation.blocked !== 'by_me' && (
+                    <DropdownMenuItem
+                        onSelect={() =>
+                            messagesBlocked
+                                ? router.delete(route('blocks.messages.destroy', conversation.with.id), { preserveScroll: true })
+                                : window.confirm(t('Block messages from :name? Everything else stays as it is.', { name })) &&
+                                  router.post(route('blocks.messages.store', conversation.with.id), {}, { preserveScroll: true })
+                        }
+                    >
+                        <MessageCircleOff className="size-4" /> {messagesBlocked ? t('Unblock messages') : t('Block messages only')}
+                    </DropdownMenuItem>
+                )}
+                {conversation.blocked !== 'by_me' && (
+                    <DropdownMenuItem
+                        onSelect={() =>
+                            window.confirm(t('Block :name? You will stop seeing each other in the club.', { name })) &&
+                            router.post(route('blocks.user', conversation.with.id), {}, { preserveScroll: true })
+                        }
+                    >
+                        <Ban className="size-4" /> {t('Block completely')}
+                    </DropdownMenuItem>
+                )}
+                {conversation.blocked === 'by_me' && (
+                    <DropdownMenuItem onSelect={() => router.delete(route('blocks.user.destroy', conversation.with.id), { preserveScroll: true })}>
+                        <Ban className="size-4" /> {t('Unblock')}
+                    </DropdownMenuItem>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 

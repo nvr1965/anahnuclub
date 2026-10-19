@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\User;
 use App\Translation\Translator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class MessengerTest extends TestCase
@@ -18,6 +19,7 @@ class MessengerTest extends TestCase
         $this->app->instance(Translator::class, $fake);
         $anna = User::factory()->create(['locale' => 'ru']);
         $dana = User::factory()->create(['locale' => 'he']);
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
 
         $this->actingAs($anna)->post("/people/{$dana->id}/message")->assertRedirect();
         $conversation = Conversation::firstOrFail();

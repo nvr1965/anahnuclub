@@ -63,6 +63,9 @@ class PeopleController extends Controller
                 'is_me' => $me,
                 'friendship' => $me ? null : $viewer->friendshipWith($user),
                 'blocked_by_me' => $blockedByMe,
+                'messages_blocked_by_me' => ! $me && $viewer->hasMessengerBlocked($user),
+                // Shut when they take messages from friends only, or the messenger is blocked either way.
+                'can_message' => ! $me && $viewer->canMessage($user),
             ],
             'tab' => $tab,
             'posts' => $posts ? PostResource::collection($posts) : null,
