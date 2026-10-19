@@ -20,6 +20,7 @@ const kinds: Record<string, { text: string; icon: ReactNode; color: string }> = 
     photo_liked: { text: ':name liked your photo', icon: <ThumbsUp />, color: 'bg-brand' },
     video_liked: { text: ':name liked your video', icon: <ThumbsUp />, color: 'bg-brand' },
     post_commented: { text: ':name commented on your post', icon: <MessageCircle />, color: 'bg-green-500' },
+    comment_replied: { text: ':name replied to your comment', icon: <MessageCircle />, color: 'bg-green-500' },
     comment_also: { text: ':name also commented on a post you commented on', icon: <MessageCircle />, color: 'bg-green-500' },
     friend_request: { text: ':name sent you a friend request', icon: <UserPlus />, color: 'bg-sky-500' },
     friend_accepted: { text: ':name accepted your friend request', icon: <UserCheck />, color: 'bg-sky-500' },

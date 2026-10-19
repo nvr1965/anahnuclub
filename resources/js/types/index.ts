@@ -67,6 +67,7 @@ export interface Translatable {
 }
 
 export interface Comment extends Translatable {
+    parent_id: number | null;
     body: string;
     created_at: string | null;
     author: Author | null;

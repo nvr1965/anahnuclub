@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
-import { type Post, type SharedData } from '@/types';
+import { type Comment, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, ThumbsUp, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
@@ -29,6 +29,9 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const [commenting, setCommenting] = useState(full);
     const form = useForm({ body: '' });
     const like = useForm({});
+    const reply = useForm({ body: '' });
+    const [replyTo, setReplyTo] = useState<{ thread: number; id: number } | null>(null);
+    const [expanded, setExpanded] = useState<number[]>([]);
     const [editing, setEditing] = useState(false);
     const edit = useForm({ body: post.editable_text ?? '' });
     const [choosingAudience, setChoosingAudience] = useState(false);
@@ -63,6 +66,91 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     };
 
     const commentsLabel = t(':count comments', { count: post.comments.length });
+
+    // Comments with their replies under them, one level deep as on Facebook.
+    const threads = post.comments
+        .filter((c) => !c.parent_id || !post.comments.some((p) => p.id === c.parent_id))
+        .map((comment) => ({ comment, replies: post.comments.filter((c) => c.parent_id === comment.id) }));
+
+    const startReply = (thread: number, to: Comment) => {
+        const name = to.author && to.author.id !== auth.user?.id ? `${to.author.name} ` : '';
+        setReplyTo({ thread, id: to.id });
+        reply.setData('body', name);
+    };
+
+    const submitReply: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!replyTo) return;
+        reply.transform((data) => ({ ...data, parent_id: replyTo.id }));
+        reply.post(route('comments.store', post.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setExpanded((all) => [...all, replyTo.thread]);
+                setReplyTo(null);
+                reply.reset();
+            },
+        });
+    };
+
+    const renderComment = (comment: Comment, thread: number, small = false) => (
+        <div key={comment.id} className="flex gap-2">
+            <Avatar className={small ? 'size-6' : 'size-8'}>
+                <AvatarImage src={comment.author?.avatar ?? undefined} alt="" className="object-cover" />
+                <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(comment.author?.name ?? '?')}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+                <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[15px] dark:bg-neutral-800">
+                    {comment.author ? (
+                        <Link href={route('people.show', comment.author.id)} className="block text-[13px] font-semibold hover:underline">
+                            {comment.author.name}
+                        </Link>
+                    ) : (
+                        <div className="text-[13px] font-semibold">{t('Former member')}</div>
+                    )}
+                    <TranslatedText item={comment} fetched={translated('comment', comment.id)} original={{ body: comment.body }} />
+                </div>
+                <div className="text-muted-foreground flex gap-3 px-3 pt-0.5 text-xs">
+                    <span>{relativeTime(comment.created_at, locale)}</span>
+                    {auth.user && (
+                        <button type="button" className="font-semibold hover:underline" onClick={() => startReply(thread, comment)}>
+                            {t('Reply')}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
+    const commentForm = (isReply: boolean) => {
+        if (!auth.user) return null;
+        const f = isReply ? reply : form;
+        return (
+            <form onSubmit={isReply ? submitReply : submitComment} className="flex items-center gap-2 pt-1">
+                <Avatar className={isReply ? 'size-6' : 'size-8'}>
+                    <AvatarImage src={auth.user.avatar} alt="" className="object-cover" />
+                    <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(auth.user.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-1 items-center rounded-full bg-slate-100 pe-1 dark:bg-neutral-800">
+                    <input
+                        dir="auto"
+                        className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[15px] outline-none"
+                        placeholder={isReply ? t('Write a reply…') : t('Write a comment…')}
+                        value={f.data.body}
+                        autoFocus={isReply || commenting}
+                        onChange={(e) => f.setData('body', e.target.value)}
+                        onKeyDown={(e) => isReply && e.key === 'Escape' && setReplyTo(null)}
+                    />
+                    <button
+                        className="text-brand rounded-full p-1.5 hover:bg-black/5 disabled:opacity-30"
+                        disabled={f.processing || !f.data.body.trim()}
+                        aria-label={t('Send')}
+                    >
+                        <SendHorizontal className="size-5 rtl:rotate-180" />
+                    </button>
+                </div>
+            </form>
+        );
+    };
 
     return (
         <article className="rounded-lg bg-white shadow-sm dark:bg-neutral-900">
@@ -258,58 +346,32 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
 
             {(post.comments.length > 0 || commenting) && (
                 <div className="space-y-2 border-t border-slate-200 px-4 py-3 dark:border-neutral-800">
-                    {post.comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-2">
-                            <Avatar className="size-8">
-                                <AvatarImage src={comment.author?.avatar ?? undefined} alt="" className="object-cover" />
-                                <AvatarFallback className="bg-brand-soft text-brand text-xs">
-                                    {getInitials(comment.author?.name ?? '?')}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                                <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[15px] dark:bg-neutral-800">
-                                    {comment.author ? (
-                                        <Link
-                                            href={route('people.show', comment.author.id)}
-                                            className="block text-[13px] font-semibold hover:underline"
-                                        >
-                                            {comment.author.name}
-                                        </Link>
-                                    ) : (
-                                        <div className="text-[13px] font-semibold">{t('Former member')}</div>
-                                    )}
-                                    <TranslatedText item={comment} fetched={translated('comment', comment.id)} original={{ body: comment.body }} />
-                                </div>
-                                <div className="text-muted-foreground px-3 pt-0.5 text-xs">{relativeTime(comment.created_at, locale)}</div>
+                    {threads.map(({ comment, replies }) => {
+                        const open = expanded.includes(comment.id) || replies.length <= 2;
+                        const shown = open ? replies : replies.slice(-1);
+                        return (
+                            <div key={comment.id} className="space-y-2">
+                                {renderComment(comment, comment.id)}
+                                {(replies.length > 0 || replyTo?.thread === comment.id) && (
+                                    <div className="ms-10 space-y-2">
+                                        {!open && (
+                                            <button
+                                                type="button"
+                                                className="text-muted-foreground text-sm font-semibold hover:underline"
+                                                onClick={() => setExpanded((all) => [...all, comment.id])}
+                                            >
+                                                {t('View :count more replies', { count: replies.length - shown.length })}
+                                            </button>
+                                        )}
+                                        {shown.map((reply) => renderComment(reply, comment.id, true))}
+                                        {replyTo?.thread === comment.id && commentForm(true)}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
-                    {auth.user && (
-                        <form onSubmit={submitComment} className="flex items-center gap-2 pt-1">
-                            <Avatar className="size-8">
-                                <AvatarImage src={auth.user.avatar} alt="" className="object-cover" />
-                                <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(auth.user.name)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-1 items-center rounded-full bg-slate-100 pe-1 dark:bg-neutral-800">
-                                <input
-                                    dir="auto"
-                                    className="flex-1 bg-transparent px-3 py-2 text-[15px] outline-none"
-                                    placeholder={t('Write a comment…')}
-                                    value={form.data.body}
-                                    autoFocus={commenting}
-                                    onChange={(e) => form.setData('body', e.target.value)}
-                                />
-                                <button
-                                    className="text-brand rounded-full p-1.5 hover:bg-black/5 disabled:opacity-30"
-                                    disabled={form.processing || !form.data.body.trim()}
-                                    aria-label={t('Send')}
-                                >
-                                    <SendHorizontal className="size-5 rtl:rotate-180" />
-                                </button>
-                            </div>
-                        </form>
-                    )}
+                    {commentForm(false)}
                 </div>
             )}
         </article>
