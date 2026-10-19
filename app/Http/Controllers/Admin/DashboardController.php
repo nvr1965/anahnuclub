@@ -7,6 +7,7 @@ use App\Models\ContentTranslation;
 use App\Models\Group;
 use App\Models\Post;
 use App\Models\User;
+use App\Translation\TranslatorChain;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,7 +26,8 @@ class DashboardController extends AdminController
                 'comments' => Comment::count(),
                 'translations' => ContentTranslation::count(),
             ],
-            'translation_driver' => config('services.translation.driver'),
+            // The services that are set up and on, in the order they are tried.
+            'translation_driver' => collect(app(TranslatorChain::class)->describe())->filter(fn ($t) => $t['on'] && $t['ready'])->pluck('label')->implode(' → ') ?: 'null',
         ]);
     }
 }

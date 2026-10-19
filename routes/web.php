@@ -104,6 +104,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('groups', [Admin\GroupController::class, 'index'])->name('groups.index');
     Route::patch('groups/{group:id}', [Admin\GroupController::class, 'update'])->name('groups.update');
     Route::delete('groups/{group:id}', [Admin\GroupController::class, 'destroy'])->name('groups.destroy');
+    Route::get('translators', [Admin\TranslatorController::class, 'index'])->name('translators.index');
+    Route::put('translators', [Admin\TranslatorController::class, 'update'])->name('translators.update');
+    Route::post('translators/{translator}/check', [Admin\TranslatorController::class, 'check'])->name('translators.check');
     Route::get('languages', [Admin\LanguageController::class, 'index'])->name('languages.index');
     Route::post('languages', [Admin\LanguageController::class, 'store'])->name('languages.store');
     Route::patch('languages/{language}', [Admin\LanguageController::class, 'update'])->name('languages.update');

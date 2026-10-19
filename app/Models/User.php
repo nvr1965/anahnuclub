@@ -28,6 +28,7 @@ class User extends Authenticatable
         'username',
         'email',
         'locale',
+        'ui_locale',
         'password',
         'avatar_path',
         'cover_path',

@@ -14,7 +14,7 @@ class LocaleController extends Controller
         abort_unless(Language::isEnabled($locale), 422);
 
         $request->session()->put('locale', $locale);
-        $request->user()?->update(['locale' => $locale]);
+        $request->user()?->update(['locale' => $locale, 'ui_locale' => $locale]);
 
         return back();
     }

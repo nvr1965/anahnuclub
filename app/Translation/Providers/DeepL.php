@@ -1,23 +1,19 @@
 <?php
 
-namespace App\Translation;
+namespace App\Translation\Providers;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
-class DeepLTranslator implements Translator
+/** DeepL: very good for European languages; the free plan gives 500,000 characters a month. */
+class DeepL extends Provider
 {
     public function __construct(private string $apiKey) {}
 
     /** DeepL wants a regional variant for a few target languages. */
     private const TARGETS = ['en' => 'EN-GB', 'pt' => 'PT-PT', 'zh' => 'ZH-HANS'];
-
-    public function translate(string $text, string $targetLocale, ?string $sourceLocale = null): string
-    {
-        return $this->translateMany([$text], $targetLocale, $sourceLocale)[0] ?? $text;
-    }
 
     /**
      * Several texts in one request (up to 50).

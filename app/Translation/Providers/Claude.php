@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Translation;
+namespace App\Translation\Providers;
 
 use Anthropic\Client;
 use App\Models\Language;
 use RuntimeException;
 
-class ClaudeTranslator implements Translator
+/** Anthropic Claude: any language, keeps the tone well; paid per use. */
+class Claude extends Provider
 {
     public function __construct(private Client $client, private string $model) {}
 

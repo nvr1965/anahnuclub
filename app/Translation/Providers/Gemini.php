@@ -1,20 +1,15 @@
 <?php
 
-namespace App\Translation;
+namespace App\Translation\Providers;
 
 use App\Models\Language;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-/** Google Gemini: translates into many languages DeepL lacks (Uzbek, Georgian, Persian, ...). */
-class GeminiTranslator implements Translator
+/** Google Gemini: many languages DeepL lacks (Uzbek, Georgian, Persian, ...); the API has a free tier. */
+class Gemini extends Provider
 {
     public function __construct(private string $apiKey, private string $model) {}
-
-    public function translate(string $text, string $targetLocale, ?string $sourceLocale = null): string
-    {
-        return $this->translateMany([$text], $targetLocale, $sourceLocale)[0];
-    }
 
     /**
      * Several texts in one request, as a JSON array in and out.

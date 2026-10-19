@@ -36,7 +36,7 @@ return [
     ],
 
     'translation' => [
-        // null | claude | gemini | deepl (DeepL hands the languages it lacks to Gemini or Claude)
+        // Old single choice (null | claude | gemini | deepl ...); if set, that service is tried first. See config/translation.php.
         'driver' => env('TRANSLATION_DRIVER', 'null'),
         // Translate while the reader waits (slow); off = only show translations prepared in the background.
         'on_demand' => (bool) env('TRANSLATION_ON_DEMAND', false),
@@ -53,6 +53,20 @@ return [
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
         'translation_model' => env('GEMINI_TRANSLATION_MODEL', 'gemini-flash-lite-latest'),
+    ],
+
+    'google_translate' => [
+        'key' => env('GOOGLE_TRANSLATE_KEY'),
+    ],
+
+    'libretranslate' => [
+        'url' => env('LIBRETRANSLATE_URL'),
+        'key' => env('LIBRETRANSLATE_KEY'),
+    ],
+
+    'mymemory' => [
+        // An address raises the free amount from 5,000 to 50,000 characters a day.
+        'email' => env('MYMEMORY_EMAIL'),
     ],
 
     'deepl' => [
