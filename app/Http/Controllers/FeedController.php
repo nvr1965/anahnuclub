@@ -52,7 +52,7 @@ class FeedController extends Controller
 
         return Post::query()
             ->with([
-                'user', 'group', 'photos', 'video', 'event',
+                'user', 'group', 'photos', 'video', 'event', 'linkPreview',
                 'comments' => fn ($q) => $q->where(fn ($q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)),
                 'comments.user',
                 'contentTranslations' => fn ($q) => $q->where('locale', $locale),

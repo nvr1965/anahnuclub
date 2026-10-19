@@ -70,6 +70,7 @@ npm ci --no-audit --no-fund
 npm run build
 php artisan migrate --force --seed
 php artisan storage:link 2>/dev/null || true
+php artisan posts:link-previews
 
 if [ -n "$JOOMLA_SQL" ]; then
     php artisan import:joomla ${JOOMLA_FILES:+--files="$JOOMLA_FILES"}

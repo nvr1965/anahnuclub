@@ -93,6 +93,15 @@ export interface Post extends Translatable {
     photos: PhotoItem[];
     video: VideoItem | null;
     event: EventItem | null;
+    link: LinkCard | null;
+}
+
+export interface LinkCard {
+    url: string;
+    domain: string;
+    title: string | null;
+    description: string | null;
+    image: string | null;
 }
 
 export interface PhotoItem {

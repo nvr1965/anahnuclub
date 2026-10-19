@@ -7,12 +7,35 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
-import { type Comment, type Post, type SharedData } from '@/types';
+import { type Comment, type LinkCard, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, ThumbsUp, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
+
+/** A shared link drawn as on Facebook: the page's picture, then its site, title and summary. */
+function LinkPreview({ link }: { link: LinkCard }) {
+    const [broken, setBroken] = useState(false);
+    const picture = link.image && !broken;
+    return (
+        <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow ugc"
+            className={`block overflow-hidden border-y border-slate-200 bg-slate-100 transition hover:bg-slate-200/70 dark:border-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 ${picture ? '' : 'flex items-stretch'}`}
+        >
+            {picture && (
+                <img src={link.image!} alt="" loading="lazy" className="aspect-[1.91/1] w-full object-cover" onError={() => setBroken(true)} />
+            )}
+            <div dir="auto" className="min-w-0 px-4 py-2.5">
+                <div className="text-muted-foreground truncate text-[13px] uppercase">{link.domain}</div>
+                {link.title && <div className="line-clamp-2 text-[17px] leading-snug font-semibold">{link.title}</div>}
+                {link.description && <div className="text-muted-foreground mt-0.5 line-clamp-1 text-[15px]">{link.description}</div>}
+            </div>
+        </a>
+    );
+}
 
 const actions: Record<string, string> = {
     discussion: 'new discussion',
@@ -27,6 +50,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const getInitials = useInitials();
     const { locale, auth } = usePage<SharedData>().props;
     const [commenting, setCommenting] = useState(full);
+    const [typing, setTyping] = useState(full);
     const form = useForm({ body: '' });
     const like = useForm({});
     const reply = useForm({ body: '' });
@@ -136,7 +160,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[15px] outline-none"
                         placeholder={isReply ? t('Write a reply…') : t('Write a comment…')}
                         value={f.data.body}
-                        autoFocus={isReply || commenting}
+                        autoFocus={isReply || typing}
                         onChange={(e) => f.setData('body', e.target.value)}
                         onKeyDown={(e) => isReply && e.key === 'Escape' && setReplyTo(null)}
                     />
@@ -307,6 +331,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     <EventCard event={post.event} />
                 </div>
             )}
+            {post.link && (
+                <div className="mt-2">
+                    <LinkPreview link={post.link} />
+                </div>
+            )}
             <div className="pb-2" />
 
             {(post.likes_count > 0 || post.comments.length > 0) && (
@@ -322,7 +351,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         )}
                     </span>
                     {post.comments.length > 0 && (
-                        <button type="button" className="hover:underline" onClick={() => setCommenting(true)}>
+                        <button type="button" className="hover:underline" aria-expanded={commenting} onClick={() => setCommenting((open) => !open)}>
                             {commentsLabel}
                         </button>
                     )}
@@ -338,13 +367,22 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 >
                     <ThumbsUp className={`size-5 ${post.liked ? 'fill-current' : ''}`} /> {t('Like')}
                 </button>
-                <button type="button" disabled={!auth.user} className={`${action} text-muted-foreground`} onClick={() => setCommenting(true)}>
+                <button
+                    type="button"
+                    disabled={!auth.user}
+                    className={`${action} text-muted-foreground`}
+                    onClick={() => {
+                        setCommenting(true);
+                        setTyping(true);
+                    }}
+                >
                     <MessageCircle className="size-5" /> {t('Comment')}
                 </button>
                 <ShareMenu url={post.url} title={plainTitle} className={`${action} text-muted-foreground outline-none`} />
             </div>
 
-            {(post.comments.length > 0 || commenting) && (
+            {/* In the feed comments stay folded behind their count, as on Facebook; a post's own page shows them. */}
+            {commenting && (
                 <div className="space-y-2 border-t border-slate-200 px-4 py-3 dark:border-neutral-800">
                     {threads.map(({ comment, replies }) => {
                         const open = expanded.includes(comment.id) || replies.length <= 2;

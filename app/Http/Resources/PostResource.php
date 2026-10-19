@@ -39,6 +39,10 @@ class PostResource extends JsonResource
             // The text as the author typed it, for editing (only posts written here, not imported HTML).
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
             'video' => $this->whenLoaded('video', fn () => $this->video?->card()),
+            // A shared link as a card; photos or a video, when the post has them, take its place.
+            'link' => $this->relationLoaded('linkPreview') && ! $this->video_id && ! ($this->relationLoaded('photos') && $this->photos->isNotEmpty())
+                ? $this->linkPreview?->card()
+                : null,
             'event' => $this->whenLoaded('event', fn () => $this->event ? EventController::card($this->event) : null),
             'editable_text' => $request->user()?->id === $this->user_id && in_array($this->type, ['status', 'photo', 'video'], true) && $this->legacy_source === null
                 ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)

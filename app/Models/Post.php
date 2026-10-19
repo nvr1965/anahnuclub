@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Jobs\FetchLinkPreview;
 use App\Models\Concerns\HasContentTranslations;
+use App\Support\LinkPreviewFetcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,9 +18,29 @@ class Post extends Model
 
     protected array $translatable = ['title', 'body'];
 
-    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'locale', 'legacy_source', 'legacy_id', 'audience', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'created_at', 'updated_at'];
 
     public const AUDIENCES = ['public', 'friends', 'except', 'specific', 'only_me'];
+
+    protected static function booted(): void
+    {
+        // The first link in the text becomes a card; its page is read once, in the background.
+        static::saving(function (Post $post) {
+            if ($post->isDirty('body') || $post->link_url === null) {
+                $post->link_url = LinkPreviewFetcher::firstUrl($post->body) ?? '';
+            }
+        });
+        static::saved(function (Post $post) {
+            if (($post->wasRecentlyCreated || $post->wasChanged('link_url')) && $post->link_url !== '' && ! LinkPreview::where('url', $post->link_url)->exists()) {
+                FetchLinkPreview::dispatch($post->link_url);
+            }
+        });
+    }
+
+    public function linkPreview(): BelongsTo
+    {
+        return $this->belongsTo(LinkPreview::class, 'link_url', 'url');
+    }
 
     public function user(): BelongsTo
     {
