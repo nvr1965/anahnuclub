@@ -1,8 +1,9 @@
 import { CommunitySidebar } from '@/components/community-sidebar';
 import InputError from '@/components/input-error';
 import { PostList } from '@/components/post-list';
-import { useT } from '@/lib/i18n';
+import { SocialLogin } from '@/components/social-login';
 import ClubLayout from '@/layouts/club-layout';
+import { useT } from '@/lib/i18n';
 import { type Post, type Sidebar } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Lock, User, UserPlus } from 'lucide-react';
@@ -26,7 +27,11 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
 
             <section className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-neutral-900 dark:ring-neutral-800">
                 <div className="bg-brand relative">
-                    <img src="/images/logo-banner.png" alt="anahnu.club" className="mx-auto h-32 w-auto object-contain sm:h-44 sm:pb-24 sm:box-content" />
+                    <img
+                        src="/images/logo-banner.png"
+                        alt="anahnu.club"
+                        className="mx-auto h-32 w-auto object-contain sm:box-content sm:h-44 sm:pb-24"
+                    />
                     <div className="from-ink/85 via-ink/50 flex flex-col gap-4 bg-gradient-to-t to-transparent px-6 pt-10 pb-6 text-white sm:absolute sm:inset-x-0 sm:bottom-0 sm:flex-row sm:items-end sm:justify-between">
                         <div className="max-w-xl">
                             <h1 className="text-2xl font-semibold">{t('Join us!')}</h1>
@@ -79,6 +84,7 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
                         </Link>
                         <InputError message={form.errors.email} />
                     </div>
+                    <SocialLogin className="sm:col-span-3" />
                 </form>
             </section>
 

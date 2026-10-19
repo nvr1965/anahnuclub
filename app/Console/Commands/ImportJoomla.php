@@ -89,7 +89,7 @@ class ImportJoomla extends Command
         $admins = $this->old->table('user_usergroup_map')->where('group_id', 8)->pluck('user_id')->flip();
 
         $rows = $this->old->table('users')->orderBy('id')->get();
-        $existing = DB::table('users')->get(['id', 'avatar_path', 'cover_path'])->keyBy('id');
+        $existing = DB::table('users')->get(['id', 'avatar_path', 'cover_path', 'email_verified_at'])->keyBy('id');
         foreach ($rows as $row) {
             $profile = $profiles->get($row->id);
             // Pictures a member has since uploaded here are kept on a re-run.
@@ -109,7 +109,9 @@ class ImportJoomla extends Command
                 'status' => $profile?->status ?: null,
                 'blocked' => (bool) $row->block,
                 'is_admin' => $admins->has($row->id),
-                'email_verified_at' => $row->activation === '' || $row->activation === '0' ? $this->date($row->registerDate) : null,
+                // An email confirmed here since stays confirmed on a re-run.
+                'email_verified_at' => $existing->get($row->id)?->email_verified_at
+                    ?? ($row->activation === '' || $row->activation === '0' ? $this->date($row->registerDate) : null),
                 'last_seen_at' => $this->date($row->lastvisitDate),
                 'created_at' => $this->date($row->registerDate) ?? now(),
                 'updated_at' => now(),

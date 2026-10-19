@@ -31,11 +31,16 @@ class ProfileController extends Controller
     {
         $request->user()->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
+        $emailChanged = $request->user()->isDirty('email');
+        if ($emailChanged) {
             $request->user()->email_verified_at = null;
         }
 
         $request->user()->save();
+
+        if ($emailChanged) {
+            $request->user()->sendEmailVerificationNotification();
+        }
 
         return to_route('profile.edit');
     }

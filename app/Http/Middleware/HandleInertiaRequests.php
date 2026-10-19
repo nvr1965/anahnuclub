@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Models\Language;
 use App\Models\Page;
 use App\Models\Setting;
@@ -58,6 +59,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Sign-in services with keys set, for the buttons on the login and sign-up forms.
+            'social' => fn () => $request->user() ? [] : SocialLoginController::enabled(),
             // Badges in the top bar; the page asks for just these again now and then.
             'counts' => fn () => $request->user() ? [
                 'messages' => $request->user()->unreadMessagesCount(),

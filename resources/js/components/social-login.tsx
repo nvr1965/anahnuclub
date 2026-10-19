@@ -1,0 +1,62 @@
+import { useT } from '@/lib/i18n';
+import { type SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
+
+const LABELS: Record<string, string> = { google: 'Google', facebook: 'Facebook' };
+
+function GoogleIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+            <path
+                fill="#EA4335"
+                d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.8-5.4 3.8-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.4 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12s4.3 9.6 9.6 9.6c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12Z"
+            />
+            <path
+                fill="#34A853"
+                d="M3.5 7.5l3.2 2.3C7.6 7.7 9.6 6.1 12 6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.4 14.6 2.4 12 2.4 8.3 2.4 5.1 4.5 3.5 7.5Z"
+            />
+            <path fill="#FBBC05" d="M12 21.6c2.5 0 4.7-.8 6.2-2.3l-2.9-2.4c-.8.6-1.9 1-3.3 1-3.8 0-5.2-2.5-5.4-3.8l-3.2 2.5c1.6 3 4.8 5 8.6 5Z" />
+            <path fill="#4285F4" d="M21.2 12.2c0-.6-.1-1.1-.2-1.6H12v3.9h5.4c-.3 1.2-1 2.2-2.1 2.9l2.9 2.4c1.8-1.6 3-4.1 3-7.6Z" />
+        </svg>
+    );
+}
+
+function FacebookIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+            <path
+                fill="#1877F2"
+                d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12Z"
+            />
+        </svg>
+    );
+}
+
+/** "Continue with Google / Facebook": only the services whose keys are set on the server. */
+export function SocialLogin({ className = '' }: { className?: string }) {
+    const t = useT();
+    const { social } = usePage<SharedData>().props;
+    if (!social?.length) return null;
+
+    return (
+        <div className={`space-y-3 ${className}`}>
+            <div className="text-muted-foreground flex items-center gap-3 text-xs">
+                <span className="h-px flex-1 bg-slate-200 dark:bg-neutral-700" />
+                {t('or')}
+                <span className="h-px flex-1 bg-slate-200 dark:bg-neutral-700" />
+            </div>
+            <div className="grid gap-2 sm:auto-cols-fr sm:grid-flow-col">
+                {social.map((provider) => (
+                    <a
+                        key={provider}
+                        href={route('social.redirect', provider)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                        {provider === 'google' ? <GoogleIcon /> : <FacebookIcon />}
+                        {t('Continue with :provider', { provider: LABELS[provider] ?? provider })}
+                    </a>
+                ))}
+            </div>
+        </div>
+    );
+}

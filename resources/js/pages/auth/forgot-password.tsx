@@ -1,8 +1,8 @@
 // Components
+import { useT } from '@/lib/i18n';
 import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
-import { useT } from '@/lib/i18n';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -24,15 +24,15 @@ export default function ForgotPassword({ status }: { status?: string }) {
     };
 
     return (
-        <AuthLayout title={t("Forgot password")} description={t("Enter your email to receive a password reset link")}>
-            <Head title={t("Forgot password")} />
+        <AuthLayout title={t('Forgot password')} description={t('Enter your email to receive a password reset link')}>
+            <Head title={t('Forgot password')} />
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
 
             <div className="space-y-6">
                 <form onSubmit={submit}>
                     <div className="grid gap-2">
-                        <Label htmlFor="email">{t("Email address")}</Label>
+                        <Label htmlFor="email">{t('Email address')}</Label>
                         <Input
                             id="email"
                             type="email"
@@ -56,7 +56,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 </form>
 
                 <div className="text-muted-foreground space-x-1 text-center text-sm">
-                    <span>{t("Or, return to")}</span>
+                    <span>{t('Or, return to')}</span>
                     <TextLink href={route('login')}>log in</TextLink>
                 </div>
             </div>

@@ -1,7 +1,7 @@
+import { useT } from '@/lib/i18n';
 import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
-import { useT } from '@/lib/i18n';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -38,13 +38,13 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     };
 
     return (
-        <AuthLayout title={t("Reset password")} description={t("Please enter your new password below")}>
-            <Head title={t("Reset password")} />
+        <AuthLayout title={t('Reset password')} description={t('Please enter your new password below')}>
+            <Head title={t('Reset password')} />
 
             <form onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">{t("Email")}</Label>
+                        <Label htmlFor="email">{t('Email')}</Label>
                         <Input
                             id="email"
                             type="email"
@@ -59,7 +59,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password">{t("Password")}</Label>
+                        <Label htmlFor="password">{t('Password')}</Label>
                         <Input
                             id="password"
                             type="password"
@@ -69,13 +69,13 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                             className="mt-1 block w-full"
                             autoFocus
                             onChange={(e) => setData('password', e.target.value)}
-                            placeholder={t("Password")}
+                            placeholder={t('Password')}
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">{t("Confirm password")}</Label>
+                        <Label htmlFor="password_confirmation">{t('Confirm password')}</Label>
                         <Input
                             id="password_confirmation"
                             type="password"
@@ -84,7 +84,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                             value={data.password_confirmation}
                             className="mt-1 block w-full"
                             onChange={(e) => setData('password_confirmation', e.target.value)}
-                            placeholder={t("Confirm password")}
+                            placeholder={t('Confirm password')}
                         />
                         <InputError message={errors.password_confirmation} className="mt-2" />
                     </div>

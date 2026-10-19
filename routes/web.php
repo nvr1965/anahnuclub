@@ -33,7 +33,7 @@ Route::get('p/{page}', [PageController::class, 'show'])->name('pages.show');
 Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:10,1')->name('contact.store');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
     Route::get('search', SearchController::class)->name('search');
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');
@@ -101,7 +101,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', Admin\DashboardController::class)->name('index');
     Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
     Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');

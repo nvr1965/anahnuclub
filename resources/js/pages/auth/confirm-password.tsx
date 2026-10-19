@@ -1,8 +1,8 @@
 // Components
+import { useT } from '@/lib/i18n';
 import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
-import { useT } from '@/lib/i18n';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -26,20 +26,20 @@ export default function ConfirmPassword() {
 
     return (
         <AuthLayout
-            title={t("Confirm your password")}
-            description={t("This is a secure area of the application. Please confirm your password before continuing.")}
+            title={t('Confirm your password')}
+            description={t('This is a secure area of the application. Please confirm your password before continuing.')}
         >
-            <Head title={t("Confirm password")} />
+            <Head title={t('Confirm password')} />
 
             <form onSubmit={submit}>
                 <div className="space-y-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="password">{t("Password")}</Label>
+                        <Label htmlFor="password">{t('Password')}</Label>
                         <Input
                             id="password"
                             type="password"
                             name="password"
-                            placeholder={t("Password")}
+                            placeholder={t('Password')}
                             autoComplete="current-password"
                             value={data.password}
                             autoFocus

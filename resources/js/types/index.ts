@@ -30,6 +30,8 @@ export interface SharedData {
     auth: Auth;
     counts: { messages: number; friend_requests: number; notifications: number } | null;
     footer: { pages: { slug: string; title: string }[]; donate: { label: string; url: string }[] };
+    /** Sign-in services set up on the server, for guests. */
+    social: string[];
     [key: string]: unknown;
 }
 
