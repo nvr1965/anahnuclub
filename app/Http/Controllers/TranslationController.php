@@ -46,7 +46,7 @@ class TranslationController extends Controller
                 $text = $onDemand
                     ? $translator->translate($model, $field, $locale)
                     : ($translator->needsTranslation($model, $field, $locale) ? $model->cachedTranslation($field, $locale) : null);
-                if ($text !== null) {
+                if ($text !== null && ! TranslationPayload::same($text, (string) $model->getAttribute($field))) {
                     $fields[$field] = $field === 'title' || $field === 'name' ? $text : Html::clean($text);
                 }
             }

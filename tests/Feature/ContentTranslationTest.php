@@ -53,6 +53,28 @@ class ContentTranslationTest extends TestCase
         $this->assertSame(0, $this->fake->calls);
     }
 
+    public function test_text_that_comes_back_unchanged_is_not_marked_as_translated()
+    {
+        $reader = User::factory()->create(['locale' => 'en']);
+        $post = Post::create(['user_id' => $reader->id, 'body' => 'hjjlh:lhlhl']);
+        $this->app->instance(Translator::class, new class implements Translator
+        {
+            public function translate(string $text, string $targetLocale, ?string $sourceLocale = null): string
+            {
+                return $text;
+            }
+
+            public function name(): string
+            {
+                return 'echo';
+            }
+        });
+
+        $this->actingAs($reader)->postJson('/translations', ['items' => [['type' => 'post', 'id' => $post->id]]])
+            ->assertOk()->assertJsonPath('results.0.fields', []);
+        $this->get('/feed')->assertInertia(fn ($page) => $page->where('posts.data.0.translation', null));
+    }
+
     public function test_edited_text_is_translated_again()
     {
         $reader = User::factory()->create(['locale' => 'he']);

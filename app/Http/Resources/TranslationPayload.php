@@ -25,6 +25,9 @@ class TranslationPayload
             $cached = $model->cachedTranslation($field, $locale);
             if ($cached === null) {
                 $pending = true;
+            } elseif (self::same($cached, (string) $model->getAttribute($field))) {
+                // Names, links or random letters come back unchanged: nothing to mark as translated.
+                continue;
             } else {
                 $fields[$field] = $field === 'title' ? $cached : Html::clean($cached);
             }
@@ -39,6 +42,13 @@ class TranslationPayload
         }
 
         return ['type' => $model->getMorphClass(), 'pending' => $pending, 'fields' => $fields];
+    }
+
+    public static function same(string $a, string $b): bool
+    {
+        $plain = fn (string $s) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($s)))));
+
+        return $plain($a) === $plain($b);
     }
 
     /** Published so recently that its translation may still be on the way. */
