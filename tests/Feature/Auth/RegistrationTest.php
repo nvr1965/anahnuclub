@@ -35,7 +35,7 @@ class RegistrationTest extends TestCase
 
         // Until the email is confirmed, the club stays closed; the letter goes out in the visitor's language.
         $user = User::where('email', 'test@example.com')->first();
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmail::class, fn ($n) => $n->queue === 'mail');
         $this->get('/feed')->assertRedirect(route('verification.notice', absolute: false));
         $this->get('/settings/profile')->assertOk();
     }

@@ -8,9 +8,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
  * The "confirm your email" letter, sent from the queue: a slow or failing mail server
- * must not break signing up. It goes out in the member's language (User::preferredLocale).
+ * must not break signing up. It goes out in the member's language (User::preferredLocale),
+ * on its own "mail" queue so it never waits behind a long run of translations.
  */
 class VerifyEmail extends BaseVerifyEmail implements ShouldQueue
 {
     use Queueable;
+
+    public function __construct()
+    {
+        $this->onQueue('mail');
+    }
 }
