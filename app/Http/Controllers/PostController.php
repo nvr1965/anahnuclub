@@ -28,6 +28,7 @@ class PostController extends Controller
             'images.*' => ['image', 'max:15360'],
             'video' => ['nullable', 'file', 'mimetypes:'.VideoController::FILE_TYPES, 'max:204800'],
             'video_thumb' => ['nullable', 'image', 'max:5120'],
+            ...self::audienceRules(),
         ]);
         $text = (string) ($data['body'] ?? '');
         $images = $request->file('images', []);
@@ -60,6 +61,10 @@ class PostController extends Controller
             'body' => Html::fromPlainText($text),
             'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
         ]);
+        // In a group the group decides who reads; elsewhere the author picks the audience.
+        if (! $post->group_id) {
+            $this->applyAudience($request, $post, $data);
+        }
 
         if ($images) {
             AlbumController::savePhotos($images, Album::timelineOf($request->user()), $request->user(), $post);
@@ -69,6 +74,45 @@ class PostController extends Controller
         TranslateContent::dispatchAfterResponse($post);
 
         return back();
+    }
+
+    /** Changes who sees a post, from its menu. */
+    public function audience(Request $request, Post $post): RedirectResponse
+    {
+        abort_unless($post->user_id === $request->user()->id && $post->group_id === null, 403);
+        $this->applyAudience($request, $post, $request->validate(self::audienceRules()));
+
+        return back();
+    }
+
+    private static function audienceRules(): array
+    {
+        return [
+            'audience' => ['nullable', 'in:'.implode(',', Post::AUDIENCES)],
+            'audience_ids' => ['nullable', 'array', 'max:500', 'required_if:audience,specific'],
+            'audience_ids.*' => ['integer'],
+            'audience_default' => ['nullable', 'boolean'],
+        ];
+    }
+
+    /** Sets the audience; the people named must be the author's friends. Optionally the new default. */
+    private function applyAudience(Request $request, Post $post, array $data): void
+    {
+        $user = $request->user();
+        $audience = $data['audience'] ?? $user->default_audience ?? 'public';
+        $ids = in_array($audience, ['except', 'specific'], true)
+            ? $user->friendIds()->intersect(array_map('intval', $data['audience_ids'] ?? []))->values()->all()
+            : [];
+        // "Specific friends" with nobody valid left would hide the post from everyone but the author.
+        if ($audience === 'specific' && $ids === []) {
+            $audience = 'only_me';
+        }
+
+        $post->update(['audience' => $audience]);
+        $post->audienceUsers()->sync($ids);
+        if ($data['audience_default'] ?? false) {
+            $user->update(['default_audience' => in_array($audience, ['except', 'specific'], true) ? 'friends' : $audience]);
+        }
     }
 
     /** A single post, open to anyone with the link unless it sits in a private or hidden group. */

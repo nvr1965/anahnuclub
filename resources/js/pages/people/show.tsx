@@ -1,4 +1,5 @@
 import { AlbumForm } from '@/components/album-form';
+import { AudienceIcon, useAudienceLabels } from '@/components/audience-picker';
 import { PhotoViewer } from '@/components/photo-viewer';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
@@ -17,6 +18,7 @@ import {
     Cake,
     Camera,
     Check,
+    ChevronDown,
     Clock,
     Ellipsis,
     Globe,
@@ -46,7 +48,9 @@ interface Profile {
     gender: 'male' | 'female' | null;
     joined_at: string | null;
     last_seen_at: string | null;
-    friends_count: number;
+    friends_count: number | null;
+    friends_hidden: boolean;
+    privacy: Record<PrivateField, Visibility> | null;
     posts_count: number;
     is_me: boolean;
     friendship: 'none' | 'friends' | 'sent' | 'received' | null;
@@ -54,6 +58,9 @@ interface Profile {
     messages_blocked_by_me: boolean;
     can_message: boolean;
 }
+
+type PrivateField = 'location' | 'website' | 'birthdate' | 'gender' | 'friends';
+type Visibility = 'public' | 'friends' | 'only_me';
 
 type Photo = PhotoItem;
 type Album = { id: number; name: string; kind: string | null; photos_count: number; cover: string | null };
@@ -129,9 +136,11 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             <h1 dir="auto" className="text-2xl font-bold sm:text-3xl">
                                 {profile.name}
                             </h1>
-                            <Link href={tabHref('friends')} className="text-muted-foreground text-[15px] font-semibold hover:underline">
-                                {t(':count friends', { count: profile.friends_count })}
-                            </Link>
+                            {profile.friends_count !== null && (
+                                <Link href={tabHref('friends')} className="text-muted-foreground text-[15px] font-semibold hover:underline">
+                                    {t(':count friends', { count: profile.friends_count })}
+                                </Link>
+                            )}
                             {friends.length > 0 && (
                                 <div className="mt-1.5 flex justify-center -space-x-2 sm:justify-start rtl:space-x-reverse">
                                     {friends.slice(0, 8).map((friend) => (
@@ -242,13 +251,15 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                     <PhotoGrid photos={photos} className="grid-cols-3 overflow-hidden rounded-lg" />
                                 </section>
                             )}
-                            <section className={card}>
-                                <Heading title={t('Friends')} href={tabHref('friends')} />
-                                <p className="text-muted-foreground -mt-2 mb-3 text-[15px]">
-                                    {t(':count friends', { count: profile.friends_count })}
-                                </p>
-                                <FriendGrid friends={friends} small />
-                            </section>
+                            {!profile.friends_hidden && (
+                                <section className={card}>
+                                    <Heading title={t('Friends')} href={tabHref('friends')} />
+                                    <p className="text-muted-foreground -mt-2 mb-3 text-[15px]">
+                                        {t(':count friends', { count: profile.friends_count ?? 0 })}
+                                    </p>
+                                    <FriendGrid friends={friends} small />
+                                </section>
+                            )}
                         </div>
                         <div className="min-w-0 space-y-4">
                             {profile.is_me && <PostComposer />}
@@ -272,7 +283,11 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                 {tab === 'friends' && !profile.blocked_by_me && (
                     <section className={card}>
                         <h2 className="mb-4 text-xl font-bold">{t('Friends')}</h2>
-                        <FriendGrid friends={friends} />
+                        {profile.friends_hidden ? (
+                            <p className="text-muted-foreground text-[15px]">{t('The friends list is hidden.')}</p>
+                        ) : (
+                            <FriendGrid friends={friends} />
+                        )}
                     </section>
                 )}
 
@@ -572,24 +587,36 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
         website: profile.website ?? '',
         birthdate: profile.birthdate ?? '',
         gender: profile.gender ?? '',
+        privacy: (profile.privacy ?? { location: 'public', website: 'public', birthdate: 'public', gender: 'public', friends: 'public' }) as Record<
+            PrivateField,
+            Visibility
+        >,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        form.transform((data) => Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === '' ? null : v])) as typeof data);
+        form.transform((data) => Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v === '' ? null : v])) as unknown as typeof data);
         form.patch(route('people.update'), { preserveScroll: true, onSuccess: onClose });
     };
 
     const field =
         'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none focus:border-brand dark:border-neutral-700 dark:bg-neutral-900';
-    const row = (label: string, key: keyof typeof form.data, input: ReactNode) => (
-        <label className="block space-y-1">
-            <span className="text-sm font-medium">{label}</span>
+    type TextKey = Exclude<keyof typeof form.data, 'privacy'>;
+    /** Who sees one detail: everyone, friends, or only the owner. */
+    const seen = (key: PrivateField) => (
+        <VisibilitySelect value={form.data.privacy[key]} onChange={(value) => form.setData('privacy', { ...form.data.privacy, [key]: value })} />
+    );
+    const row = (label: string, key: TextKey, input: ReactNode, privacy?: PrivateField) => (
+        <div className="block space-y-1">
+            <label className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">{label}</span>
+                {privacy && seen(privacy)}
+            </label>
             {input}
             {form.errors[key] && <span className="block text-sm text-red-600">{form.errors[key]}</span>}
-        </label>
+        </div>
     );
-    const text = (key: keyof typeof form.data, type = 'text') => (
+    const text = (key: TextKey, type = 'text') => (
         <input dir="auto" type={type} className={field} value={form.data[key]} onChange={(e) => form.setData(key, e.target.value)} />
     );
 
@@ -613,10 +640,10 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
                             onChange={(e) => form.setData('about', e.target.value)}
                         />,
                     )}
-                    {row(t('City'), 'location', text('location'))}
-                    {row(t('Website'), 'website', text('website', 'url'))}
-                    <div className="grid grid-cols-2 gap-3">
-                        {row(t('Birthday'), 'birthdate', text('birthdate', 'date'))}
+                    {row(t('City'), 'location', text('location'), 'location')}
+                    {row(t('Website'), 'website', text('website', 'url'), 'website')}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {row(t('Birthday'), 'birthdate', text('birthdate', 'date'), 'birthdate')}
                         {row(
                             t('Gender'),
                             'gender',
@@ -625,7 +652,12 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
                                 <option value="female">{t('Female')}</option>
                                 <option value="male">{t('Male')}</option>
                             </select>,
+                            'gender',
                         )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2 dark:bg-neutral-800/60">
+                        <span className="text-sm font-medium">{t('Who sees my friends list')}</span>
+                        {seen('friends')}
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button type="button" className={secondary} onClick={onClose}>
@@ -638,5 +670,29 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
                 </form>
             </DialogContent>
         </Dialog>
+    );
+}
+
+/** A small "who sees this" picker next to a profile detail. */
+function VisibilitySelect({ value, onChange }: { value: Visibility; onChange: (value: Visibility) => void }) {
+    const t = useT();
+    const labels = useAudienceLabels();
+    return (
+        <span className="text-muted-foreground relative inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold dark:bg-neutral-800">
+            <AudienceIcon audience={value} />
+            <select
+                aria-label={t('Who can see it')}
+                className="cursor-pointer appearance-none bg-transparent pe-3 outline-none"
+                value={value}
+                onChange={(e) => onChange(e.target.value as Visibility)}
+            >
+                {(['public', 'friends', 'only_me'] as const).map((v) => (
+                    <option key={v} value={v}>
+                        {labels[v].title}
+                    </option>
+                ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute end-1 size-3" />
+        </span>
     );
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Notifications\ClubActivity;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,13 @@ class FriendController extends Controller
                 ->get()
                 ->map(fn (User $u) => PeopleController::card($u)),
         ]);
+    }
+
+    /** The viewer's friends, for picking who sees a post. */
+    public function list(Request $request): JsonResponse
+    {
+        return response()->json($request->user()->friends()->where('blocked', false)->orderBy('name')->get()
+            ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar])->values());
     }
 
     /** Asks $user to be friends, or accepts when $user already asked. */

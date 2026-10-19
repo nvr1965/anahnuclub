@@ -34,6 +34,8 @@ class AlbumController extends Controller
                 'created_at' => $album->created_at?->toIso8601String(),
             ],
             'photos' => $album->photos()
+                // Pictures of a post follow its audience.
+                ->where(fn ($q) => $q->whereNull('post_id')->orWhereHas('post', fn ($p) => $p->visibleTo($request->user())))
                 ->withCount('likes')
                 ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $request->user()->id)])
                 ->latest('id')

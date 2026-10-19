@@ -14,6 +14,8 @@ class LikeController extends Controller
 {
     public function toggle(Request $request, Post $post): RedirectResponse
     {
+        abort_unless($post->isVisibleTo($request->user()), 404);
+
         return $this->like($request, $post, 'post_liked', route('posts.show', $post), $post->title ?: $post->body);
     }
 

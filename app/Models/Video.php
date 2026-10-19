@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasContentTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /** A video from YouTube or Vimeo, or a file uploaded here. */
@@ -84,5 +85,11 @@ class Video extends Model
         }
 
         return null;
+    }
+
+    /** The posts that carry this clip. */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
     }
 }

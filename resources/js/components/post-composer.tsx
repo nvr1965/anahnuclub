@@ -1,11 +1,12 @@
+import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
 import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame } from '@/lib/shrink-image';
-import { type SharedData } from '@/types';
+import { type Audience, type SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
-import { Camera, ImagePlus, X } from 'lucide-react';
+import { Camera, ChevronDown, ImagePlus, X } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 
 const MAX_PHOTOS = 20;
@@ -18,14 +19,28 @@ export function PostComposer({ groupId }: { groupId?: number }) {
     const [open, setOpen] = useState(false);
     const [preparing, setPreparing] = useState(false);
     const [shooting, setShooting] = useState(false);
+    const [choosingAudience, setChoosingAudience] = useState(false);
+    const audienceLabels = useAudienceLabels();
     const picker = useRef<HTMLInputElement>(null);
     const nativeCamera = useRef<HTMLInputElement>(null);
-    const form = useForm<{ body: string; group_id: number | null; images: File[]; video: File | null; video_thumb: File | null }>({
+    const form = useForm<{
+        body: string;
+        group_id: number | null;
+        images: File[];
+        video: File | null;
+        video_thumb: File | null;
+        audience: Audience;
+        audience_ids: number[];
+        audience_default: boolean;
+    }>({
         body: '',
         group_id: groupId ?? null,
         images: [],
         video: null,
         video_thumb: null,
+        audience: auth.user?.default_audience ?? 'public',
+        audience_ids: [],
+        audience_default: false,
     });
     const firstName = auth.user?.name.split(' ')[0] ?? '';
     const previews = useMemo(() => form.data.images.map((file) => URL.createObjectURL(file)), [form.data.images]);
@@ -68,7 +83,8 @@ export function PostComposer({ groupId }: { groupId?: number }) {
             preserveScroll: true,
             forceFormData: form.data.images.length > 0 || form.data.video !== null,
             onSuccess: () => {
-                form.reset('body', 'images', 'video', 'video_thumb');
+                // The audience stays as chosen for the next post, as on Facebook.
+                form.reset('body', 'images', 'video', 'video_thumb', 'audience_default');
                 setOpen(false);
             },
         });
@@ -132,6 +148,35 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                 )}
             </div>
 
+            {open && !groupId && (
+                <div className="mt-2 ps-12">
+                    <button
+                        type="button"
+                        onClick={() => setChoosingAudience(true)}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                    >
+                        <AudienceIcon audience={form.data.audience} />
+                        {audienceLabels[form.data.audience].title}
+                        {(form.data.audience === 'except' || form.data.audience === 'specific') && ` (${form.data.audience_ids.length})`}
+                        <ChevronDown className="size-3.5" />
+                    </button>
+                    <AudiencePicker
+                        open={choosingAudience}
+                        onClose={() => setChoosingAudience(false)}
+                        value={{ audience: form.data.audience, ids: form.data.audience_ids, makeDefault: form.data.audience_default }}
+                        onDone={(choice) => {
+                            form.setData((data) => ({
+                                ...data,
+                                audience: choice.audience,
+                                audience_ids: choice.ids,
+                                audience_default: choice.makeDefault,
+                            }));
+                            setChoosingAudience(false);
+                        }}
+                    />
+                </div>
+            )}
+
             {previews.length > 0 && (
                 <div className="mt-3 grid grid-cols-4 gap-1.5 sm:grid-cols-5">
                     {previews.map((url, i) => (
@@ -179,7 +224,7 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={() => (form.reset('body', 'images', 'video', 'video_thumb'), setOpen(false))}
+                            onClick={() => (form.reset('body', 'images', 'video', 'video_thumb', 'audience_default'), setOpen(false))}
                             className="text-muted-foreground rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap hover:bg-slate-100 dark:hover:bg-neutral-800"
                         >
                             {t('Cancel')}

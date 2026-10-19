@@ -34,6 +34,7 @@ class CommunitySidebar
                 ->whereNotNull('thumb_path')
                 ->whereHas('album', fn ($q) => $q->whereNull('group_id')
                     ->when($user, fn ($q) => $q->where(fn ($q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $user->hiddenUserIds()))))
+                ->where(fn ($q) => $q->whereNull('post_id')->orWhereHas('post', fn ($p) => $p->visibleTo($user)))
                 ->latest()
                 ->limit(6)
                 ->get()

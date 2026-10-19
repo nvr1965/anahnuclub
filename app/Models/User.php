@@ -30,6 +30,8 @@ class User extends Authenticatable
         'locale',
         'ui_locale',
         'messages_from',
+        'default_audience',
+        'privacy',
         'password',
         'avatar_path',
         'cover_path',
@@ -65,6 +67,7 @@ class User extends Authenticatable
             'is_admin' => 'boolean',
             'last_seen_at' => 'datetime',
             'birthdate' => 'date:Y-m-d',
+            'privacy' => 'array',
         ];
     }
 
@@ -163,6 +166,23 @@ class User extends Authenticatable
     public function forgetBlocks(): void
     {
         $this->blockMemo = null;
+    }
+
+    /** Profile details that each have their own audience. */
+    public const PRIVATE_FIELDS = ['location', 'website', 'birthdate', 'gender', 'friends'];
+
+    /** Whether $viewer may see this profile detail: public, friends or only me (public when never set). */
+    public function shows(string $field, ?User $viewer): bool
+    {
+        if ($viewer && $viewer->is($this)) {
+            return true;
+        }
+
+        return match ($this->privacy[$field] ?? 'public') {
+            'friends' => $viewer !== null && $this->friendshipWith($viewer) === 'friends',
+            'only_me' => false,
+            default => true,
+        };
     }
 
     /** Whether either of the two shut the messenger to the other (a full block counts too). */

@@ -58,6 +58,8 @@ class FeedController extends Controller
                 'contentTranslations' => fn ($q) => $q->where('locale', $locale),
                 'comments.contentTranslations' => fn ($q) => $q->where('locale', $locale),
             ])
+            // Each post's audience: public, friends, some friends, or the author only.
+            ->visibleTo($viewer)
             // Posts of groups an administrator hid stay out of every feed.
             ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)))
             // People blocked either way, and groups the reader blocked, are never shown.

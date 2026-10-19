@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('profile/cover', [PeopleController::class, 'cover'])->name('people.cover');
 
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
+    Route::get('friends/list', [FriendController::class, 'list'])->name('friends.list');
     Route::post('people/{user}/friend', [FriendController::class, 'store'])->name('friends.store');
     Route::delete('people/{user}/friend', [FriendController::class, 'destroy'])->name('friends.destroy');
     Route::post('people/{user}/block', [BlockController::class, 'blockUser'])->name('blocks.user');
@@ -96,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('notifications/read', [NotificationController::class, 'readAll'])->name('notifications.read');
     Route::get('notifications/{id}', [NotificationController::class, 'open'])->name('notifications.open');
 
+    Route::patch('posts/{post}/audience', [PostController::class, 'audience'])->name('posts.audience');
     Route::post('posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
 });
 

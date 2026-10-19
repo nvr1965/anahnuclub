@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasContentTranslations;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -14,7 +16,9 @@ class Post extends Model
 
     protected array $translatable = ['title', 'body'];
 
-    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'locale', 'legacy_source', 'legacy_id', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'locale', 'legacy_source', 'legacy_id', 'audience', 'created_at', 'updated_at'];
+
+    public const AUDIENCES = ['public', 'friends', 'except', 'specific', 'only_me'];
 
     public function user(): BelongsTo
     {
@@ -44,6 +48,37 @@ class Post extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(Photo::class)->orderBy('id');
+    }
+
+    /** The friends a post with audience "except" leaves out, or "specific" is shown to. */
+    public function audienceUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'post_audience');
+    }
+
+    /**
+     * Only the posts $viewer may see by their audience: public ones, their own, and those their
+     * friendship with the author opens. Guests see public posts only.
+     */
+    public function scopeVisibleTo(Builder $query, ?User $viewer): Builder
+    {
+        return $query->where(function (Builder $q) use ($viewer) {
+            $q->where('posts.audience', 'public');
+            if (! $viewer) {
+                return;
+            }
+            $friends = $viewer->friendIds();
+            $named = fn ($sub) => $sub->selectRaw('1')->from('post_audience')->whereColumn('post_audience.post_id', 'posts.id')->where('post_audience.user_id', $viewer->id);
+            $q->orWhere('posts.user_id', $viewer->id)
+                ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'friends')->whereIn('posts.user_id', $friends))
+                ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'except')->whereIn('posts.user_id', $friends)->whereNotExists($named))
+                ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'specific')->whereExists($named));
+        });
+    }
+
+    public function isVisibleTo(?User $viewer): bool
+    {
+        return self::query()->whereKey($this->id)->visibleTo($viewer)->exists();
     }
 
     public function likes(): MorphMany

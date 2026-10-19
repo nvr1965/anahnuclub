@@ -1,3 +1,4 @@
+import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { ShareMenu } from '@/components/share-menu';
 import { TranslatedText } from '@/components/translated-text';
@@ -8,7 +9,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Ellipsis, MessageCircle, Pencil, SendHorizontal, ThumbsUp, Trash2 } from 'lucide-react';
+import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, ThumbsUp, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -30,6 +31,10 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const like = useForm({});
     const [editing, setEditing] = useState(false);
     const edit = useForm({ body: post.editable_text ?? '' });
+    const [choosingAudience, setChoosingAudience] = useState(false);
+    const audienceLabels = useAudienceLabels();
+    const mine = auth.user?.id === post.author?.id;
+    const canChangeAudience = mine && !post.group;
 
     const saveEdit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -94,9 +99,44 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             {relativeTime(post.created_at, locale)}
                         </Link>
                         {actions[post.type] && <> · {t(actions[post.type])}</>}
+                        {!post.group && (
+                            <>
+                                {' · '}
+                                {canChangeAudience ? (
+                                    <button
+                                        type="button"
+                                        className="inline-flex align-[-2px] hover:text-current"
+                                        title={audienceLabels[post.audience]?.title}
+                                        aria-label={audienceLabels[post.audience]?.title}
+                                        onClick={() => setChoosingAudience(true)}
+                                    >
+                                        <AudienceIcon audience={post.audience} />
+                                    </button>
+                                ) : (
+                                    <span className="inline-flex align-[-2px]" title={audienceLabels[post.audience]?.title}>
+                                        <AudienceIcon audience={post.audience} />
+                                    </span>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
-                {(post.can_delete || post.editable_text !== null) && (
+                {canChangeAudience && (
+                    <AudiencePicker
+                        open={choosingAudience}
+                        onClose={() => setChoosingAudience(false)}
+                        value={{ audience: post.audience, ids: post.audience_ids, makeDefault: false }}
+                        showDefault={false}
+                        onDone={(choice) =>
+                            router.patch(
+                                route('posts.audience', post.id),
+                                { audience: choice.audience, audience_ids: choice.ids },
+                                { preserveScroll: true, onSuccess: () => setChoosingAudience(false) },
+                            )
+                        }
+                    />
+                )}
+                {(post.can_delete || post.editable_text !== null || canChangeAudience) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             className="text-muted-foreground -me-2 self-start rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
@@ -108,6 +148,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             {post.editable_text !== null && (
                                 <DropdownMenuItem onSelect={() => setEditing(true)}>
                                     <Pencil className="size-4" /> {t('Edit')}
+                                </DropdownMenuItem>
+                            )}
+                            {canChangeAudience && (
+                                <DropdownMenuItem onSelect={() => setChoosingAudience(true)}>
+                                    <Eye className="size-4" /> {t('Edit audience')}
                                 </DropdownMenuItem>
                             )}
                             {post.can_delete && (

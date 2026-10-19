@@ -31,6 +31,8 @@ class PeopleController extends Controller
         $friends = $user->friends()->where('blocked', false)->whereNotIn('id', $viewer->hiddenUserIds())->orderByDesc('last_seen_at');
         $photos = Photo::query()->where('user_id', $user->id)->whereNotNull('thumb_path')
             ->whereDoesntHave('album', fn (Builder $q) => $q->whereNotNull('group_id'))
+            // Pictures of a post follow its audience.
+            ->where(fn (Builder $q) => $q->whereNull('post_id')->orWhereHas('post', fn (Builder $p) => $p->visibleTo($viewer)))
             ->latest('id');
 
         $posts = null;
@@ -52,14 +54,17 @@ class PeopleController extends Controller
                 'cover' => $user->cover,
                 'status' => $user->status,
                 'about' => $user->about,
-                'location' => $user->location,
-                'website' => $user->website,
-                'birthdate' => $user->birthdate?->format('Y-m-d'),
-                'gender' => $user->gender,
+                // Details are left out for viewers their audience does not include.
+                'location' => $user->shows('location', $viewer) ? $user->location : null,
+                'website' => $user->shows('website', $viewer) ? $user->website : null,
+                'birthdate' => $user->shows('birthdate', $viewer) ? $user->birthdate?->format('Y-m-d') : null,
+                'gender' => $user->shows('gender', $viewer) ? $user->gender : null,
+                'privacy' => $me ? array_merge(array_fill_keys(User::PRIVATE_FIELDS, 'public'), $user->privacy ?? []) : null,
+                'friends_hidden' => ! $user->shows('friends', $viewer),
                 'joined_at' => $user->created_at?->toIso8601String(),
                 'last_seen_at' => $user->last_seen_at?->toIso8601String(),
-                'friends_count' => (clone $friends)->count(),
-                'posts_count' => $user->posts()->count(),
+                'friends_count' => $user->shows('friends', $viewer) ? (clone $friends)->count() : null,
+                'posts_count' => $user->posts()->visibleTo($viewer)->count(),
                 'is_me' => $me,
                 'friendship' => $me ? null : $viewer->friendshipWith($user),
                 'blocked_by_me' => $blockedByMe,
@@ -69,7 +74,7 @@ class PeopleController extends Controller
             ],
             'tab' => $tab,
             'posts' => $posts ? PostResource::collection($posts) : null,
-            'friends' => $blockedByMe ? [] : (clone $friends)->limit($tab === 'friends' ? 500 : 9)->get()->map(fn (User $u) => self::card($u)),
+            'friends' => $blockedByMe || ! $user->shows('friends', $viewer) ? [] : (clone $friends)->limit($tab === 'friends' ? 500 : 9)->get()->map(fn (User $u) => self::card($u)),
             'photos' => $blockedByMe ? [] : (clone $photos)->limit($tab === 'photos' ? 120 : 9)->get()
                 ->map(fn (Photo $p) => $p->card() + ['album_id' => $p->album_id]),
             'albums' => $tab === 'photos' && ! $blockedByMe ? AlbumController::listFor($user, $me) : [],
@@ -87,7 +92,12 @@ class PeopleController extends Controller
             'website' => ['nullable', 'url:http,https', 'max:255'],
             'birthdate' => ['nullable', 'date', 'before:today'],
             'gender' => ['nullable', Rule::in(['male', 'female'])],
+            'privacy' => ['nullable', 'array'],
+            'privacy.*' => ['in:public,friends,only_me'],
         ]);
+        if (isset($data['privacy'])) {
+            $data['privacy'] = array_intersect_key($data['privacy'], array_flip(User::PRIVATE_FIELDS));
+        }
 
         $request->user()->update($data);
 

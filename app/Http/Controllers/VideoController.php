@@ -143,6 +143,8 @@ class VideoController extends Controller
     public static function visible(Request $request): Builder
     {
         return Video::query()->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where('is_private', false)))
+            // A clip added with a post follows that post's audience.
+            ->whereDoesntHave('posts', fn (Builder $p) => $p->whereNot(fn (Builder $q) => $q->visibleTo($request->user())))
             ->when($request->user(), fn (Builder $q, $viewer) => $q
                 ->where(fn (Builder $q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $viewer->hiddenUserIds()))
                 ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereNotIn('group_id', $viewer->blockedGroupIds())));

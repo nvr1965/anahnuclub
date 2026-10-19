@@ -30,6 +30,11 @@ class PostResource extends JsonResource
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
             'translation' => TranslationPayload::for($this->resource, $locale, $translator),
             'url' => route('posts.show', $this->id),
+            'audience' => $this->audience ?? 'public',
+            // Who exactly was named or left out, shown only to the author.
+            'audience_ids' => $request->user()?->id === $this->user_id && in_array($this->audience, ['except', 'specific'], true)
+                ? $this->audienceUsers()->pluck('users.id')->all()
+                : [],
             'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin),
             // The text as the author typed it, for editing (only posts written here, not imported HTML).
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
