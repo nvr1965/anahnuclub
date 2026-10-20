@@ -13,6 +13,7 @@ use App\Models\Video;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Support\LinkPreviewFetcher;
+use App\Support\SiteMeta;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -156,7 +157,8 @@ class PostController extends Controller
             'url' => route('posts.show', $post),
             'title' => $post->title ?: ($post->isOfficial() ? 'anahnu.club' : ($post->user?->name ?? 'anahnu.club')),
             'description' => mb_strimwidth($text, 0, 200, '…'),
-            'image' => isset($image[1]) ? url($image[1]) : ($post->isOfficial() ? url('/images/logo-mark.png') : $post->user?->avatar),
+            // The post's own picture, large enough for Facebook's big card; else the club's invitation.
+            'image' => $post->photos->first()?->card()['url'] ?? (isset($image[1]) ? url($image[1]) : SiteMeta::image()),
         ]]);
     }
 
