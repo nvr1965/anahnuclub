@@ -3,7 +3,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, Clapperboard, House, Images, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
+import { CalendarDays, Clapperboard, Contact, House, Images, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
@@ -35,6 +35,14 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                 </span>
                 {t('Friends')}
             </Link>
+            {auth.user && (
+                <Link href={route('people.index')} className={row}>
+                    <span className="flex size-9 items-center justify-center rounded-full bg-amber-500 text-white">
+                        <Contact className="size-5" />
+                    </span>
+                    {t('All members')}
+                </Link>
+            )}
             <Link href={route('messages.index')} className={row}>
                 <span className="flex size-9 items-center justify-center rounded-full bg-violet-500 text-white">
                     <MessageCircle className="size-5" />

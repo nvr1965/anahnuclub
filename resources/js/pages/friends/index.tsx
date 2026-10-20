@@ -1,4 +1,4 @@
-import { UserAvatar } from '@/components/user-avatar';
+import { PersonCard, primary, secondary } from '@/components/person-card';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { type Person } from '@/types';
@@ -11,9 +11,6 @@ interface Props {
     friends: Person[];
     suggestions: Person[];
 }
-
-const primary = 'bg-brand hover:bg-brand-dark w-full rounded-md py-1.5 text-sm font-semibold text-white';
-const secondary = 'w-full rounded-md bg-slate-200 py-1.5 text-sm font-semibold hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700';
 
 export default function Friends({ requests, sent, friends, suggestions }: Props) {
     const t = useT();
@@ -39,7 +36,14 @@ export default function Friends({ requests, sent, friends, suggestions }: Props)
                     </Section>
                 )}
 
-                <Section title={t('People you may know')}>
+                <Section
+                    title={t('People you may know')}
+                    more={
+                        <Link href={route('people.index')} className="text-brand text-[15px] font-semibold hover:underline">
+                            {t('Show all')}
+                        </Link>
+                    }
+                >
                     {suggestions.map((person) => (
                         <PersonCard key={person.id} person={person}>
                             <button className={primary} onClick={() => add(person)}>
@@ -76,33 +80,16 @@ export default function Friends({ requests, sent, friends, suggestions }: Props)
     );
 }
 
-function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
+function Section({ title, count, more, children }: { title: string; count?: number; more?: ReactNode; children: ReactNode }) {
     return (
         <section>
-            <h2 className="mb-3 text-xl font-bold">
-                {title} {count !== undefined && <span className="text-muted-foreground font-normal">{count}</span>}
-            </h2>
+            <div className="mb-3 flex items-baseline justify-between gap-2">
+                <h2 className="text-xl font-bold">
+                    {title} {count !== undefined && <span className="text-muted-foreground font-normal">{count}</span>}
+                </h2>
+                {more}
+            </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{children}</div>
         </section>
-    );
-}
-
-function PersonCard({ person, children }: { person: Person; children: ReactNode }) {
-    return (
-        <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-neutral-900">
-            <Link href={route('people.show', person.id)} className="block">
-                {person.avatar ? (
-                    <img src={person.avatar} alt="" loading="lazy" className="aspect-square w-full object-cover" />
-                ) : (
-                    <UserAvatar person={person} className="aspect-square size-auto w-full rounded-none" fallbackClassName="rounded-none text-4xl" />
-                )}
-            </Link>
-            <div className="space-y-1.5 p-3">
-                <Link href={route('people.show', person.id)} dir="auto" className="block truncate text-[15px] font-semibold hover:underline">
-                    {person.name}
-                </Link>
-                {children}
-            </div>
-        </div>
     );
 }

@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
 
+    Route::get('people', [PeopleController::class, 'index'])->name('people.index');
     Route::get('people/{user}', [PeopleController::class, 'show'])->name('people.show');
     Route::patch('profile/about', [PeopleController::class, 'update'])->name('people.update');
     Route::post('profile/avatar', [PeopleController::class, 'avatar'])->name('people.avatar');

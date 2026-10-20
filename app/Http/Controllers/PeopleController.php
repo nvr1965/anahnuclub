@@ -9,6 +9,7 @@ use App\Support\ImageStore;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +18,47 @@ use Inertia\Response;
 class PeopleController extends Controller
 {
     public const TABS = ['posts', 'about', 'friends', 'photos', 'videos'];
+
+    /** Every member the viewer can see, recently active first, with a search by name. */
+    public function index(Request $request): Response
+    {
+        $viewer = $request->user();
+        $q = trim((string) $request->query('q'));
+        $op = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+        $people = User::query()
+            ->where('blocked', false)
+            ->whereKeyNot($viewer->id)
+            ->whereNotIn('id', $viewer->hiddenUserIds())
+            ->when($q !== '', fn (Builder $b) => $b->where(fn (Builder $w) => $w
+                ->where('name', $op, '%'.addcslashes($q, '%_\\').'%')
+                ->orWhere('username', $op, '%'.addcslashes($q, '%_\\').'%')))
+            ->orderByRaw('last_seen_at is null')
+            ->orderByDesc('last_seen_at')
+            ->orderBy('id')
+            ->paginate(48)
+            ->withQueryString();
+
+        $ties = DB::table('friendships')
+            ->where(fn ($w) => $w->where('user_id', $viewer->id)->whereIn('friend_id', $people->pluck('id')))
+            ->orWhere(fn ($w) => $w->where('friend_id', $viewer->id)->whereIn('user_id', $people->pluck('id')))
+            ->get();
+
+        return Inertia::render('people/index', [
+            'people' => $people->through(function (User $u) use ($ties, $viewer) {
+                $row = $ties->first(fn ($t) => $t->user_id === $u->id || $t->friend_id === $u->id);
+
+                return self::card($u) + ['friendship' => match (true) {
+                    $row === null => 'none',
+                    (bool) $row->accepted => 'friends',
+                    $row->user_id === $viewer->id => 'sent',
+                    default => 'received',
+                }];
+            }),
+            'total' => $people->total(),
+            'q' => $q,
+        ]);
+    }
 
     public function show(Request $request, User $user): Response
     {

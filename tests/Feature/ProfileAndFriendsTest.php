@@ -79,4 +79,24 @@ class ProfileAndFriendsTest extends TestCase
         $anna = User::factory()->create();
         $this->actingAs($anna)->post("/people/{$anna->id}/friend")->assertStatus(422);
     }
+
+    public function test_the_members_page_lists_everyone_with_a_name_search()
+    {
+        $me = User::factory()->create(['name' => 'Me']);
+        $friend = User::factory()->create(['name' => 'Ольга', 'avatar_path' => null]);
+        User::factory()->create(['name' => 'Борис']);
+        User::factory()->create(['name' => 'Spammer', 'blocked' => true]);
+        $this->actingAs($me)->post("/people/{$friend->id}/friend");
+
+        $this->actingAs($me)->get('/people')->assertOk()->assertInertia(fn ($page) => $page
+            ->component('people/index')
+            ->where('total', 2)
+            ->has('people.data', 2)
+        );
+        $this->actingAs($me)->get('/people?q=Ольг')->assertInertia(fn ($page) => $page
+            ->has('people.data', 1)
+            ->where('people.data.0.name', 'Ольга')
+            ->where('people.data.0.friendship', 'sent')
+        );
+    }
 }
