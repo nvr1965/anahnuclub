@@ -6,7 +6,22 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Person, type SharedData, type TranslationInfo } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Ban, Check, Ellipsis, Languages, MessageCircle, MessageCircleOff, Phone, SendHorizontal, Trash2, Video } from 'lucide-react';
+import {
+    ArrowLeft,
+    Ban,
+    Check,
+    Ellipsis,
+    FileText,
+    Languages,
+    MessageCircle,
+    MessageCircleOff,
+    Paperclip,
+    Phone,
+    SendHorizontal,
+    Trash2,
+    Video,
+    X,
+} from 'lucide-react';
 import { type FormEventHandler, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 interface ConversationRow {
@@ -20,6 +35,7 @@ interface ConversationRow {
 interface Message {
     id: number;
     body: string;
+    files: { id: number; name: string; size: number; image: boolean; url: string }[];
     mine: boolean;
     created_at: string | null;
     translation: TranslationInfo | null;
@@ -139,7 +155,8 @@ export default function Messages({ conversations, requests, conversation, messag
 function Chat({ conversation, messages }: { conversation: NonNullable<Props['conversation']>; messages: Message[] }) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
-    const form = useForm({ body: '' });
+    const form = useForm<{ body: string; files: File[] }>({ body: '', files: [] });
+    const picker = useRef<HTMLInputElement>(null);
     const scroller = useRef<HTMLDivElement>(null);
     const lastId = messages.at(-1)?.id;
     const online = conversation.with.last_seen_at && Date.now() - new Date(conversation.with.last_seen_at).getTime() < 5 * 60 * 1000;
@@ -150,9 +167,20 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
 
     const send: FormEventHandler = (e) => {
         e.preventDefault();
-        if (!form.data.body.trim() || form.processing) return;
-        form.post(route('messages.store', conversation.id), { preserveScroll: true, onSuccess: () => form.reset() });
+        if ((!form.data.body.trim() && !form.data.files.length) || form.processing) return;
+        form.post(route('messages.store', conversation.id), {
+            preserveScroll: true,
+            forceFormData: form.data.files.length > 0,
+            onSuccess: () => form.reset(),
+        });
     };
+
+    const addFiles = (list: FileList | null) => {
+        if (list?.length) form.setData('files', [...form.data.files, ...Array.from(list)].slice(0, 10));
+    };
+    const fileErrors = Object.entries(form.errors)
+        .filter(([key]) => key.startsWith('files'))
+        .map(([, message]) => message);
 
     const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
@@ -262,24 +290,89 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                     )}
                 </div>
             ) : (
-                <form onSubmit={send} className="flex items-end gap-2 border-t border-slate-200 p-3 dark:border-neutral-800">
-                    <textarea
-                        dir="auto"
-                        rows={1}
-                        autoFocus
-                        value={form.data.body}
-                        onChange={(e) => form.setData('body', e.target.value)}
-                        onKeyDown={onKeyDown}
-                        placeholder={t('Aa')}
-                        className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none rounded-2xl bg-slate-100 px-4 py-2 text-[15px] outline-none dark:bg-neutral-800"
-                    />
-                    <button
-                        className="text-brand rounded-full p-2 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
-                        disabled={form.processing || !form.data.body.trim()}
-                        aria-label={t('Send')}
-                    >
-                        <SendHorizontal className="size-6 rtl:rotate-180" />
-                    </button>
+                <form
+                    onSubmit={send}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        addFiles(e.dataTransfer.files);
+                    }}
+                    className="space-y-2 border-t border-slate-200 p-3 dark:border-neutral-800"
+                >
+                    {form.data.files.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {form.data.files.map((file, i) => (
+                                <span
+                                    key={i}
+                                    className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-100 py-1 ps-2 pe-1 text-sm dark:bg-neutral-800"
+                                >
+                                    {file.type.startsWith('image/') ? (
+                                        <img src={URL.createObjectURL(file)} alt="" className="size-8 rounded object-cover" />
+                                    ) : (
+                                        <FileText className="text-muted-foreground size-4 shrink-0" />
+                                    )}
+                                    <span dir="auto" className="max-w-48 truncate">
+                                        {file.name}
+                                    </span>
+                                    <span className="text-muted-foreground text-xs">{fileSize(file.size)}</span>
+                                    <button
+                                        type="button"
+                                        aria-label={t('Remove')}
+                                        className="rounded p-0.5 hover:bg-slate-200 dark:hover:bg-neutral-700"
+                                        onClick={() =>
+                                            form.setData(
+                                                'files',
+                                                form.data.files.filter((_, j) => j !== i),
+                                            )
+                                        }
+                                    >
+                                        <X className="size-4" />
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    {fileErrors.length > 0 && <p className="text-sm text-red-600">{fileErrors[0]}</p>}
+                    <div className="flex items-end gap-2">
+                        <input
+                            ref={picker}
+                            type="file"
+                            multiple
+                            hidden
+                            onChange={(e) => {
+                                addFiles(e.target.files);
+                                e.target.value = '';
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="text-brand rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            aria-label={t('Attach a file')}
+                            title={t('Attach a file')}
+                            onClick={() => picker.current?.click()}
+                        >
+                            <Paperclip className="size-6" />
+                        </button>
+                        <textarea
+                            dir="auto"
+                            rows={1}
+                            autoFocus
+                            value={form.data.body}
+                            onChange={(e) => form.setData('body', e.target.value)}
+                            onKeyDown={onKeyDown}
+                            onPaste={(e) => e.clipboardData.files.length > 0 && addFiles(e.clipboardData.files)}
+                            placeholder={t('Aa')}
+                            className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none rounded-2xl bg-slate-100 px-4 py-2 text-[15px] outline-none dark:bg-neutral-800"
+                        />
+                        <button
+                            className="text-brand rounded-full p-2 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
+                            disabled={form.processing || (!form.data.body.trim() && !form.data.files.length)}
+                            aria-label={t('Send')}
+                        >
+                            <SendHorizontal className="size-6 rtl:rotate-180" />
+                        </button>
+                    </div>
+                    {form.progress && <div className="bg-brand h-0.5 rounded" style={{ width: `${form.progress.percentage ?? 0}%` }} />}
                 </form>
             )}
         </section>
@@ -367,6 +460,10 @@ function ChatMenu({ conversation }: { conversation: NonNullable<Props['conversat
 }
 
 /** More than 15 minutes between two messages starts a new block with its time. */
+function fileSize(bytes: number) {
+    return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function gap(a: Message, b: Message) {
     return !a.created_at || !b.created_at || new Date(b.created_at).getTime() - new Date(a.created_at).getTime() > 15 * 60 * 1000;
 }
@@ -387,13 +484,40 @@ function Bubble({ message, showTime }: { message: Message; showTime: boolean }) 
             )}
             <div className={`flex ${message.mine ? 'justify-end' : 'justify-start'}`}>
                 <div className="max-w-[75%]">
-                    <div
-                        dir="auto"
-                        title={message.created_at ? new Date(message.created_at).toLocaleString(locale) : ''}
-                        className={`rounded-2xl px-3 py-2 text-[15px] break-words whitespace-pre-wrap ${message.mine ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-neutral-800'}`}
-                    >
-                        {text}
-                    </div>
+                    {message.files.length > 0 && (
+                        <div className={`mb-1 flex flex-wrap gap-1 ${message.mine ? 'justify-end' : ''}`}>
+                            {message.files.map((file) =>
+                                file.image ? (
+                                    <a key={file.id} href={file.url} target="_blank" rel="noreferrer">
+                                        <img src={file.url} alt={file.name} loading="lazy" className="max-h-60 max-w-full rounded-2xl object-cover" />
+                                    </a>
+                                ) : (
+                                    <a
+                                        key={file.id}
+                                        href={file.url}
+                                        className="flex max-w-full items-center gap-2 rounded-2xl bg-slate-100 px-3 py-2 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                                    >
+                                        <FileText className="text-brand size-6 shrink-0" />
+                                        <span className="min-w-0">
+                                            <span dir="auto" className="block truncate text-[15px] font-medium">
+                                                {file.name}
+                                            </span>
+                                            <span className="text-muted-foreground block text-xs">{fileSize(file.size)}</span>
+                                        </span>
+                                    </a>
+                                ),
+                            )}
+                        </div>
+                    )}
+                    {text && (
+                        <div
+                            dir="auto"
+                            title={message.created_at ? new Date(message.created_at).toLocaleString(locale) : ''}
+                            className={`rounded-2xl px-3 py-2 text-[15px] break-words whitespace-pre-wrap ${message.mine ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-neutral-800'}`}
+                        >
+                            {text}
+                        </div>
+                    )}
                     {(translated || message.translation?.pending) && (
                         <div className="text-muted-foreground inline-flex items-center gap-1 px-2 pt-0.5 text-[11px]">
                             <Languages className="size-3" />

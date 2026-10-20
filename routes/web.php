@@ -65,6 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
+    Route::get('messages/files/{attachment}', [MessageController::class, 'file'])->name('messages.files');
     Route::post('people/{user}/message', [MessageController::class, 'start'])->name('messages.start');
     Route::post('messages/{conversation}/accept', [MessageController::class, 'accept'])->name('messages.accept');
     Route::post('messages/{conversation}/call', [CallController::class, 'start'])->middleware('throttle:20,1')->name('calls.start');

@@ -6,17 +6,23 @@ use App\Http\Resources\TranslationPayload;
 use App\Jobs\TranslateContent;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\MessageAttachment;
 use App\Models\User;
 use App\Translation\ContentTranslator;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** Private messages between members, translated into each reader's language. */
 class MessageController extends Controller
 {
+    /** Files a browser or a computer could run; they are not passed on. */
+    private const BLOCKED = ['php', 'phtml', 'phar', 'html', 'htm', 'xhtml', 'svg', 'js', 'mjs', 'exe', 'bat', 'cmd', 'com', 'msi', 'sh', 'ps1', 'vbs', 'jar', 'scr', 'apk'];
+
     public function index(Request $request): Response
     {
         return Inertia::render('messages/index', [
@@ -38,7 +44,7 @@ class MessageController extends Controller
         $locale = app()->getLocale();
         $other = $conversation->users()->whereKeyNot($user->id)->first() ?? $user;
         $messages = $conversation->messages()
-            ->with(['contentTranslations' => fn ($q) => $q->where('locale', $locale)])
+            ->with(['attachments', 'contentTranslations' => fn ($q) => $q->where('locale', $locale)])
             ->latest('id')
             ->limit(200)
             ->get()
@@ -47,6 +53,7 @@ class MessageController extends Controller
             ->map(fn (Message $m) => [
                 'id' => $m->id,
                 'body' => $m->body,
+                'files' => $m->attachments->map->card()->all(),
                 'mine' => $m->user_id === $user->id,
                 'created_at' => $m->created_at?->toIso8601String(),
                 'translation' => $m->user_id === $user->id ? null : TranslationPayload::for($m, $locale, $translator),
@@ -79,7 +86,16 @@ class MessageController extends Controller
     {
         $user = $request->user();
         abort_unless($conversation->users()->whereKey($user->id)->exists(), 404);
-        $body = $request->validate(['body' => ['required', 'string', 'max:5000']])['body'];
+        $data = $request->validate([
+            'body' => ['nullable', 'required_without:files', 'string', 'max:5000'],
+            'files' => ['array', 'max:10'],
+            'files.*' => ['file', 'max:20480', function (string $attribute, mixed $file, \Closure $fail) {
+                if (in_array(strtolower($file->getClientOriginalExtension()), self::BLOCKED, true)) {
+                    $fail(__('This kind of file cannot be sent.'));
+                }
+            }],
+        ]);
+        $body = trim((string) ($data['body'] ?? ''));
         $others = $conversation->users()->whereKeyNot($user->id)->get();
         abort_if($others->contains(fn (User $other) => ! $user->canMessage($other)), 403);
 
@@ -88,15 +104,38 @@ class MessageController extends Controller
             'body' => $body,
             'locale' => LanguageGuesser::guess($body) ?? $user->locale,
         ]);
+        foreach ($request->file('files', []) as $file) {
+            $message->attachments()->create([
+                'path' => $file->store('messages/'.$conversation->id, 'local'),
+                'name' => mb_substr($file->getClientOriginalName(), -200),
+                'mime' => $file->getMimeType() ?: 'application/octet-stream',
+                'size' => $file->getSize(),
+            ]);
+        }
         $conversation->update(['last_message_at' => $message->created_at]);
         // Answering a request lets it into the inbox.
         $conversation->users()->updateExistingPivot($user->id, ['last_read_at' => now(), 'accepted_at' => $conversation->users()->whereKey($user->id)->first()->pivot->accepted_at ?? now(), 'declined_at' => null]);
 
         // Only into the languages the other people in the chat read.
         $locales = $conversation->users()->whereKeyNot($user->id)->pluck('locale')->unique()->values()->all();
-        TranslateContent::dispatchAfterResponse($message, $locales);
+        if ($body !== '') {
+            TranslateContent::dispatchAfterResponse($message, $locales);
+        }
 
         return back();
+    }
+
+    /** A file from a chat, only for the people in it. Pictures open in place, other files download. */
+    public function file(Request $request, MessageAttachment $attachment): StreamedResponse
+    {
+        abort_unless($attachment->message->conversation->users()->whereKey($request->user()->id)->exists(), 404);
+        abort_unless(Storage::disk('local')->exists($attachment->path), 404);
+
+        $headers = ['Content-Type' => $attachment->isImage() ? $attachment->mime : 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, max-age=86400'];
+
+        return $attachment->isImage()
+            ? Storage::disk('local')->response($attachment->path, $attachment->name, $headers)
+            : Storage::disk('local')->download($attachment->path, $attachment->name, $headers);
     }
 
     /** Opens the chat with a member, starting one if needed. */
@@ -143,7 +182,7 @@ class MessageController extends Controller
     private function conversations(User $user): array
     {
         return $user->conversations()
-            ->with(['users', 'latestMessage'])
+            ->with(['users', 'latestMessage.attachments'])
             ->whereNotNull('last_message_at')
             ->whereDoesntHave('users', fn ($q) => $q->whereIn('users.id', $user->hiddenUserIds()))
             // A request that was turned down, with nothing newer since.
@@ -160,7 +199,7 @@ class MessageController extends Controller
                 return [
                     'id' => $c->id,
                     'with' => PeopleController::card($other),
-                    'last' => $last ? ['body' => mb_strimwidth($last->body, 0, 80, '…'), 'mine' => $last->user_id === $user->id, 'created_at' => $last->created_at?->toIso8601String()] : null,
+                    'last' => $last ? ['body' => mb_strimwidth($last->body !== '' ? $last->body : '📎 '.$last->attachments->pluck('name')->implode(', '), 0, 80, '…'), 'mine' => $last->user_id === $user->id, 'created_at' => $last->created_at?->toIso8601String()] : null,
                     'unread' => $last && $last->user_id !== $user->id && ($readAt === null || $last->created_at->gt($readAt)),
                     'request' => $pivot?->accepted_at === null,
                 ];

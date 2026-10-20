@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Conversation;
+use App\Models\MessageAttachment;
 use App\Models\User;
 use App\Translation\Translator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MessengerTest extends TestCase
@@ -47,5 +50,29 @@ class MessengerTest extends TestCase
 
         $this->actingAs($eve)->get("/messages/{$conversation->id}")->assertNotFound();
         $this->post("/messages/{$conversation->id}", ['body' => 'hi'])->assertNotFound();
+    }
+
+    public function test_files_are_sent_in_a_chat_and_only_its_members_open_them()
+    {
+        Storage::fake('local');
+        [$anna, $dana, $eve] = User::factory()->count(3)->create();
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
+        $conversation = Conversation::between($anna, $dana);
+
+        $this->actingAs($anna)->post("/messages/{$conversation->id}", [
+            'files' => [UploadedFile::fake()->image('sea.jpg', 40, 40), UploadedFile::fake()->create('plan.pdf', 120, 'application/pdf')],
+        ])->assertSessionHasNoErrors();
+        $this->post("/messages/{$conversation->id}", ['files' => [UploadedFile::fake()->create('virus.exe', 10)]])->assertSessionHasErrors('files.0');
+
+        $this->actingAs($dana)->get("/messages/{$conversation->id}")->assertInertia(fn ($page) => $page
+            ->where('messages.0.body', '')
+            ->where('messages.0.files.0.name', 'sea.jpg')
+            ->where('messages.0.files.0.image', true)
+            ->where('messages.0.files.1.image', false)
+            ->where('conversations.0.last.body', '📎 sea.jpg, plan.pdf'));
+
+        $file = MessageAttachment::where('name', 'plan.pdf')->firstOrFail();
+        $this->get("/messages/files/{$file->id}")->assertOk()->assertDownload('plan.pdf');
+        $this->actingAs($eve)->get("/messages/files/{$file->id}")->assertNotFound();
     }
 }
