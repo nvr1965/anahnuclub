@@ -16,6 +16,9 @@ class LinkPreviewFetcher
 
     private const MAX_REDIRECTS = 3;
 
+    /** Why the last fetch() came back empty, for `posts:link-previews --url`. */
+    public ?string $lastError = null;
+
     /** The first web address in a post's text, or null. */
     public static function firstUrl(?string $text): ?string
     {
@@ -30,8 +33,11 @@ class LinkPreviewFetcher
     /** @return array{title: ?string, description: ?string, image: ?string, site_name: ?string}|null */
     public function fetch(string $url): ?array
     {
+        $this->lastError = null;
         for ($hop = 0; $hop <= self::MAX_REDIRECTS; $hop++) {
             if (! self::isPublic($url)) {
+                $this->lastError = "not a public address: $url";
+
                 return null;
             }
             try {
@@ -39,13 +45,17 @@ class LinkPreviewFetcher
                     ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; AnahnuClubBot/1.0; +'.config('app.url').')', 'Accept' => 'text/html,application/xhtml+xml'])
                     ->withOptions(['allow_redirects' => false, 'stream' => true])
                     ->get($url);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
+                $this->lastError = $e->getMessage();
+
                 return null;
             }
 
             if ($response->redirect()) {
                 $next = $response->header('Location');
                 if (! $next) {
+                    $this->lastError = 'redirect without an address';
+
                     return null;
                 }
                 $url = self::absolute($next, $url);
@@ -53,6 +63,8 @@ class LinkPreviewFetcher
                 continue;
             }
             if (! $response->successful() || ! str_contains(strtolower($response->header('Content-Type')), 'html')) {
+                $this->lastError = 'HTTP '.$response->status().' '.$response->header('Content-Type');
+
                 return null;
             }
 
@@ -65,6 +77,8 @@ class LinkPreviewFetcher
 
             return $this->parse($html, $url, $response->header('Content-Type'));
         }
+
+        $this->lastError = 'too many redirects';
 
         return null;
     }

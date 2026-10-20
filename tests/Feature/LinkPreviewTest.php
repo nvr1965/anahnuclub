@@ -80,4 +80,12 @@ class LinkPreviewTest extends TestCase
         $this->assertSame('http://93.184.216.34/old', Post::find($id)->link_url);
         $this->assertSame('NofInfo', LinkPreview::where('url', 'http://93.184.216.34/old')->value('site_name'));
     }
+
+    public function test_one_page_can_be_read_by_hand_to_see_why_it_fails()
+    {
+        Http::fake(['http://93.184.216.34/blocked' => Http::response('no', 403, ['Content-Type' => 'text/html']), 'http://93.184.216.34/*' => Http::response(self::PAGE, 200, ['Content-Type' => 'text/html'])]);
+
+        $this->artisan('posts:link-previews', ['--url' => 'http://93.184.216.34/blocked'])->expectsOutputToContain('HTTP 403')->assertSuccessful();
+        $this->artisan('posts:link-previews', ['--url' => 'http://93.184.216.34/ok'])->expectsOutputToContain('site_name: NofInfo')->assertSuccessful();
+    }
 }
