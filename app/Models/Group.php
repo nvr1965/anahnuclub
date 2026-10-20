@@ -41,6 +41,11 @@ class Group extends Model
         return $this->hasMany(Post::class);
     }
 
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(GroupInvitation::class);
+    }
+
     public function roleOffers(): HasMany
     {
         return $this->hasMany(GroupRoleOffer::class);

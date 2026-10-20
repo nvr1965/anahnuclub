@@ -29,6 +29,7 @@ const kinds: Record<string, { text: string; icon: ReactNode; color: string }> = 
     group_offer_admin: { text: ':name invites you to be an admin of a group', icon: <ShieldCheck />, color: 'bg-indigo-500' },
     group_offer_moderator: { text: ':name invites you to be a moderator of a group', icon: <Shield />, color: 'bg-indigo-500' },
     group_offer_owner: { text: ':name offers to hand a group over to you', icon: <Crown />, color: 'bg-amber-500' },
+    group_invite: { text: ':name invites you to join a group', icon: <UserPlus />, color: 'bg-indigo-500' },
     group_offer_accepted: { text: ':name accepted your offer in a group', icon: <UserCheck />, color: 'bg-indigo-500' },
 };
 

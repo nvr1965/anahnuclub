@@ -10,6 +10,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupInviteController;
 use App\Http\Controllers\GroupRoleController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
@@ -52,6 +53,10 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::delete('groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
     Route::post('groups/{group}/members/{user}/approve', [GroupController::class, 'approve'])->name('groups.members.approve');
     Route::delete('groups/{group}/members/{user}', [GroupController::class, 'removeMember'])->name('groups.members.destroy');
+    Route::get('groups/{group}/invite', [GroupInviteController::class, 'candidates'])->name('groups.invite.candidates');
+    Route::post('groups/{group}/invite', [GroupInviteController::class, 'store'])->middleware('throttle:30,60')->name('groups.invite.store');
+    Route::post('groups/{group}/invitations/{invitation}/accept', [GroupInviteController::class, 'accept'])->name('groups.invitations.accept');
+    Route::delete('groups/{group}/invitations/{invitation}', [GroupInviteController::class, 'decline'])->name('groups.invitations.destroy');
     Route::post('groups/{group}/offers', [GroupRoleController::class, 'offer'])->name('groups.offers.store');
     Route::post('groups/{group}/offers/{offer}/accept', [GroupRoleController::class, 'accept'])->name('groups.offers.accept');
     Route::delete('groups/{group}/offers/{offer}', [GroupRoleController::class, 'cancel'])->name('groups.offers.destroy');

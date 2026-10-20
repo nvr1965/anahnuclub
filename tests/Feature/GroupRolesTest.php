@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class GroupRolesTest extends TestCase
@@ -110,5 +111,36 @@ class GroupRolesTest extends TestCase
         $this->actingAs($guest)->delete("/groups/{$group->slug}")->assertForbidden();
         $this->actingAs($me)->delete("/groups/{$group->slug}")->assertRedirect('/groups');
         $this->assertNull(Group::find($group->id));
+    }
+
+    public function test_members_invite_club_members_into_the_group()
+    {
+        [$owner, $friend, $other, $member] = User::factory()->count(4)->create();
+        $group = $this->group($owner, $member);
+        $group->update(['is_private' => true]);
+        DB::table('friendships')->insert(['user_id' => $owner->id, 'friend_id' => $friend->id, 'accepted' => true]);
+
+        // Friends first; members of the group are not offered.
+        $list = $this->actingAs($owner)->getJson('/groups/haifa/invite')->assertOk()->json();
+        $this->assertSame($friend->id, $list[0]['id']);
+        $this->assertTrue($list[0]['friend']);
+        $this->assertNotContains($member->id, array_column($list, 'id'));
+        $this->getJson('/groups/haifa/invite?q='.urlencode($other->name))->assertJsonPath('0.id', $other->id);
+
+        $this->post('/groups/haifa/invite', ['user_ids' => [$friend->id, $other->id, $member->id]])->assertRedirect();
+        $this->assertSame(2, $group->invitations()->count());
+        $this->assertSame('group_invite', $friend->notifications()->first()->data['kind']);
+        $this->actingAs(User::factory()->create())->post('/groups/haifa/invite', ['user_ids' => [$other->id]])->assertForbidden();
+
+        // Invited by the owner, the friend walks straight into the closed group.
+        $invitation = $group->invitations()->where('user_id', $friend->id)->first();
+        $this->actingAs($friend)->get('/groups/haifa')->assertOk()->assertInertia(fn ($page) => $page->where('group.invitation.id', $invitation->id));
+        $this->post("/groups/haifa/invitations/{$invitation->id}/accept")->assertRedirect();
+        $this->assertSame('member', $group->roleOf($friend));
+
+        $invitation = $group->invitations()->where('user_id', $other->id)->first();
+        $this->actingAs($other)->delete("/groups/haifa/invitations/{$invitation->id}")->assertRedirect();
+        $this->assertSame(0, $group->invitations()->count());
+        $this->assertNull($group->roleOf($other));
     }
 }

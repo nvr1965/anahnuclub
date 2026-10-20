@@ -1,6 +1,6 @@
 import { GroupForm } from '@/components/group-form';
+import { GroupInvite, InvitationBanner } from '@/components/group-invite';
 import { GroupTeam, OfferBanner, RoleBadge, type GroupRole, type OfferRole, type TeamMember } from '@/components/group-team';
-import { InviteButton } from '@/components/invite-button';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import AppLayout from '@/layouts/app-layout';
@@ -23,6 +23,7 @@ interface Group {
     blocked: boolean;
     role: GroupRole | null;
     offer: { id: number; role: OfferRole; from: Person } | null;
+    invitation: { id: number; from: Person } | null;
 }
 
 const secondary =
@@ -67,12 +68,12 @@ export default function GroupShow({
                                 </button>
                             ) : (
                                 <>
-                                    <InviteButton group={group} />
+                                    {group.role && <GroupInvite group={group} />}
                                     {team && group.role && <GroupTeam group={group} team={team} myRole={group.role} />}
                                     {(group.role === 'owner' || group.role === 'admin') && (
                                         <GroupForm group={group} isOwner={group.role === 'owner'} />
                                     )}
-                                    {!group.is_member && (
+                                    {!group.is_member && !group.invitation && (
                                         <button
                                             onClick={() => router.post(route('groups.join', group.slug))}
                                             className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold text-white"
@@ -107,6 +108,7 @@ export default function GroupShow({
                     )}
                 </section>
                 {group.offer && <OfferBanner group={group} offer={group.offer} />}
+                {group.invitation && <InvitationBanner group={group} invitation={group.invitation} />}
                 {group.blocked ? (
                     <section className="text-muted-foreground rounded-lg bg-white p-4 text-center text-[15px] shadow-sm dark:bg-neutral-900">
                         {t('You blocked this group. Its posts are hidden from you.')}

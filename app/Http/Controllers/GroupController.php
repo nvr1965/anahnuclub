@@ -42,9 +42,14 @@ class GroupController extends Controller
     {
         $member = $request->user() && $group->members()->whereKey($request->user()->id)->exists();
         abort_if(! $group->published && ! $request->user()?->is_admin, 404);
-        abort_if($group->is_private && ! $member && ! $request->user()?->is_admin, 403);
+        // Someone invited may look before deciding.
+        $invited = $request->user() && $group->invitations()->where('user_id', $request->user()->id)->exists();
+        abort_if($group->is_private && ! $member && ! $invited && ! $request->user()?->is_admin, 403);
 
-        $posts = FeedController::postQuery($request)->where('group_id', $group->id)->paginate(20);
+        $posts = FeedController::postQuery($request)->where('group_id', $group->id)
+            // A closed group shows its posts to members only, not to someone still invited or waiting.
+            ->when($group->is_private && ! $request->user()?->is_admin && ! $group->roleOf($request->user()), fn ($q) => $q->whereRaw('1 = 0'))
+            ->paginate(20);
 
         return Inertia::render('groups/show', [
             'group' => [
@@ -66,6 +71,10 @@ class GroupController extends Controller
                     'id' => $offer->id,
                     'role' => $offer->role,
                     'from' => PeopleController::card($offer->from),
+                ] : null,
+                'invitation' => ! $role && ($inv = $group->invitations()->with('from')->where('user_id', $request->user()?->id)->first()) ? [
+                    'id' => $inv->id,
+                    'from' => PeopleController::card($inv->from),
                 ] : null,
             ],
             // The team and the members to pick from, for those who run the group.
