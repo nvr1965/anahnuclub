@@ -1,11 +1,12 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
+import { startCall } from '@/components/video-call';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Person, type SharedData, type TranslationInfo } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Ban, Check, Ellipsis, Languages, MessageCircle, MessageCircleOff, SendHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, Ban, Check, Ellipsis, Languages, MessageCircle, MessageCircleOff, Phone, SendHorizontal, Trash2, Video } from 'lucide-react';
 import { type FormEventHandler, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 interface ConversationRow {
@@ -34,6 +35,8 @@ interface Props {
         blocked: 'by_me' | 'messages_by_me' | 'by_them' | 'friends_only' | null;
         request: boolean;
         friends: boolean;
+        /** The other member let this chat in and still takes messages, so they can be called. */
+        can_call: boolean;
     } | null;
     messages: Message[];
 }
@@ -185,7 +188,31 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                         </span>
                     </span>
                 </Link>
-                <ChatMenu conversation={conversation} />
+                <div className="ms-auto flex items-center">
+                    {conversation.can_call && !conversation.blocked && (
+                        <>
+                            <button
+                                type="button"
+                                className="text-brand rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                aria-label={t('Audio call')}
+                                title={t('Audio call')}
+                                onClick={() => startCall(conversation.id, false, conversation.with.name)}
+                            >
+                                <Phone className="size-5" />
+                            </button>
+                            <button
+                                type="button"
+                                className="text-brand rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                aria-label={t('Video call')}
+                                title={t('Video call')}
+                                onClick={() => startCall(conversation.id, true, conversation.with.name)}
+                            >
+                                <Video className="size-5" />
+                            </button>
+                        </>
+                    )}
+                    <ChatMenu conversation={conversation} />
+                </div>
             </header>
 
             <div ref={scroller} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-4">
@@ -303,10 +330,7 @@ function ChatMenu({ conversation }: { conversation: NonNullable<Props['conversat
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger
-                className="ms-auto rounded-full p-2 outline-none hover:bg-slate-100 dark:hover:bg-neutral-800"
-                aria-label={t('More')}
-            >
+            <DropdownMenuTrigger className="rounded-full p-2 outline-none hover:bg-slate-100 dark:hover:bg-neutral-800" aria-label={t('More')}>
                 <Ellipsis className="size-5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

@@ -86,4 +86,12 @@ return [
         'redirect' => env('APP_URL').'/auth/facebook/callback',
     ],
 
+    // Video calls. STUN is free and enough for most networks; a TURN relay (e.g. metered.ca) helps the rest.
+    'webrtc' => [
+        'stun' => env('WEBRTC_STUN', 'stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302'),
+        'turn_urls' => env('TURN_URLS'),
+        'turn_username' => env('TURN_USERNAME'),
+        'turn_credential' => env('TURN_CREDENTIAL'),
+    ],
+
 ];

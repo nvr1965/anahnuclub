@@ -4,6 +4,7 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
+import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
 
 declare global {
@@ -20,7 +21,17 @@ createInertiaApp({
 
         syncDocumentLanguage(props.initialPage.props);
 
-        root.render(<App {...props} />);
+        // The call window sits beside the page, so a call carries on from page to page.
+        root.render(
+            <App {...props}>
+                {({ Component, key, props: pageProps }) => (
+                    <>
+                        <Component key={key} {...pageProps} />
+                        <CallRoot />
+                    </>
+                )}
+            </App>,
+        );
     },
     progress: {
         color: '#4B5563',

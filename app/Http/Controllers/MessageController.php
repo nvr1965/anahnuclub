@@ -68,6 +68,8 @@ class MessageController extends Controller
                 // Someone who is not a friend wrote first and this member has not let them in yet.
                 'request' => $mine->accepted_at === null,
                 'friends' => $user->friendshipWith($other) === 'friends',
+                'can_call' => ! $other->is($user) && $user->canMessage($other)
+                    && $conversation->users()->whereKey($other->id)->first()?->pivot->accepted_at !== null,
             ],
             'messages' => $messages,
         ]);

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\BlockController;
+use App\Http\Controllers\CallController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
@@ -65,6 +66,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
     Route::post('people/{user}/message', [MessageController::class, 'start'])->name('messages.start');
     Route::post('messages/{conversation}/accept', [MessageController::class, 'accept'])->name('messages.accept');
+    Route::post('messages/{conversation}/call', [CallController::class, 'start'])->middleware('throttle:20,1')->name('calls.start');
+    Route::get('calls/ringing', [CallController::class, 'ringing'])->name('calls.ringing');
+    Route::get('calls/{call}', [CallController::class, 'show'])->middleware('throttle:300,1')->name('calls.show');
+    Route::post('calls/{call}/signal', [CallController::class, 'signal'])->middleware('throttle:300,1')->name('calls.signal');
+    Route::post('calls/{call}/accept', [CallController::class, 'accept'])->name('calls.accept');
+    Route::post('calls/{call}/decline', [CallController::class, 'decline'])->name('calls.decline');
+    Route::post('calls/{call}/end', [CallController::class, 'end'])->name('calls.end');
     Route::post('messages/{conversation}/decline', [MessageController::class, 'decline'])->name('messages.decline');
     Route::post('people/{user}/message-block', [BlockController::class, 'blockMessages'])->name('blocks.messages.store');
     Route::delete('people/{user}/message-block', [BlockController::class, 'unblockMessages'])->name('blocks.messages.destroy');
