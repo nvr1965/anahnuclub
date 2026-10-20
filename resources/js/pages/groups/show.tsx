@@ -1,9 +1,10 @@
+import { GroupTeam, OfferBanner, RoleBadge, type GroupRole, type OfferRole, type TeamMember } from '@/components/group-team';
 import { InviteButton } from '@/components/invite-button';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { type Paginated, type Post, type Sidebar } from '@/types';
+import { type Paginated, type Person, type Post, type Sidebar } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Ban, Users } from 'lucide-react';
 
@@ -16,12 +17,24 @@ interface Group {
     members_count: number;
     is_member: boolean;
     blocked: boolean;
+    role: GroupRole | null;
+    offer: { id: number; role: OfferRole; from: Person } | null;
 }
 
 const secondary =
     'inline-flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700';
 
-export default function GroupShow({ group, posts, sidebar }: { group: Group; posts: Paginated<Post>; sidebar: Sidebar }) {
+export default function GroupShow({
+    group,
+    posts,
+    sidebar,
+    team,
+}: {
+    group: Group;
+    posts: Paginated<Post>;
+    sidebar: Sidebar;
+    team: TeamMember[] | null;
+}) {
     const t = useT();
 
     return (
@@ -40,6 +53,7 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                             </h1>
                             <p className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 text-sm">
                                 <Users className="size-4" /> {t(':count members', { count: group.members_count })}
+                                {group.role && <RoleBadge role={group.role} />}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -50,6 +64,7 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                             ) : (
                                 <>
                                     <InviteButton group={group} />
+                                    {team && group.role && <GroupTeam group={group} team={team} myRole={group.role} />}
                                     {!group.is_member && (
                                         <button
                                             onClick={() => router.post(route('groups.join', group.slug))}
@@ -82,6 +97,7 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                         />
                     )}
                 </section>
+                {group.offer && <OfferBanner group={group} offer={group.offer} />}
                 {group.blocked ? (
                     <section className="text-muted-foreground rounded-lg bg-white p-4 text-center text-[15px] shadow-sm dark:bg-neutral-900">
                         {t('You blocked this group. Its posts are hidden from you.')}

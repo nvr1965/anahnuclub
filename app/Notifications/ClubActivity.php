@@ -14,6 +14,7 @@ class ClubActivity extends Notification
     public const TYPES = [
         'post_liked', 'post_commented', 'comment_replied', 'comment_also', 'photo_liked', 'video_liked',
         'friend_request', 'friend_accepted', 'event_going', 'event_interested',
+        'group_offer_admin', 'group_offer_moderator', 'group_offer_owner', 'group_offer_accepted',
     ];
 
     public function __construct(

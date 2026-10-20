@@ -41,7 +41,7 @@ class PostResource extends JsonResource
             'audience_ids' => $request->user()?->id === $this->user_id && in_array($this->audience, ['except', 'specific'], true)
                 ? $this->audienceUsers()->pluck('users.id')->all()
                 : [],
-            'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin),
+            'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin || ($this->group_id && $this->group?->canModerate($request->user()))),
             // The text as the author typed it, for editing (only posts written here, not imported HTML).
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
             'video' => $this->whenLoaded('video', fn () => $this->video?->card()),

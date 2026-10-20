@@ -174,7 +174,7 @@ class PostController extends Controller
 
     public function destroy(Request $request, Post $post): RedirectResponse
     {
-        abort_unless($post->user_id === $request->user()->id || $request->user()->is_admin, 403);
+        abort_unless($post->user_id === $request->user()->id || $request->user()->is_admin || $post->group?->canModerate($request->user()), 403);
         // Pictures added with the post go with it; ones uploaded to an album stay there.
         $post->photos()->whereHas('album', fn ($q) => $q->where('kind', 'timeline'))->get()->each(fn ($photo) => AlbumController::deletePhoto($photo));
         $post->delete();

@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Group roles already looked up in this request (Group::roleOf).
+        $this->app->scoped('group.roles', fn () => new \ArrayObject);
         // The translation block; with no service set up and on, translation is simply off.
         $this->app->singleton(TranslatorChain::class, fn () => TranslatorChain::fromSettings());
         $this->app->singleton(Translator::class, fn ($app) => $app->make(TranslatorChain::class)->available()

@@ -3,7 +3,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Person, type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { CalendarCheck, MessageCircle, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
+import { CalendarCheck, Crown, MessageCircle, Shield, ShieldCheck, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
 import { type ReactNode } from 'react';
 
 export interface ClubNotification {
@@ -26,6 +26,10 @@ const kinds: Record<string, { text: string; icon: ReactNode; color: string }> = 
     friend_accepted: { text: ':name accepted your friend request', icon: <UserCheck />, color: 'bg-sky-500' },
     event_going: { text: ':name is going to your event', icon: <CalendarCheck />, color: 'bg-red-500' },
     event_interested: { text: ':name is interested in your event', icon: <Star />, color: 'bg-amber-500' },
+    group_offer_admin: { text: ':name invites you to be an admin of a group', icon: <ShieldCheck />, color: 'bg-indigo-500' },
+    group_offer_moderator: { text: ':name invites you to be a moderator of a group', icon: <Shield />, color: 'bg-indigo-500' },
+    group_offer_owner: { text: ':name offers to hand a group over to you', icon: <Crown />, color: 'bg-amber-500' },
+    group_offer_accepted: { text: ':name accepted your offer in a group', icon: <UserCheck />, color: 'bg-indigo-500' },
 };
 
 /** Notices as a list of rows; each opens what it is about and marks itself read. */

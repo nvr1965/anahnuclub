@@ -8,6 +8,7 @@
         <meta name="google" content="notranslate">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        @php($meta ??= \App\Support\SiteMeta::default())
         @isset($meta)
             {{-- Read by Facebook, Telegram, WhatsApp and others when a link to this page is shared. --}}
             <meta property="og:site_name" content="anahnu.club">
@@ -18,6 +19,10 @@
             <meta name="description" content="{{ $meta['description'] }}">
             @if ($meta['image'])
                 <meta property="og:image" content="{{ $meta['image'] }}">
+                @if (str_contains($meta['image'], '/images/invite/'))
+                    <meta property="og:image:width" content="1200">
+                    <meta property="og:image:height" content="630">
+                @endif
                 <meta name="twitter:card" content="summary_large_image">
             @else
                 <meta name="twitter:card" content="summary">

@@ -176,6 +176,20 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return $query->orderByRaw('case when users.last_seen_at > ? then 0 else 1 end', [now()->subMinutes(5)]);
     }
 
+    /**
+     * Admins stay out of member lists: only other admins and their own friends see them there,
+     * so a stranger finds them neither among all members nor in someone's friends.
+     */
+    public function scopeListedFor(Builder $query, ?User $viewer): Builder
+    {
+        if ($viewer?->is_admin) {
+            return $query;
+        }
+
+        return $query->where(fn (Builder $q) => $q->where('users.is_admin', false)
+            ->when($viewer, fn (Builder $q) => $q->orWhere('users.id', $viewer->id)->orWhereIn('users.id', $viewer->friendIds())));
+    }
+
     /** Most recently here first, never-seen last (PostgreSQL would put empty dates first). */
     public function scopeLatestSeen(Builder $query): Builder
     {

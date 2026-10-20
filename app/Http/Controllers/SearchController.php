@@ -75,6 +75,7 @@ class SearchController extends Controller
 
         $people = User::query()
             ->where('blocked', false)
+            ->listedFor($viewer)
             ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->hiddenUserIds()))
             ->where(fn (Builder $w) => $w->where('name', $op, $like)->orWhere('username', $op, $like)
                 // Location can be hidden from some viewers, so only the open "about" text is searched.

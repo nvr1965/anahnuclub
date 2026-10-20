@@ -15,12 +15,13 @@ class CommunitySidebar
             'members' => User::query()
                 ->where('blocked', false)
                 ->showable()
+                ->listedFor($user)
                 ->when($user, fn ($q) => $q->whereNotIn('id', $user->hiddenUserIds()))
                 ->latestSeen()
                 ->limit(20)
                 ->get()
                 ->map(fn (User $u) => PeopleController::card($u)),
-            'members_count' => User::where('blocked', false)->count(),
+            'members_count' => User::where('blocked', false)->listedFor($user)->count(),
             'groups' => ($user ? $user->groups() : Group::query())
                 ->where('published', true)
                 ->where('is_private', false)

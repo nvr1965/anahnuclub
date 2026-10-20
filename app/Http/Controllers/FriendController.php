@@ -27,6 +27,7 @@ class FriendController extends Controller
             'suggestions' => User::query()
                 ->where('blocked', false)
                 ->whereKeyNot($user->id)
+                ->listedFor($user)
                 ->whereNotIn('id', $friendIds->merge($pendingIds)->merge($user->friendRequesters()->pluck('id'))->merge($user->hiddenUserIds()))
                 ->showable()
                 ->latestSeen()

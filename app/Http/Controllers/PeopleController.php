@@ -33,6 +33,7 @@ class PeopleController extends Controller
         $visible = fn () => User::query()
             ->where('blocked', false)
             ->whereKeyNot($viewer->id)
+            ->listedFor($viewer)
             ->whereNotIn('id', $viewer->hiddenUserIds());
         // Only countries their owners show to everyone count for the filter.
         $publicCountry = fn (Builder $b) => $b->whereNotNull('country')
@@ -85,7 +86,7 @@ class PeopleController extends Controller
         abort_if(! $me && ! $blockedByMe && ! $viewer->is_admin && $viewer->isBlockedWith($user), 404);
 
         $tab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'posts';
-        $friends = $user->friends()->where('blocked', false)->whereNotIn('id', $viewer->hiddenUserIds())->latestSeen();
+        $friends = $user->friends()->where('blocked', false)->listedFor($viewer)->whereNotIn('id', $viewer->hiddenUserIds())->latestSeen();
         $photos = Photo::query()->where('user_id', $user->id)->whereNotNull('thumb_path')
             ->whereDoesntHave('album', fn (Builder $q) => $q->whereNotNull('group_id'))
             // Pictures of a post follow its audience.

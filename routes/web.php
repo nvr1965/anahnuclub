@@ -10,6 +10,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupRoleController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
@@ -46,6 +47,10 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');
     Route::get('groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
+    Route::post('groups/{group}/offers', [GroupRoleController::class, 'offer'])->name('groups.offers.store');
+    Route::post('groups/{group}/offers/{offer}/accept', [GroupRoleController::class, 'accept'])->name('groups.offers.accept');
+    Route::delete('groups/{group}/offers/{offer}', [GroupRoleController::class, 'cancel'])->name('groups.offers.destroy');
+    Route::delete('groups/{group}/roles/{user}', [GroupRoleController::class, 'demote'])->name('groups.roles.destroy');
 
     Route::post('posts', [PostController::class, 'store'])->name('posts.store');
     Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->name('links.preview');

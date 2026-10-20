@@ -13,6 +13,11 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $codes = Language::enabled()->pluck('code')->all();
+        // An invitation link carries the inviter's language (?lang=he), so the guest lands in it.
+        $asked = $request->query('lang');
+        if (is_string($asked) && in_array($asked, $codes, true) && ! $request->user()) {
+            $request->session()->put('locale', $asked);
+        }
 
         $locale = collect([
             $request->session()->get('locale'),
