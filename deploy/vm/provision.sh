@@ -18,7 +18,12 @@ start() { if command -v systemctl >/dev/null && [ -d /run/systemd/system ]; then
 reload() { if command -v systemctl >/dev/null && [ -d /run/systemd/system ]; then systemctl reload "$1"; else service "$1" reload; fi; }
 
 echo "==> Packages"
-apt-get update -qq
+# A VM clock that drifted (after a pause or sleep) makes apt refuse the package lists; set it right first.
+if command -v timedatectl >/dev/null; then timedatectl set-ntp true 2>/dev/null || true; fi
+web_date=$(curl -sI --max-time 10 https://www.google.com | sed -n 's/^[Dd]ate: //p' | tr -d '\r')
+[ -n "$web_date" ] && date -s "$web_date" >/dev/null 2>&1 || true
+# Package lists that cannot be refreshed are not a reason to stop: the installed ones still work.
+apt-get update -qq || echo "   (package lists not refreshed, carrying on)"
 apt-get install -y -qq ca-certificates curl git unzip nginx postgresql mariadb-server cron \
     php-fpm php-cli php-pgsql php-mysql php-mbstring php-xml php-curl \
     php-zip php-intl php-gd php-bcmath >/dev/null
