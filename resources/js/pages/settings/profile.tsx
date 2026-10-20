@@ -103,7 +103,9 @@ export default function Profile({
                                 ))}
                             </select>
                             <p className="text-muted-foreground text-sm">
-                                {t('The site opens in this language, and posts and messages are translated into it.')}
+                                {t(
+                                    'Letters and notifications come in this language. The language switch at the top changes only the interface and the translations you see.',
+                                )}
                             </p>
                             <InputError className="mt-2" message={errors.locale} />
                         </div>

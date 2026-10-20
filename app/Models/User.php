@@ -81,10 +81,10 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     protected $appends = ['avatar'];
 
-    /** Letters to the member go out in the language they use the site in. */
+    /** Letters to the member go out in their default language, not the one the interface is switched to. */
     public function preferredLocale(): ?string
     {
-        return $this->ui_locale ?? $this->locale;
+        return $this->locale ?? $this->ui_locale;
     }
 
     public function sendEmailVerificationNotification(): void

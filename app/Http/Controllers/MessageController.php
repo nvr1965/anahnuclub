@@ -123,7 +123,8 @@ class MessageController extends Controller
         $conversation->users()->updateExistingPivot($user->id, ['last_read_at' => now(), 'accepted_at' => $conversation->users()->whereKey($user->id)->first()->pivot->accepted_at ?? now(), 'declined_at' => null]);
 
         // Only into the languages the other people in the chat read.
-        $locales = $conversation->users()->whereKeyNot($user->id)->pluck('locale')->unique()->values()->all();
+        $readers = $conversation->users()->whereKeyNot($user->id)->get(['users.id', 'locale', 'ui_locale']);
+        $locales = $readers->flatMap(fn (User $u) => [$u->locale, $u->ui_locale])->filter()->unique()->values()->all();
         if ($body !== '') {
             TranslateContent::dispatchAfterResponse($message, $locales);
         }

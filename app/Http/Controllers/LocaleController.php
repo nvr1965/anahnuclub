@@ -14,7 +14,8 @@ class LocaleController extends Controller
         abort_unless(Language::isEnabled($locale), 422);
 
         $request->session()->put('locale', $locale);
-        $request->user()?->update(['locale' => $locale, 'ui_locale' => $locale]);
+        // Only the interface (and so the translations shown); the default language stays as set in the profile.
+        $request->user()?->forceFill(['ui_locale' => $locale])->save();
 
         return back();
     }

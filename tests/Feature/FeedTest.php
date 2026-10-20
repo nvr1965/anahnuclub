@@ -49,7 +49,9 @@ class FeedTest extends TestCase
         $user = User::factory()->create(['locale' => 'ru']);
 
         $this->actingAs($user)->post('/locale', ['locale' => 'he'])->assertRedirect();
-        $this->assertSame('he', $user->fresh()->locale);
+        $this->assertSame('he', $user->fresh()->ui_locale);
+        // The default language set in the profile stays.
+        $this->assertSame('ru', $user->fresh()->locale);
 
         $this->get('/feed')->assertInertia(fn ($page) => $page->where('locale', 'he')->where('dir', 'rtl')
             ->where('translations.Feed', 'פיד'));
