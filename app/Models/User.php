@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasContentTranslations;
 use App\Notifications\VerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -18,7 +19,10 @@ use Illuminate\Support\Facades\DB;
 class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasContentTranslations, HasFactory, Notifiable;
+
+    /** The city is shown in the reader's language. */
+    protected array $translatable = ['location'];
 
     /**
      * The attributes that are mass assignable.

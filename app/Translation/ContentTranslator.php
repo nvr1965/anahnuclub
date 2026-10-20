@@ -2,6 +2,7 @@
 
 namespace App\Translation;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -23,7 +24,10 @@ class ContentTranslator
 
     public function sourceLocale(Model $model, string $field): ?string
     {
-        return $model->getAttribute('locale') ?? LanguageGuesser::guess((string) $model->getAttribute($field));
+        // A member's own language setting says nothing about how they wrote their city.
+        $locale = $model instanceof User ? null : $model->getAttribute('locale');
+
+        return $locale ?? LanguageGuesser::guess((string) $model->getAttribute($field));
     }
 
     public function needsTranslation(Model $model, string $field, string $locale): bool

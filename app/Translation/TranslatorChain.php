@@ -38,6 +38,7 @@ class TranslatorChain implements Translator
 
     public static function fromSettings(): self
     {
+        TranslatorKeys::apply();
         $catalog = config('translation.providers');
         $order = config('translation.order');
         // The older single choice, TRANSLATION_DRIVER, still puts that service first.
@@ -48,7 +49,7 @@ class TranslatorChain implements Translator
 
         $saved = json_decode(Setting::get('translators') ?? 'null', true);
         if (! is_array($saved)) {
-            $saved = array_map(fn ($id) => ['id' => $id, 'on' => true, 'daily_chars' => $catalog[$id]['daily_chars'] ?? 0], $order);
+            $saved = array_map(fn ($id) => ['id' => $id, 'on' => true, 'daily_chars' => self::defaultLimit($id)], $order);
         }
 
         return new self(self::merge($saved, $catalog));
@@ -67,11 +68,19 @@ class TranslatorChain implements Translator
                 $entries[$row['id']] = ['id' => $row['id'], 'on' => (bool) ($row['on'] ?? true), 'daily_chars' => max(0, (int) ($row['daily_chars'] ?? 0))];
             }
         }
-        foreach ($catalog as $id => $info) {
-            $entries[$id] ??= ['id' => $id, 'on' => false, 'daily_chars' => (int) $info['daily_chars']];
+        foreach (array_keys($catalog) as $id) {
+            $entries[$id] ??= ['id' => $id, 'on' => false, 'daily_chars' => self::defaultLimit($id)];
         }
 
         return array_values($entries);
+    }
+
+    /** The starting daily limit; MyMemory gives ten times more when an email address is sent. */
+    public static function defaultLimit(string $id): int
+    {
+        $info = config('translation.providers.'.$id);
+
+        return (int) ($id === 'mymemory' && config('services.mymemory.email') ? $info['daily_chars_with_email'] : $info['daily_chars']);
     }
 
     /** For tests and other code: use this provider object for an id instead of building one. */
@@ -98,6 +107,7 @@ class TranslatorChain implements Translator
                 'note' => $info['note'] ?? '',
                 'ready' => $this->ready($entry['id']),
                 'needs' => array_values($info['needs']),
+                'fields' => TranslatorKeys::fields($entry['id']),
                 'used_today' => $this->usedToday($entry['id']),
             ];
         }, $this->entries);

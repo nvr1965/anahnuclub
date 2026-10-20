@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Setting;
 use App\Translation\TranslatorChain;
+use App\Translation\TranslatorKeys;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,32 @@ class TranslatorController extends AdminController
             fn ($row) => ['id' => $row['id'], 'on' => (bool) $row['on'], 'daily_chars' => (int) $row['daily_chars']],
             array_values($data['translators']),
         )));
+
+        return back();
+    }
+
+    /** Keys and addresses entered here instead of in .env; an empty value goes back to .env. */
+    public function keys(Request $request, string $translator): RedirectResponse
+    {
+        abort_unless(config('translation.providers.'.$translator), 404);
+        $paths = TranslatorKeys::paths($translator);
+        $values = $request->validate(['values' => ['present', 'array'], 'values.*' => ['nullable', 'string', 'max:500']])['values'];
+        $hadEmail = (bool) config('services.mymemory.email');
+
+        TranslatorKeys::put(array_intersect_key($values, array_flip($paths)));
+
+        // With an email address MyMemory allows ten times more; raise a limit still at the old free amount.
+        if ($translator === 'mymemory' && ! $hadEmail && config('services.mymemory.email')) {
+            $rows = json_decode(Setting::get('translators') ?? 'null', true);
+            if (is_array($rows)) {
+                foreach ($rows as &$row) {
+                    if ($row['id'] === 'mymemory' && (int) $row['daily_chars'] === (int) config('translation.providers.mymemory.daily_chars')) {
+                        $row['daily_chars'] = TranslatorChain::defaultLimit('mymemory');
+                    }
+                }
+                Setting::put('translators', json_encode($rows));
+            }
+        }
 
         return back();
     }

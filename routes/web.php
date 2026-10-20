@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('groups/{group:id}', [Admin\GroupController::class, 'destroy'])->name('groups.destroy');
     Route::get('translators', [Admin\TranslatorController::class, 'index'])->name('translators.index');
     Route::put('translators', [Admin\TranslatorController::class, 'update'])->name('translators.update');
+    Route::put('translators/{translator}/keys', [Admin\TranslatorController::class, 'keys'])->name('translators.keys');
     Route::post('translators/{translator}/check', [Admin\TranslatorController::class, 'check'])->name('translators.check');
     Route::get('languages', [Admin\LanguageController::class, 'index'])->name('languages.index');
     Route::post('languages', [Admin\LanguageController::class, 'store'])->name('languages.store');

@@ -3,8 +3,11 @@ import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, FlaskConical } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowDown, ArrowUp, FlaskConical, KeyRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+/** What the server decides about a service, kept apart from the order and switches being edited. */
+const pick = (row?: Translator) => (row ? { ready: row.ready, fields: row.fields, used_today: row.used_today, daily_chars: row.daily_chars } : {});
 
 interface Translator {
     id: string;
@@ -13,6 +16,7 @@ interface Translator {
     note: string;
     ready: boolean;
     needs: string[];
+    fields: { path: string; env: string; secret: boolean; value: string; source: 'admin' | 'env' | null }[];
     on: boolean;
     daily_chars: number;
     used_today: number;
@@ -25,7 +29,27 @@ export default function Translators({ translators }: { translators: Translator[]
     const [saving, setSaving] = useState(false);
     const [checkLocale, setCheckLocale] = useState(locale === 'en' ? 'ru' : locale);
     const [checks, setChecks] = useState<Record<string, { ok: boolean; text: string } | 'busy'>>({});
-    const changed = JSON.stringify(rows) !== JSON.stringify(translators);
+    const [editing, setEditing] = useState<string | null>(null);
+    const [values, setValues] = useState<Record<string, string>>({});
+    const changed =
+        JSON.stringify(rows.map(({ id, on, daily_chars }) => [id, on, daily_chars])) !==
+        JSON.stringify(translators.map(({ id, on, daily_chars }) => [id, on, daily_chars]));
+
+    // After a save the page comes back with fresh "set up" marks and limits.
+    useEffect(() => setRows((all) => all.map((row) => ({ ...row, ...pick(translators.find((r) => r.id === row.id)) }))), [translators]);
+
+    const saveKeys = (id: string, patch: Record<string, string>) =>
+        router.put(
+            route('admin.translators.keys', id),
+            { values: patch },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setValues({});
+                    setEditing(null);
+                },
+            },
+        );
 
     const set = (index: number, patch: Partial<Translator>) => setRows((all) => all.map((row, i) => (i === index ? { ...row, ...patch } : row)));
     const move = (index: number, by: number) =>
@@ -76,7 +100,9 @@ export default function Translators({ translators }: { translators: Translator[]
                         )}
                     </p>
                     <p className="text-muted-foreground">
-                        {t('Keys are written into the .env file on the server, never here. After changing .env run: php artisan optimize')}
+                        {t(
+                            'Keys can be entered here or written into the .env file on the server. A key entered here is stored encrypted and takes the place of the one in .env.',
+                        )}
                     </p>
                 </div>
 
@@ -118,11 +144,7 @@ export default function Translators({ translators }: { translators: Translator[]
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-semibold">{row.label}</span>
                                             <Badge tone={price[row.price].tone}>{price[row.price].text}</Badge>
-                                            {row.ready ? (
-                                                <Badge tone="green">{t('Set up')}</Badge>
-                                            ) : (
-                                                <Badge tone="red">{t('Needs :key in .env', { key: row.needs.join(', ') })}</Badge>
-                                            )}
+                                            {row.ready ? <Badge tone="green">{t('Set up')}</Badge> : <Badge tone="red">{t('Needs a key')}</Badge>}
                                         </div>
                                         <div className="text-muted-foreground text-xs">{t(row.note)}</div>
                                     </div>
@@ -144,7 +166,63 @@ export default function Translators({ translators }: { translators: Translator[]
                                     >
                                         <FlaskConical className="size-4" /> {t('Check')}
                                     </button>
+                                    {row.fields.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="text-muted-foreground inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                            onClick={() => {
+                                                setValues({});
+                                                setEditing(editing === row.id ? null : row.id);
+                                            }}
+                                        >
+                                            <KeyRound className="size-4" /> {t('Key')}
+                                        </button>
+                                    )}
                                 </div>
+                                {(editing === row.id || (!row.ready && row.on)) && row.fields.length > 0 && (
+                                    <form
+                                        className="space-y-2 rounded-md bg-slate-50 p-3 sm:ms-14 dark:bg-neutral-800/50"
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            const patch = Object.fromEntries(Object.entries(values).filter(([, v]) => v.trim() !== ''));
+                                            if (Object.keys(patch).length) saveKeys(row.id, patch);
+                                        }}
+                                    >
+                                        {row.fields.map((f) => (
+                                            <div key={f.path} className="space-y-1">
+                                                <div className="flex flex-wrap items-center gap-2 text-sm">
+                                                    <span className="font-mono text-xs">{f.env}</span>
+                                                    {f.source === 'admin' && <Badge tone="green">{t('Saved here')}</Badge>}
+                                                    {f.source === 'env' && <Badge tone="gray">{t('From .env')}</Badge>}
+                                                    {f.source === 'admin' && (
+                                                        <button
+                                                            type="button"
+                                                            className="text-xs text-red-600 hover:underline"
+                                                            onClick={() => saveKeys(row.id, { [f.path]: '' })}
+                                                        >
+                                                            {t('Remove')}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    type={f.secret ? 'password' : 'text'}
+                                                    autoComplete="off"
+                                                    className={`${field} w-full font-mono`}
+                                                    placeholder={f.value || t('Not set')}
+                                                    value={values[f.path] ?? ''}
+                                                    onChange={(e) => setValues((all) => ({ ...all, [f.path]: e.target.value }))}
+                                                />
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="submit"
+                                            disabled={!Object.values(values).some((v) => v.trim() !== '')}
+                                            className="bg-brand hover:bg-brand-dark rounded-md px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                                        >
+                                            {t('Save key')}
+                                        </button>
+                                    </form>
+                                )}
                                 <div className="text-muted-foreground ps-14 text-xs">
                                     {t('Used today: :used characters', { used: row.used_today.toLocaleString() })}
                                     {row.daily_chars > 0 ? ` / ${row.daily_chars.toLocaleString()}` : ` · ${t('no limit')}`}

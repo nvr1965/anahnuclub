@@ -1,5 +1,6 @@
 import { AlbumForm } from '@/components/album-form';
 import { AudienceIcon, useAudienceLabels } from '@/components/audience-picker';
+import { CountryPicker } from '@/components/country-picker';
 import { PhotoViewer } from '@/components/photo-viewer';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
@@ -9,7 +10,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { VideoGrid } from '@/components/video-grid';
 import ClubLayout from '@/layouts/club-layout';
 import { albumName } from '@/lib/albums';
-import { countryFlag, countryName, countryOptions } from '@/lib/countries';
+import { countryFlag, countryName } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Paginated, type Person, type PhotoItem, type Post, type SharedData, type VideoItem } from '@/types';
@@ -45,6 +46,7 @@ interface Profile {
     status: string | null;
     about: string | null;
     location: string | null;
+    location_translated?: string | null;
     country: string | null;
     website: string | null;
     birthdate: string | null;
@@ -382,7 +384,13 @@ function Details({ profile, locale, short = false }: { profile: Profile; locale:
     const rows: [ReactNode, ReactNode][] = [];
     const date = (iso: string, options: Intl.DateTimeFormatOptions) => new Date(iso).toLocaleDateString(locale, options);
 
-    if (profile.location) rows.push([<MapPin key="i" />, profile.location]);
+    if (profile.location)
+        rows.push([
+            <MapPin key="i" />,
+            <span dir="auto" title={profile.location_translated ? profile.location : undefined}>
+                {profile.location_translated ?? profile.location}
+            </span>,
+        ]);
     if (profile.country) rows.push([<Flag key="i" />, `${countryFlag(profile.country)} ${countryName(profile.country, locale)}`]);
     if (profile.website)
         rows.push([
@@ -654,14 +662,12 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
                     {row(
                         t('Country'),
                         'country',
-                        <select className={field} value={form.data.country} onChange={(e) => form.setData('country', e.target.value)}>
-                            <option value="">{t('Not specified')}</option>
-                            {countryOptions(locale).map(([code, name]) => (
-                                <option key={code} value={code}>
-                                    {name}
-                                </option>
-                            ))}
-                        </select>,
+                        <CountryPicker
+                            className={field}
+                            locale={locale}
+                            value={form.data.country}
+                            onChange={(code) => form.setData('country', code)}
+                        />,
                         'country',
                     )}
                     {row(t('Website'), 'website', text('website', 'url'), 'website')}

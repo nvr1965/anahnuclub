@@ -6,6 +6,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Photo;
 use App\Models\User;
 use App\Support\ImageStore;
+use App\Translation\ContentTranslator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,6 +99,7 @@ class PeopleController extends Controller
                 'about' => $user->about,
                 // Details are left out for viewers their audience does not include.
                 'location' => $user->shows('location', $viewer) ? $user->location : null,
+                'location_translated' => $user->shows('location', $viewer) ? app(ContentTranslator::class)->translate($user, 'location', app()->getLocale()) : null,
                 'country' => $user->shows('country', $viewer) ? $user->country : null,
                 'website' => $user->shows('website', $viewer) ? $user->website : null,
                 'birthdate' => $user->shows('birthdate', $viewer) ? $user->birthdate?->format('Y-m-d') : null,

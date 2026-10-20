@@ -85,4 +85,17 @@ class ContentTranslationTest extends TestCase
         $this->postJson('/translations', ['items' => [['type' => 'post', 'id' => $post->id]]])
             ->assertJsonPath('results.0.fields.body', '[he] Вторая версия');
     }
+
+    public function test_a_members_city_is_shown_in_the_readers_language()
+    {
+        $member = User::factory()->create(['locale' => 'he', 'location' => 'Хайфа']);
+        $reader = User::factory()->create(['locale' => 'en']);
+
+        $this->actingAs($reader)->get('/people/'.$member->id)->assertInertia(fn ($page) => $page
+            ->where('profile.location', 'Хайфа')
+            ->where('profile.location_translated', '[en] Хайфа'));
+        $this->actingAs($member)->get('/people/'.$member->id)->assertInertia(fn ($page) => $page->where('profile.location_translated', '[he] Хайфа'));
+        $this->get('/people/'.$member->id);
+        $this->assertSame(2, $this->fake->calls, 'a city is translated once per language');
+    }
 }

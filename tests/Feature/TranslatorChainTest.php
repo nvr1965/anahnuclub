@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\TranslateInterface;
 use App\Models\Language;
+use App\Models\Setting;
 use App\Models\User;
 use App\Translation\InterfaceStrings;
 use App\Translation\Providers\DeepL;
@@ -229,5 +230,38 @@ class TranslatorChainTest extends TestCase
         $this->assertSame([], InterfaceStrings::missing('uk'));
         $this->assertTrue(Language::find('uk')->enabled);
         InterfaceStrings::forget('uk');
+    }
+
+    public function test_admins_enter_keys_on_the_page_and_they_stay_encrypted()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        config(['services.deepl.key' => null]);
+        $this->assertFalse(collect(TranslatorChain::fromSettings()->describe())->firstWhere('id', 'deepl')['ready']);
+
+        $this->actingAs($admin)->put('/admin/translators/deepl/keys', ['values' => ['services.deepl.key' => 'abcd-secret-1234:fx', 'services.anthropic.key' => 'not-this-one']])
+            ->assertSessionHasNoErrors();
+
+        $this->assertStringNotContainsString('secret', (string) Setting::get('translator_keys'));
+        $deepl = collect(TranslatorChain::fromSettings()->describe())->firstWhere('id', 'deepl');
+        $this->assertTrue($deepl['ready']);
+        $this->assertSame(['value' => '••••4:fx', 'source' => 'admin'], array_intersect_key($deepl['fields'][0], ['value' => 1, 'source' => 1]));
+        $this->assertNotSame('not-this-one', config('services.anthropic.key'), 'a field of another service is ignored');
+        $this->get('/admin/translators')->assertDontSee('abcd-secret');
+
+        $this->put('/admin/translators/deepl/keys', ['values' => ['services.deepl.key' => '']]);
+        $this->assertFalse(collect(TranslatorChain::fromSettings()->describe())->firstWhere('id', 'deepl')['ready']);
+    }
+
+    public function test_a_mymemory_email_entered_on_the_page_raises_its_limit()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        config(['services.mymemory.email' => null]);
+        $this->actingAs($admin)->put('/admin/translators', ['translators' => [['id' => 'mymemory', 'on' => true, 'daily_chars' => 4500]]]);
+
+        $this->put('/admin/translators/mymemory/keys', ['values' => ['services.mymemory.email' => 'team@anahnu.club']]);
+
+        $mymemory = collect(TranslatorChain::fromSettings()->describe())->firstWhere('id', 'mymemory');
+        $this->assertSame(45000, $mymemory['daily_chars']);
+        $this->assertSame('team@anahnu.club', $mymemory['fields'][0]['value']);
     }
 }
