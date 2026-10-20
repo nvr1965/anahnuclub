@@ -41,8 +41,8 @@ export default function LanguageTexts({
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
-                    setDrafts(({ [key]: _, ...rest }) => rest);
-                    setErrors(({ [key]: _, ...rest }) => rest);
+                    setDrafts(({ [key]: _done, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+                    setErrors(({ [key]: _done, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
                 },
                 onError: (e) => setErrors((all) => ({ ...all, [key]: e.text ?? Object.values(e)[0] })),
             },

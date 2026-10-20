@@ -1,5 +1,5 @@
-import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { MessageSquare, Users } from 'lucide-react';
@@ -13,7 +13,13 @@ interface GroupRow {
     posts_count: number;
 }
 
-export default function GroupsIndex({ groups, sidebar }: { groups: { data: GroupRow[]; next_page_url: string | null; prev_page_url: string | null }; sidebar: Sidebar }) {
+export default function GroupsIndex({
+    groups,
+    sidebar,
+}: {
+    groups: { data: GroupRow[]; next_page_url: string | null; prev_page_url: string | null };
+    sidebar: Sidebar;
+}) {
     const t = useT();
 
     return (

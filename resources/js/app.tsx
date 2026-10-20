@@ -4,6 +4,7 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
+import { ErrorBoundary } from './components/error-boundary';
 import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
 import { setUpInstall } from './lib/install-app';
@@ -27,7 +28,9 @@ createInertiaApp({
             <App {...props}>
                 {({ Component, key, props: pageProps }) => (
                     <>
-                        <Component key={key} {...pageProps} />
+                        <ErrorBoundary resetKey={key}>
+                            <Component key={key} {...pageProps} />
+                        </ErrorBoundary>
                         <CallRoot />
                     </>
                 )}
@@ -48,6 +51,25 @@ function syncDocumentLanguage(pageProps: Record<string, unknown>) {
 
 router.on('navigate', (event) => syncDocumentLanguage(event.detail.page.props));
 router.on('success', (event) => syncDocumentLanguage(event.detail.page.props));
+
+// After an update the old page files are gone; a tab opened before it loads the new ones once.
+window.addEventListener('vite:preloadError', (event) => {
+    try {
+        if (sessionStorage.getItem('reloaded-for-update')) return;
+        sessionStorage.setItem('reloaded-for-update', '1');
+    } catch {
+        // Without storage, reload anyway.
+    }
+    event.preventDefault();
+    window.location.reload();
+});
+router.on('success', () => {
+    try {
+        sessionStorage.removeItem('reloaded-for-update');
+    } catch {
+        // Nothing to clear.
+    }
+});
 
 setUpInstall();
 

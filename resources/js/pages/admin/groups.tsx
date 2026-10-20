@@ -42,7 +42,10 @@ export default function AdminGroups({ groups, q }: { groups: Page<Row>; q: strin
                             </ActionButton>
                             <ActionButton
                                 danger
-                                onClick={() => confirm(t('Delete the group “:name” with all its posts?', { name: group.name })) && send('delete', route('admin.groups.destroy', group.id))}
+                                onClick={() =>
+                                    confirm(t('Delete the group “:name” with all its posts?', { name: group.name })) &&
+                                    send('delete', route('admin.groups.destroy', group.id))
+                                }
                             >
                                 {t('Delete')}
                             </ActionButton>

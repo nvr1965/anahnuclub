@@ -66,6 +66,11 @@ export default function Messages({ conversations, requests, conversation, messag
     const [showRequests, setShowRequests] = useState(Boolean(conversation?.request));
     const rows = showRequests ? requests : conversations;
 
+    // A request just accepted moves to the chats, and the list follows it there.
+    useEffect(() => {
+        if (conversation && !conversation.request) setShowRequests(false);
+    }, [conversation?.id, conversation?.request]); // eslint-disable-line react-hooks/exhaustive-deps
+
     useEffect(() => {
         const timer = setInterval(
             () => {

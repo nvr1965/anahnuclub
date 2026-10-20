@@ -78,10 +78,18 @@ export function CountryPicker({
                     setOpen(true);
                 }}
                 onKeyDown={(e) => {
-                    if (e.key === 'ArrowDown') e.preventDefault(), setOpen(true), move(1);
-                    else if (e.key === 'ArrowUp') e.preventDefault(), move(-1);
-                    else if (e.key === 'Enter' && open && shown[active]) e.preventDefault(), pick(shown[active].code);
-                    else if (e.key === 'Escape') setOpen(false);
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setOpen(true);
+                        move(1);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        move(-1);
+                    } else if (e.key === 'Enter' && open && shown[active]) {
+                        e.preventDefault();
+                        pick(shown[active].code);
+                    }
+                    if (e.key === 'Escape') setOpen(false);
                 }}
             />
             <div className="text-muted-foreground pointer-events-none absolute inset-y-0 end-2 flex items-center gap-1">
@@ -109,7 +117,10 @@ export function CountryPicker({
                             key={o.code}
                             role="option"
                             aria-selected={o.code === value}
-                            onMouseDown={(e) => (e.preventDefault(), pick(o.code))}
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                pick(o.code);
+                            }}
                             onMouseEnter={() => setActive(i)}
                             className={`cursor-pointer px-3 py-1.5 text-[15px] ${i === active ? 'bg-slate-100 dark:bg-neutral-800' : ''} ${o.code === value ? 'font-semibold' : ''}`}
                         >

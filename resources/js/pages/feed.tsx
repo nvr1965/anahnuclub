@@ -1,7 +1,7 @@
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
-import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { type Paginated, type Post, type Sidebar } from '@/types';
 import { Head } from '@inertiajs/react';
 

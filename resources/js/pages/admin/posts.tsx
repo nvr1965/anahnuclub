@@ -51,11 +51,20 @@ export default function AdminPosts({ posts, q, user }: { posts: Page<Row>; q: st
                 {posts.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
                 {posts.data.map((post) => (
                     <div key={post.id} className="flex gap-3 p-3">
-                        <input type="checkbox" className="accent-brand mt-1 size-4" checked={selected.includes(post.id)} onChange={() => toggle(post.id)} />
+                        <input
+                            type="checkbox"
+                            className="accent-brand mt-1 size-4"
+                            checked={selected.includes(post.id)}
+                            onChange={() => toggle(post.id)}
+                        />
                         <div className="min-w-0 flex-1">
                             <div className="text-muted-foreground text-xs">
                                 {post.author ? (
-                                    <Link href={route('admin.posts.index', { user: post.author.id })} className="text-foreground font-medium hover:underline" dir="auto">
+                                    <Link
+                                        href={route('admin.posts.index', { user: post.author.id })}
+                                        className="text-foreground font-medium hover:underline"
+                                        dir="auto"
+                                    >
                                         {post.author.name}
                                     </Link>
                                 ) : (
@@ -70,7 +79,8 @@ export default function AdminPosts({ posts, q, user }: { posts: Page<Row>; q: st
                                         </Link>
                                     </>
                                 )}
-                                {post.created_at && <> · {relativeTime(post.created_at, locale)}</>} · {t(':count comments', { count: post.comments_count })}
+                                {post.created_at && <> · {relativeTime(post.created_at, locale)}</>} ·{' '}
+                                {t(':count comments', { count: post.comments_count })}
                             </div>
                             {post.title && (
                                 <div dir="auto" className="mt-0.5 font-medium">
