@@ -40,7 +40,7 @@ class PageController extends AdminController
                 'published' => $edit->published,
                 'sort' => $edit->sort ?? 0,
             ] : null,
-            'donate_links' => Setting::donateLinks(),
+            'donate_links' => Setting::donateLinks(all: true),
             'can_translate' => app(Translator::class)->name() !== 'null',
         ]);
     }
@@ -86,8 +86,9 @@ class PageController extends AdminController
             'donate_links' => ['present', 'array', 'max:10'],
             'donate_links.*.label' => ['required', 'string', 'max:40'],
             'donate_links.*.url' => ['required', 'url:https,http', 'max:500'],
+            'donate_links.*.on' => ['sometimes', 'boolean'],
         ]);
-        $links = array_map(fn ($l) => ['label' => trim($l['label']), 'url' => trim($l['url'])], $data['donate_links']);
+        $links = array_map(fn ($l) => ['label' => trim($l['label']), 'url' => trim($l['url']), 'on' => (bool) ($l['on'] ?? true)], $data['donate_links']);
         Setting::put('donate_links', json_encode(array_values($links), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         return back();

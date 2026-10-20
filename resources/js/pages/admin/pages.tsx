@@ -18,7 +18,7 @@ interface Props {
     languages: Language[];
     pages: { slug: string; title: string; published: boolean; in_footer: boolean; languages: string[] }[];
     edit: { slug: string | null; content: Content; in_footer: boolean; published: boolean; sort: number } | null;
-    donate_links: { label: string; url: string }[];
+    donate_links: { label: string; url: string; on: boolean }[];
     can_translate: boolean;
 }
 
@@ -30,7 +30,7 @@ const secondary =
 
 export default function AdminPages({ languages, pages, edit, donate_links, can_translate }: Props) {
     const t = useT();
-    const settings = useForm<{ donate_links: { label: string; url: string }[] }>({ donate_links: donate_links });
+    const settings = useForm<{ donate_links: { label: string; url: string; on: boolean }[] }>({ donate_links: donate_links });
     const links = settings.data.donate_links;
     const setLink = (i: number, key: 'label' | 'url', value: string) =>
         settings.setData(
@@ -83,13 +83,27 @@ export default function AdminPages({ languages, pages, edit, donate_links, can_t
                     <h2 className="font-semibold">{t('Donation button')}</h2>
                     <p className="text-muted-foreground text-sm">
                         {t(
-                            'Ways to donate under the “Support Anahnu Club” button in the footer. With several, the button opens a menu. Remove all to hide it.',
+                            'Ways to donate under the “Support Anahnu Club” button in the footer. With several, the button opens a menu. Untick one to hide it without deleting; with none on, the button is hidden.',
                         )}
                     </p>
                     {links.map((link, i) => (
-                        <div key={i} className="flex flex-wrap gap-2">
+                        <div key={i} className="flex flex-wrap items-center gap-2">
+                            <label className="flex items-center gap-1.5 text-sm" title={t('Shown on the site')}>
+                                <input
+                                    type="checkbox"
+                                    className="accent-brand size-4"
+                                    checked={link.on}
+                                    onChange={(e) =>
+                                        settings.setData(
+                                            'donate_links',
+                                            links.map((l, j) => (j === i ? { ...l, on: e.target.checked } : l)),
+                                        )
+                                    }
+                                />
+                                {t('On')}
+                            </label>
                             <input
-                                className={`${field.replace('w-full', '')} w-36`}
+                                className={`${field.replace('w-full', '')} w-36 ${link.on ? '' : 'opacity-50'}`}
                                 placeholder="Ko-fi"
                                 value={link.label}
                                 onChange={(e) => setLink(i, 'label', e.target.value)}
@@ -124,7 +138,7 @@ export default function AdminPages({ languages, pages, edit, donate_links, can_t
                             type="button"
                             className={secondary}
                             disabled={links.length >= 10}
-                            onClick={() => settings.setData('donate_links', [...links, { label: '', url: '' }])}
+                            onClick={() => settings.setData('donate_links', [...links, { label: '', url: '', on: true }])}
                         >
                             <Plus className="size-4" /> {t('Add a way to donate')}
                         </button>

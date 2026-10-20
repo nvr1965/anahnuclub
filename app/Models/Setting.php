@@ -28,10 +28,19 @@ class Setting extends Model
         return array_key_exists($key, $all) ? $all[$key] : (self::DEFAULTS[$key] ?? null);
     }
 
-    /** Ways to donate shown under the footer button. @return list<array{label: string, url: string}> */
-    public static function donateLinks(): array
+    /**
+     * Ways to donate shown under the footer button; with $all also the ones switched off in the admin.
+     *
+     * @return list<array{label: string, url: string, on?: bool}>
+     */
+    public static function donateLinks(bool $all = false): array
     {
-        return array_values(json_decode(static::get('donate_links') ?? '[]', true) ?: []);
+        // Saved before the switch existed: on.
+        $links = array_map(fn ($l) => $l + ['on' => true], json_decode(static::get('donate_links') ?? '[]', true) ?: []);
+
+        return $all
+            ? array_values($links)
+            : array_values(array_map(fn ($l) => ['label' => $l['label'], 'url' => $l['url']], array_filter($links, fn ($l) => $l['on'])));
     }
 
     public static function put(string $key, ?string $value): void

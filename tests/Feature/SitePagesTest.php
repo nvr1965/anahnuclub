@@ -71,6 +71,10 @@ class SitePagesTest extends TestCase
         $links = [['label' => 'PayPal', 'url' => 'https://paypal.me/x'], ['label' => 'Ko-fi', 'url' => 'https://ko-fi.com/x']];
         $this->patch('/admin/site-settings', ['donate_links' => $links])->assertRedirect();
         $this->get('/p/faq')->assertInertia(fn ($page) => $page->where('footer.donate', $links));
+        // Switched off: kept for the admin, gone from the footer.
+        $this->patch('/admin/site-settings', ['donate_links' => [$links[0] + ['on' => false], $links[1] + ['on' => true]]])->assertRedirect();
+        $this->get('/p/faq')->assertInertia(fn ($page) => $page->where('footer.donate', [$links[1]]));
+        $this->get('/admin/pages')->assertInertia(fn ($page) => $page->has('donate_links', 2)->where('donate_links.0.on', false));
         $this->patch('/admin/site-settings', ['donate_links' => [['label' => 'Bad', 'url' => 'not a link']]])->assertSessionHasErrors('donate_links.0.url');
         $this->patch('/admin/site-settings', ['donate_links' => []])->assertRedirect();
         $this->get('/p/faq')->assertInertia(fn ($page) => $page->where('footer.donate', []));
