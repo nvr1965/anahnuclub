@@ -5,7 +5,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
 import { type FormEventHandler, type ReactNode } from 'react';
 
-export default function Contact({ sent }: { sent: boolean }) {
+export default function Contact({ sent, email }: { sent: boolean; email: string | null }) {
     const t = useT();
     const { auth } = usePage<SharedData>().props;
     const form = useForm({ name: '', email: '', subject: '', body: '', website: '' });
@@ -32,6 +32,16 @@ export default function Contact({ sent }: { sent: boolean }) {
                 <h1 className="text-2xl font-bold">{t('Contact us')}</h1>
                 <p className="text-muted-foreground mt-1 mb-5 text-[15px]">
                     {t('Questions, ideas, a complaint about a post or a request about your data: write to the club administration.')}
+                    {email && (
+                        <>
+                            {' '}
+                            {t('You can also write to')}{' '}
+                            <a href={`mailto:${email}`} className="text-brand font-medium hover:underline" dir="ltr">
+                                {email}
+                            </a>
+                            .
+                        </>
+                    )}
                 </p>
                 {sent ? (
                     <div className="flex flex-col items-center gap-3 py-8 text-center">

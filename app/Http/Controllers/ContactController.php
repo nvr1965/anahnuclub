@@ -3,18 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
+use App\Notifications\ContactReceived;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** The feedback form; messages land in the admin inbox. */
+/** The feedback form; messages land in the admin inbox and are copied to the team's mailbox. */
 class ContactController extends Controller
 {
     public function create(): Response
     {
-        return Inertia::render('contact', ['sent' => session('contact_sent', false)]);
+        return Inertia::render('contact', ['sent' => session('contact_sent', false), 'email' => config('services.contact.email')]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -38,7 +40,7 @@ class ContactController extends Controller
         }
         RateLimiter::hit($key, 3600);
 
-        ContactMessage::create([
+        $message = ContactMessage::create([
             'user_id' => $user?->id,
             'name' => ($data['name'] ?? null) ?: $user?->name,
             'email' => ($data['email'] ?? null) ?: $user?->email,
@@ -47,6 +49,9 @@ class ContactController extends Controller
             'locale' => app()->getLocale(),
             'ip' => $request->ip(),
         ]);
+        if ($to = config('services.contact.email')) {
+            Notification::route('mail', $to)->notify(new ContactReceived($message));
+        }
 
         return back()->with('contact_sent', true);
     }

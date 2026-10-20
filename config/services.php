@@ -35,6 +35,11 @@ return [
         ],
     ],
 
+    // Where contact form messages are copied to, besides the admin inbox; empty = inbox only.
+    'contact' => [
+        'email' => env('CONTACT_EMAIL', 'team@anahnu.club'),
+    ],
+
     'translation' => [
         // Old single choice (null | claude | gemini | deepl ...); if set, that service is tried first. See config/translation.php.
         'driver' => env('TRANSLATION_DRIVER', 'null'),

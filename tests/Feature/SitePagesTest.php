@@ -6,9 +6,11 @@ use App\Models\ContactMessage;
 use App\Models\Language;
 use App\Models\Page;
 use App\Models\User;
+use App\Notifications\ContactReceived;
 use App\Translation\InterfaceStrings;
 use App\Translation\Translator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class SitePagesTest extends TestCase
@@ -27,7 +29,8 @@ class SitePagesTest extends TestCase
             $this->withSession(['locale' => $locale])->get('/p/disclaimer')->assertOk()->assertInertia(fn ($page) => $page
                 ->component('pages/show')
                 ->where('page.title', $title)
-                ->where('footer.pages.1.slug', 'privacy')
+                ->where('footer.pages.0.slug', 'rules')
+                ->where('footer.pages.2.slug', 'privacy')
                 ->where('footer.donate.0.url', 'https://www.paypal.com/donate/?hosted_button_id=9K3YLUVSY8K72')
             );
         }
@@ -35,9 +38,13 @@ class SitePagesTest extends TestCase
 
     public function test_anyone_can_send_feedback_and_admins_read_it()
     {
+        Notification::fake();
         $this->post('/contact', ['name' => 'Dana', 'email' => 'dana@example.com', 'subject' => 'Hi', 'body' => 'Great club!'])->assertRedirect();
         $this->post('/contact', ['name' => 'Bot', 'email' => 'bot@example.com', 'body' => 'Buy things', 'website' => 'spam.example'])->assertRedirect();
         $this->assertSame(['Great club!'], ContactMessage::pluck('body')->all());
+        Notification::assertSentOnDemand(ContactReceived::class, fn ($n, $channels, $to) => $to->routes['mail'] === 'team@anahnu.club'
+            && $n->toMail($to)->replyTo[0][0] === 'dana@example.com');
+        Notification::assertSentOnDemandTimes(ContactReceived::class, 1);
 
         $member = User::factory()->create();
         $this->actingAs($member)->post('/contact', ['body' => 'Please delete my old posts'])->assertRedirect();
@@ -53,20 +60,20 @@ class SitePagesTest extends TestCase
         $this->app->instance(Translator::class, new FakeTranslator);
         $admin = User::factory()->create(['is_admin' => true]);
 
-        $this->actingAs($admin)->post('/admin/pages', ['slug' => 'rules', 'content' => ['ru' => ['title' => 'Правила', 'body' => '<p>Будьте вежливы</p>']]])
-            ->assertRedirect('/admin/pages?page=rules');
-        $this->post('/admin/pages/rules/translate', ['from' => 'ru'])->assertRedirect();
+        $this->actingAs($admin)->post('/admin/pages', ['slug' => 'faq', 'content' => ['ru' => ['title' => 'Вопросы', 'body' => '<p>Будьте вежливы</p>']]])
+            ->assertRedirect('/admin/pages?page=faq');
+        $this->post('/admin/pages/faq/translate', ['from' => 'ru'])->assertRedirect();
 
-        $content = Page::where('slug', 'rules')->first()->content;
-        $this->assertSame('[he] Правила', $content['he']['title']);
+        $content = Page::where('slug', 'faq')->first()->content;
+        $this->assertSame('[he] Вопросы', $content['he']['title']);
         $this->assertTrue($content['en']['auto']);
 
         $links = [['label' => 'PayPal', 'url' => 'https://paypal.me/x'], ['label' => 'Ko-fi', 'url' => 'https://ko-fi.com/x']];
         $this->patch('/admin/site-settings', ['donate_links' => $links])->assertRedirect();
-        $this->get('/p/rules')->assertInertia(fn ($page) => $page->where('footer.donate', $links));
+        $this->get('/p/faq')->assertInertia(fn ($page) => $page->where('footer.donate', $links));
         $this->patch('/admin/site-settings', ['donate_links' => [['label' => 'Bad', 'url' => 'not a link']]])->assertSessionHasErrors('donate_links.0.url');
         $this->patch('/admin/site-settings', ['donate_links' => []])->assertRedirect();
-        $this->get('/p/rules')->assertInertia(fn ($page) => $page->where('footer.donate', []));
+        $this->get('/p/faq')->assertInertia(fn ($page) => $page->where('footer.donate', []));
     }
 
     public function test_a_new_language_gets_its_interface_translated_and_switches_on()
