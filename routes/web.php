@@ -140,6 +140,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('users/{user}/purge', [Admin\UserController::class, 'purge'])->name('users.purge');
     Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
     Route::delete('posts', [Admin\PostController::class, 'destroy'])->name('posts.destroy');
+    Route::get('moderation', [Admin\ModerationController::class, 'index'])->name('moderation.index');
+    Route::delete('moderation', [Admin\ModerationController::class, 'destroy'])->name('moderation.destroy');
+    Route::post('moderation/keep', [Admin\ModerationController::class, 'keep'])->name('moderation.keep');
+    Route::put('moderation/words', [Admin\ModerationController::class, 'words'])->name('moderation.words');
     Route::get('groups', [Admin\GroupController::class, 'index'])->name('groups.index');
     Route::patch('groups/{group:id}', [Admin\GroupController::class, 'update'])->name('groups.update');
     Route::delete('groups/{group:id}', [Admin\GroupController::class, 'destroy'])->name('groups.destroy');
