@@ -79,7 +79,7 @@ class SearchController extends Controller
             ->where(fn (Builder $w) => $w->where('name', $op, $like)->orWhere('username', $op, $like)
                 // Location can be hidden from some viewers, so only the open "about" text is searched.
                 ->orWhere('about', $op, $like))
-            ->orderByRaw('last_seen_at is null')->orderByDesc('last_seen_at')->orderBy('id');
+            ->latestSeen()->orderBy('id');
 
         $posts = FeedController::postQuery($request)
             ->whereDoesntHave('group', fn (Builder $g) => $g->where('is_private', true)->whereNotIn('id', $myGroups))

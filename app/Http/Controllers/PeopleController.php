@@ -34,8 +34,7 @@ class PeopleController extends Controller
             ->when($q !== '', fn (Builder $b) => $b->where(fn (Builder $w) => $w
                 ->where('name', $op, '%'.addcslashes($q, '%_\\').'%')
                 ->orWhere('username', $op, '%'.addcslashes($q, '%_\\').'%')))
-            ->orderByRaw('last_seen_at is null')
-            ->orderByDesc('last_seen_at')
+            ->latestSeen()
             ->orderBy('id')
             ->paginate(48)
             ->withQueryString();
@@ -71,7 +70,7 @@ class PeopleController extends Controller
         abort_if(! $me && ! $blockedByMe && ! $viewer->is_admin && $viewer->isBlockedWith($user), 404);
 
         $tab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'posts';
-        $friends = $user->friends()->where('blocked', false)->whereNotIn('id', $viewer->hiddenUserIds())->orderByDesc('last_seen_at');
+        $friends = $user->friends()->where('blocked', false)->whereNotIn('id', $viewer->hiddenUserIds())->latestSeen();
         $photos = Photo::query()->where('user_id', $user->id)->whereNotNull('thumb_path')
             ->whereDoesntHave('album', fn (Builder $q) => $q->whereNotNull('group_id'))
             // Pictures of a post follow its audience.

@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -110,5 +111,19 @@ class ProfileAndFriendsTest extends TestCase
         $this->actingAs($here)->get('/people/'.$away->id)->assertInertia(fn ($page) => $page->where('profile.online', false));
         $this->get('/people/'.$here->id)->assertInertia(fn ($page) => $page->where('profile.online', true));
         $this->get('/people')->assertInertia(fn ($page) => $page->where('people.data', fn ($rows) => collect($rows)->firstWhere('id', $away->id)['online'] === false));
+    }
+
+    public function test_friends_on_the_site_now_come_first()
+    {
+        $me = User::factory()->create();
+        $anna = User::factory()->create(['name' => 'Anna', 'last_seen_at' => now()->subDay()]);
+        $zoe = User::factory()->create(['name' => 'Zoe', 'last_seen_at' => now()->subMinute()]);
+        $never = User::factory()->create(['name' => 'Boris', 'last_seen_at' => null]);
+        foreach ([$anna, $zoe, $never] as $friend) {
+            DB::table('friendships')->insert(['user_id' => $me->id, 'friend_id' => $friend->id, 'accepted' => true]);
+        }
+
+        $this->actingAs($me)->get('/friends')->assertInertia(fn ($page) => $page->where('friends.0.id', $zoe->id)->where('friends.1.id', $anna->id));
+        $this->get('/people/'.$me->id)->assertInertia(fn ($page) => $page->where('friends.0.id', $zoe->id)->where('friends.2.id', $never->id));
     }
 }

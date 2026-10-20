@@ -169,6 +169,24 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return $this->last_seen_at !== null && $this->last_seen_at->gt(now()->subMinutes(5));
     }
 
+    /** Members on the site now go first; the order given after this sorts the rest. */
+    public function scopeOnlineFirst(Builder $query): Builder
+    {
+        return $query->orderByRaw('case when users.last_seen_at > ? then 0 else 1 end', [now()->subMinutes(5)]);
+    }
+
+    /** Most recently here first, never-seen last (PostgreSQL would put empty dates first). */
+    public function scopeLatestSeen(Builder $query): Builder
+    {
+        return $query->orderByRaw('users.last_seen_at is null')->orderByDesc('users.last_seen_at');
+    }
+
+    /** With a picture, or on the site now: lists of faces leave out the rest. */
+    public function scopeShowable(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->whereNotNull('users.avatar_path')->orWhere('users.last_seen_at', '>', now()->subMinutes(5)));
+    }
+
     /** The main administrator, see config app.super_admin_email. */
     public function isSuperAdmin(): bool
     {

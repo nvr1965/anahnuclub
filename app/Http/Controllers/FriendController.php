@@ -22,14 +22,14 @@ class FriendController extends Controller
         return Inertia::render('friends/index', [
             'requests' => $user->friendRequesters()->where('blocked', false)->latest('id')->get()->map(fn (User $u) => PeopleController::card($u)),
             'sent' => User::query()->whereIn('id', $pendingIds)->get()->map(fn (User $u) => PeopleController::card($u)),
-            'friends' => $user->friends()->where('blocked', false)->orderBy('name')->get()->map(fn (User $u) => PeopleController::card($u)),
+            'friends' => $user->friends()->where('blocked', false)->onlineFirst()->orderBy('name')->get()->map(fn (User $u) => PeopleController::card($u)),
             // Members recently active the viewer has no tie to yet.
             'suggestions' => User::query()
                 ->where('blocked', false)
                 ->whereKeyNot($user->id)
                 ->whereNotIn('id', $friendIds->merge($pendingIds)->merge($user->friendRequesters()->pluck('id'))->merge($user->hiddenUserIds()))
-                ->whereNotNull('avatar_path')
-                ->orderByDesc('last_seen_at')
+                ->showable()
+                ->latestSeen()
                 ->limit(12)
                 ->get()
                 ->map(fn (User $u) => PeopleController::card($u)),

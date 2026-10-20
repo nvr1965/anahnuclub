@@ -14,9 +14,9 @@ class CommunitySidebar
         return [
             'members' => User::query()
                 ->where('blocked', false)
-                ->whereNotNull('avatar_path')
+                ->showable()
                 ->when($user, fn ($q) => $q->whereNotIn('id', $user->hiddenUserIds()))
-                ->orderByDesc('last_seen_at')
+                ->latestSeen()
                 ->limit(20)
                 ->get()
                 ->map(fn (User $u) => PeopleController::card($u)),
