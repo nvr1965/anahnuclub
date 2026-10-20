@@ -45,8 +45,13 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
     Route::get('search', SearchController::class)->name('search');
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');
+    Route::post('groups', [GroupController::class, 'store'])->middleware('throttle:5,60')->name('groups.store');
     Route::get('groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
+    Route::put('groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+    Route::delete('groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+    Route::post('groups/{group}/members/{user}/approve', [GroupController::class, 'approve'])->name('groups.members.approve');
+    Route::delete('groups/{group}/members/{user}', [GroupController::class, 'removeMember'])->name('groups.members.destroy');
     Route::post('groups/{group}/offers', [GroupRoleController::class, 'offer'])->name('groups.offers.store');
     Route::post('groups/{group}/offers/{offer}/accept', [GroupRoleController::class, 'accept'])->name('groups.offers.accept');
     Route::delete('groups/{group}/offers/{offer}', [GroupRoleController::class, 'cancel'])->name('groups.offers.destroy');

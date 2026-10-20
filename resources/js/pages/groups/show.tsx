@@ -1,3 +1,4 @@
+import { GroupForm } from '@/components/group-form';
 import { GroupTeam, OfferBanner, RoleBadge, type GroupRole, type OfferRole, type TeamMember } from '@/components/group-team';
 import { InviteButton } from '@/components/invite-button';
 import { PostComposer } from '@/components/post-composer';
@@ -14,6 +15,9 @@ interface Group {
     slug: string;
     description: string;
     cover: string | null;
+    avatar: string | null;
+    is_private: boolean;
+    description_text: string;
     members_count: number;
     is_member: boolean;
     blocked: boolean;
@@ -65,6 +69,9 @@ export default function GroupShow({
                                 <>
                                     <InviteButton group={group} />
                                     {team && group.role && <GroupTeam group={group} team={team} myRole={group.role} />}
+                                    {(group.role === 'owner' || group.role === 'admin') && (
+                                        <GroupForm group={group} isOwner={group.role === 'owner'} />
+                                    )}
                                     {!group.is_member && (
                                         <button
                                             onClick={() => router.post(route('groups.join', group.slug))}
@@ -73,18 +80,20 @@ export default function GroupShow({
                                             {t('Join')}
                                         </button>
                                     )}
-                                    <button
-                                        type="button"
-                                        className={secondary}
-                                        title={t('Block group')}
-                                        aria-label={t('Block group')}
-                                        onClick={() =>
-                                            window.confirm(t('Block this group? You will leave it and stop seeing its posts.')) &&
-                                            router.post(route('blocks.group', group.slug))
-                                        }
-                                    >
-                                        <Ban className="size-4" />
-                                    </button>
+                                    {group.role !== 'owner' && (
+                                        <button
+                                            type="button"
+                                            className={secondary}
+                                            title={t('Block group')}
+                                            aria-label={t('Block group')}
+                                            onClick={() =>
+                                                window.confirm(t('Block this group? You will leave it and stop seeing its posts.')) &&
+                                                router.post(route('blocks.group', group.slug))
+                                            }
+                                        >
+                                            <Ban className="size-4" />
+                                        </button>
+                                    )}
                                 </>
                             )}
                         </div>

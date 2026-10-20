@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
+use App\Jobs\TranslateContent;
 use App\Models\Group;
 use App\Models\User;
 use App\Support\Html;
+use App\Support\ImageStore;
 use App\Support\SiteMeta;
+use App\Translation\LanguageGuesser;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,6 +53,10 @@ class GroupController extends Controller
                 'slug' => $group->slug,
                 'description' => Html::clean($group->description),
                 'cover' => $group->cover_path ? asset('storage/'.$group->cover_path) : null,
+                'avatar' => $group->avatar_path ? asset('storage/'.$group->avatar_path) : null,
+                'is_private' => $group->is_private,
+                // The text as typed, for the settings form.
+                'description_text' => trim(html_entity_decode(strip_tags(preg_replace('~<br\s*/?>\R?|</p>~i', "\n", (string) $group->description)))),
                 'members_count' => $group->members()->count(),
                 'is_member' => $member,
                 'blocked' => (bool) $request->user()?->blockedGroupIds()->contains($group->id),
@@ -71,21 +80,133 @@ class GroupController extends Controller
         ]]);
     }
 
+    /** Any member can start a group and becomes its owner. */
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validated($request);
+        $me = $request->user();
+        $group = Group::create([
+            'owner_id' => $me->id,
+            'name' => $data['name'],
+            'slug' => (string) Str::uuid(),
+            'description' => Html::fromPlainText((string) ($data['description'] ?? '')),
+            'locale' => LanguageGuesser::guess($data['name'].' '.($data['description'] ?? '')) ?? $me->locale,
+            'is_private' => (bool) ($data['is_private'] ?? false),
+        ]);
+        // As the imported groups: "12-name", readable and unique.
+        $group->update(['slug' => trim($group->id.'-'.Str::limit(Str::slug($data['name'], '-', $group->locale ?? 'en'), 60, ''), '-')]);
+        $group->members()->attach($me->id, ['role' => 'owner', 'approved' => true]);
+        $this->pictures($request, $group);
+        TranslateContent::dispatchAfterResponse($group);
+
+        return to_route('groups.show', $group);
+    }
+
+    /** Name, description, pictures and privacy, for the owner and admins. */
+    public function update(Request $request, Group $group): RedirectResponse
+    {
+        abort_unless(in_array($group->roleOf($request->user()), ['owner', 'admin'], true), 403);
+        $data = $this->validated($request);
+        $group->update([
+            'name' => $data['name'],
+            'description' => Html::fromPlainText((string) ($data['description'] ?? '')),
+            'is_private' => (bool) ($data['is_private'] ?? false),
+        ]);
+        foreach (['avatar_path' => 'remove_avatar', 'cover_path' => 'remove_cover'] as $column => $flag) {
+            if ($request->boolean($flag) && $group->{$column}) {
+                ImageStore::delete($group->{$column});
+                $group->update([$column => null]);
+            }
+        }
+        $this->pictures($request, $group);
+        if ($group->wasChanged(['name', 'description'])) {
+            TranslateContent::dispatchAfterResponse($group);
+        }
+
+        return back();
+    }
+
+    /** Only the owner closes a group; its posts go with it. */
+    public function destroy(Request $request, Group $group): RedirectResponse
+    {
+        abort_unless($group->roleOf($request->user()) === 'owner', 403);
+        ImageStore::delete($group->avatar_path);
+        ImageStore::delete($group->cover_path);
+        $group->delete();
+
+        return to_route('groups.index');
+    }
+
+    /** Lets someone who asked into a closed group. */
+    public function approve(Request $request, Group $group, User $user): RedirectResponse
+    {
+        abort_unless($group->canModerate($request->user()), 403);
+        $group->members()->updateExistingPivot($user->id, ['approved' => true]);
+        Group::forgetRoles();
+
+        return back();
+    }
+
+    /** Turns down a request or removes a member: each role only those below it. */
+    public function removeMember(Request $request, Group $group, User $user): RedirectResponse
+    {
+        $mine = $group->roleOf($request->user());
+        $theirs = $group->roleOf($user) ?? 'pending';
+        $allowed = match ($mine) {
+            'owner' => ['admin', 'moderator', 'member', 'pending'],
+            'admin' => ['moderator', 'member', 'pending'],
+            'moderator' => ['member', 'pending'],
+            default => [],
+        };
+        abort_unless(in_array($theirs, $allowed, true), 403);
+        $group->members()->detach($user->id);
+        $group->roleOffers()->where('user_id', $user->id)->delete();
+        Group::forgetRoles();
+
+        return back();
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'is_private' => ['nullable', 'boolean'],
+            'avatar' => ['nullable', 'image', 'max:10240'],
+            'cover' => ['nullable', 'image', 'max:10240'],
+        ]);
+    }
+
+    private function pictures(Request $request, Group $group): void
+    {
+        foreach (['avatar' => ['avatar_path', 'group-avatars', 400, 400], 'cover' => ['cover_path', 'group-covers', 1640, 624]] as $field => [$column, $folder, $w, $h]) {
+            if ($request->hasFile($field)) {
+                $old = $group->{$column};
+                $group->update([$column => ImageStore::save($request->file($field), $folder, $w, $h)]);
+                ImageStore::delete($old);
+            }
+        }
+    }
+
     private function team(Group $group): array
     {
         $offers = $group->roleOffers()->get()->keyBy('user_id');
 
         return $group->members()
-            ->wherePivot('approved', true)
             ->where('blocked', false)
             ->orderBy('name')
             ->limit(500)
             ->get()
             ->map(fn (User $u) => PeopleController::card($u) + [
-                'role' => $group->owner_id === $u->id ? 'owner' : (in_array($u->pivot->role, ['admin', 'moderator'], true) ? $u->pivot->role : 'member'),
+                'role' => match (true) {
+                    $group->owner_id === $u->id => 'owner',
+                    ! $u->pivot->approved => 'pending',
+                    in_array($u->pivot->role, ['admin', 'moderator'], true) => $u->pivot->role,
+                    default => 'member',
+                },
                 'offer' => ($o = $offers->get($u->id)) ? ['id' => $o->id, 'role' => $o->role] : null,
             ])
-            ->sortBy(fn ($m) => array_search($m['role'], ['owner', 'admin', 'moderator', 'member'], true))
+            ->sortBy(fn ($m) => array_search($m['role'], ['pending', 'owner', 'admin', 'moderator', 'member'], true))
             ->values()
             ->all();
     }

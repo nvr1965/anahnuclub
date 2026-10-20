@@ -85,4 +85,30 @@ class GroupRolesTest extends TestCase
         $this->delete("/posts/{$post->id}")->assertRedirect();
         $this->assertNull(Post::find($post->id));
     }
+
+    public function test_members_create_and_run_their_own_group()
+    {
+        [$me, $guest] = User::factory()->count(2)->create();
+
+        $this->actingAs($me)->post('/groups', ['name' => 'Йога в Хайфе', 'description' => "Каждую субботу\nна пляже", 'is_private' => true])->assertRedirect();
+        $group = Group::latest('id')->first();
+        $this->assertSame($me->id, $group->owner_id);
+        $this->assertSame($group->id.'-yoga-v-hayfe', $group->slug);
+        $this->assertSame('owner', $group->roleOf($me));
+        $this->get("/groups/{$group->slug}")->assertInertia(fn ($page) => $page->where('group.description_text', "Каждую субботу\nна пляже"));
+
+        // A closed group: the request waits for the owner.
+        $this->actingAs($guest)->post("/groups/{$group->slug}/join");
+        $this->assertNull($group->roleOf($guest));
+        $this->put("/groups/{$group->slug}", ['name' => 'Взлом'])->assertForbidden();
+        $this->actingAs($me)->get("/groups/{$group->slug}")->assertInertia(fn ($page) => $page->where('team.0.role', 'pending'));
+        $this->post("/groups/{$group->slug}/members/{$guest->id}/approve")->assertRedirect();
+        $this->assertSame('member', $group->roleOf($guest));
+
+        $this->put("/groups/{$group->slug}", ['name' => 'Йога', 'is_private' => false])->assertRedirect();
+        $this->assertSame('Йога', $group->fresh()->name);
+        $this->actingAs($guest)->delete("/groups/{$group->slug}")->assertForbidden();
+        $this->actingAs($me)->delete("/groups/{$group->slug}")->assertRedirect('/groups');
+        $this->assertNull(Group::find($group->id));
+    }
 }

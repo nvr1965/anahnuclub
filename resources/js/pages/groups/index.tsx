@@ -1,3 +1,4 @@
+import { GroupForm } from '@/components/group-form';
 import { InviteButton } from '@/components/invite-button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
@@ -28,7 +29,10 @@ export default function GroupsIndex({
             <Head title={t('Groups')} />
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-2xl font-semibold">{t('Groups')}</h1>
-                <InviteButton />
+                <div className="flex flex-wrap gap-2">
+                    <GroupForm />
+                    <InviteButton />
+                </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
                 {groups.data.map((group) => (

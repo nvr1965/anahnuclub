@@ -8,10 +8,11 @@ import { Crown, MoreHorizontal, Shield, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member';
+type TeamRole = GroupRole | 'pending';
 export type OfferRole = 'owner' | 'admin' | 'moderator';
 
 export interface TeamMember extends Person {
-    role: GroupRole;
+    role: TeamRole;
     offer: { id: number; role: OfferRole } | null;
 }
 
@@ -20,9 +21,12 @@ export function useRoleNames() {
     return { owner: t('Owner'), admin: t('Admin'), moderator: t('Moderator'), member: t('Member') } as Record<GroupRole, string>;
 }
 
-export function RoleBadge({ role }: { role: GroupRole }) {
+export function RoleBadge({ role }: { role: TeamRole }) {
+    const t = useT();
     const names = useRoleNames();
     if (role === 'member') return null;
+    if (role === 'pending')
+        return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{t('Wants to join')}</span>;
     const icon = { owner: <Crown className="size-3.5" />, admin: <ShieldCheck className="size-3.5" />, moderator: <Shield className="size-3.5" /> }[
         role
     ];
@@ -74,7 +78,9 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                     <ul className="space-y-1">
                         {shown.map((m) => {
                             const canAct =
-                                m.role !== 'owner' && (myRole === 'owner' || (myRole === 'admin' && (m.role === 'member' || m.role === 'moderator')));
+                                m.role !== 'owner' &&
+                                (myRole === 'owner' ||
+                                    (myRole === 'admin' && (m.role === 'member' || m.role === 'moderator' || m.role === 'pending')));
                             return (
                                 <li key={m.id} className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-slate-50 dark:hover:bg-neutral-800">
                                     <UserAvatar person={m} className="size-10" />
@@ -87,6 +93,15 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                             {m.offer && <span className="text-muted-foreground text-xs">{offerText[m.offer.role]}</span>}
                                         </div>
                                     </div>
+                                    {m.role === 'pending' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => router.post(route('groups.members.approve', [group.slug, m.id]), {}, opts)}
+                                            className="bg-brand hover:bg-brand-dark rounded-md px-3 py-1.5 text-sm font-semibold text-white"
+                                        >
+                                            {t('Accept')}
+                                        </button>
+                                    )}
                                     {canAct && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger
@@ -96,7 +111,7 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                                 <MoreHorizontal className="size-4" />
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                {myRole === 'owner' && m.role !== 'admin' && (
+                                                {m.role !== 'pending' && myRole === 'owner' && m.role !== 'admin' && (
                                                     <DropdownMenuItem onSelect={() => offer(m, 'admin')}>
                                                         {t('Invite to be an admin')}
                                                     </DropdownMenuItem>
@@ -106,7 +121,7 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                                         {t('Invite to be a moderator')}
                                                     </DropdownMenuItem>
                                                 )}
-                                                {myRole === 'owner' && (
+                                                {myRole === 'owner' && m.role !== 'pending' && (
                                                     <DropdownMenuItem
                                                         onSelect={() =>
                                                             window.confirm(
@@ -123,7 +138,7 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                                         {t('Hand over the group')}
                                                     </DropdownMenuItem>
                                                 )}
-                                                {m.role !== 'member' && (
+                                                {(m.role === 'admin' || m.role === 'moderator') && (
                                                     <DropdownMenuItem
                                                         onSelect={() => router.delete(route('groups.roles.destroy', [group.slug, m.id]), opts)}
                                                     >
@@ -139,6 +154,12 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                                         {t('Cancel the offer')}
                                                     </DropdownMenuItem>
                                                 )}
+                                                <DropdownMenuItem
+                                                    className="text-red-600"
+                                                    onSelect={() => router.delete(route('groups.members.destroy', [group.slug, m.id]), opts)}
+                                                >
+                                                    {m.role === 'pending' ? t('Decline') : t('Remove from the group')}
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     )}
