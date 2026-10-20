@@ -101,4 +101,14 @@ class ProfileAndFriendsTest extends TestCase
             ->where('people.data.0.friendship', 'sent')
         );
     }
+
+    public function test_members_seen_in_the_last_minutes_show_as_online()
+    {
+        $here = User::factory()->create(['last_seen_at' => now()->subMinute()]);
+        $away = User::factory()->create(['last_seen_at' => now()->subHour()]);
+
+        $this->actingAs($here)->get('/people/'.$away->id)->assertInertia(fn ($page) => $page->where('profile.online', false));
+        $this->get('/people/'.$here->id)->assertInertia(fn ($page) => $page->where('profile.online', true));
+        $this->get('/people')->assertInertia(fn ($page) => $page->where('people.data', fn ($rows) => collect($rows)->firstWhere('id', $away->id)['online'] === false));
+    }
 }

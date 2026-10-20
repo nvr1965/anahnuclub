@@ -53,6 +53,7 @@ interface Profile {
     gender: 'male' | 'female' | null;
     joined_at: string | null;
     last_seen_at: string | null;
+    online?: boolean;
     friends_count: number | null;
     friends_hidden: boolean;
     privacy: Record<PrivateField, Visibility> | null;
@@ -403,7 +404,9 @@ function Details({ profile, locale, short = false }: { profile: Profile; locale:
         rows.push([<Cake key="i" />, date(profile.birthdate, { day: 'numeric', month: 'long', ...(short ? {} : { year: 'numeric' }) })]);
     if (profile.joined_at)
         rows.push([<Clock key="i" />, t('Joined :date', { date: date(profile.joined_at, { day: 'numeric', month: 'long', year: 'numeric' }) })]);
-    if (!short && profile.last_seen_at) rows.push([<Check key="i" />, t('Last seen :time', { time: relativeTime(profile.last_seen_at, locale) })]);
+    if (!short && profile.online) rows.push([<span key="i" className="m-1 size-3 rounded-full bg-green-500" />, t('Active now')]);
+    else if (!short && profile.last_seen_at)
+        rows.push([<Check key="i" />, t('Last seen :time', { time: relativeTime(profile.last_seen_at, locale) })]);
 
     return (
         <div className="space-y-3 text-[15px]">

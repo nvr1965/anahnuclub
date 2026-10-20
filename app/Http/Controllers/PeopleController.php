@@ -108,6 +108,7 @@ class PeopleController extends Controller
                 'friends_hidden' => ! $user->shows('friends', $viewer),
                 'joined_at' => $user->created_at?->toIso8601String(),
                 'last_seen_at' => $user->last_seen_at?->toIso8601String(),
+                'online' => $user->isOnline(),
                 'friends_count' => $user->shows('friends', $viewer) ? (clone $friends)->count() : null,
                 'posts_count' => $user->posts()->visibleTo($viewer)->count(),
                 'is_me' => $me,
@@ -182,6 +183,6 @@ class PeopleController extends Controller
     /** A member as shown in friend lists and suggestions. */
     public static function card(User $user): array
     {
-        return ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar];
+        return ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar, 'online' => $user->isOnline()];
     }
 }

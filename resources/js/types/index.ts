@@ -145,6 +145,8 @@ export interface Person {
     id: number;
     name: string;
     avatar: string | null;
+    /** Seen on the site in the last few minutes. */
+    online?: boolean;
 }
 
 export interface Paginated<T> {
@@ -154,7 +156,7 @@ export interface Paginated<T> {
 }
 
 export interface Sidebar {
-    members: { id: number; name: string; avatar: string | null }[];
+    members: Person[];
     members_count: number;
     groups: { name: string; slug: string; posts_count: number }[];
     photos: { id: number; thumb: string; url: string }[];

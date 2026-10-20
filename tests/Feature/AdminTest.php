@@ -92,4 +92,32 @@ class AdminTest extends TestCase
 
         $this->patch('/admin/languages/en', ['enabled' => false])->assertStatus(422);
     }
+
+    public function test_the_main_administrator_cannot_be_blocked_demoted_or_deleted()
+    {
+        $other = User::factory()->create();
+        $other->forceFill(['is_admin' => true])->save();
+        $this->assertTrue($this->admin->isSuperAdmin());
+        $this->assertFalse($other->isSuperAdmin());
+
+        $this->actingAs($other)->patch("/admin/users/{$this->admin->id}", ['is_admin' => false])->assertStatus(422);
+        $this->patch("/admin/users/{$this->admin->id}", ['blocked' => true])->assertStatus(422);
+        $this->get('/admin/users')->assertInertia(fn ($page) => $page->where('users.data.1.is_super', true));
+        $this->assertTrue($this->admin->fresh()->is_admin);
+
+        $this->actingAs($this->admin)->delete('/settings/profile', ['password' => 'password'])->assertSessionHasErrors('password');
+        $this->assertNotNull($this->admin->fresh());
+
+        // A named address picks someone else.
+        config(['app.super_admin_email' => $other->email]);
+        $this->assertTrue($other->isSuperAdmin());
+        $this->assertFalse($this->admin->isSuperAdmin());
+    }
+
+    public function test_english_is_marked_as_the_base_language()
+    {
+        $this->actingAs($this->admin)->get('/admin/languages')->assertInertia(fn ($page) => $page
+            ->where('languages', fn ($rows) => collect($rows)->firstWhere('code', 'en')['base'] === true && collect($rows)->firstWhere('code', 'ru')['base'] === false));
+        $this->delete('/admin/languages/en')->assertStatus(422);
+    }
 }

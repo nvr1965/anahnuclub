@@ -19,7 +19,7 @@ class CommunitySidebar
                 ->orderByDesc('last_seen_at')
                 ->limit(20)
                 ->get()
-                ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'avatar' => $u->avatar]),
+                ->map(fn (User $u) => PeopleController::card($u)),
             'members_count' => User::where('blocked', false)->count(),
             'groups' => ($user ? $user->groups() : Group::query())
                 ->where('published', true)

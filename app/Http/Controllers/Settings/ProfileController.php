@@ -55,6 +55,9 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        if ($user->isSuperAdmin()) {
+            return back()->withErrors(['password' => __('The main administrator account cannot be deleted.')]);
+        }
 
         Auth::logout();
 

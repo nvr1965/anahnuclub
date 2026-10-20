@@ -163,6 +163,25 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     private ?array $blockMemo = null;
 
     /** Members this one blocked, plus members who blocked this one: either way they do not meet. */
+    /** Seen on the site in the last five minutes; open pages check in every half minute. */
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at !== null && $this->last_seen_at->gt(now()->subMinutes(5));
+    }
+
+    /** The main administrator, see config app.super_admin_email. */
+    public function isSuperAdmin(): bool
+    {
+        if (! $this->is_admin) {
+            return false;
+        }
+        $email = config('app.super_admin_email');
+
+        return $email
+            ? strcasecmp($this->email, $email) === 0
+            : $this->id === static::query()->where('is_admin', true)->min('id');
+    }
+
     public function hiddenUserIds(): Collection
     {
         return $this->blockMemo['users'] ??= DB::table('user_blocks')->where('user_id', $this->id)->pluck('blocked_id')

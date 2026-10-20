@@ -13,6 +13,7 @@ interface Row {
     enabled: boolean;
     missing: number;
     built_in: boolean;
+    base: boolean;
 }
 
 /** Common choices; anything else can be typed in by hand. Languages DeepL lacks need the Claude key. */
@@ -92,6 +93,8 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
                                 type="checkbox"
                                 className="accent-brand size-4"
                                 checked={language.enabled}
+                                disabled={language.base}
+                                title={language.base ? t('The base language stays on') : undefined}
                                 aria-label={t('On')}
                                 onChange={() => send('patch', route('admin.languages.update', language.code), { enabled: !language.enabled })}
                             />
@@ -106,6 +109,7 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
                                     </div>
                                 )}
                             </div>
+                            {language.base && <Badge tone="brand">{t('Base language')}</Badge>}
                             {language.rtl && <Badge>RTL</Badge>}
                             {!language.enabled && language.missing > 0 && !language.built_in && <Badge tone="brand">{t('Translating…')}</Badge>}
                             {language.missing > 0 && can_translate && (

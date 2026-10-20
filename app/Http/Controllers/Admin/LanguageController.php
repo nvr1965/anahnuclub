@@ -26,6 +26,8 @@ class LanguageController extends AdminController
                 ->map(fn (Language $l) => $l->toArray() + [
                     'missing' => count(InterfaceStrings::missing($l->code)),
                     'built_in' => in_array($l->code, self::BUILT_IN, true),
+                    // The language every text is written in first; it stays on.
+                    'base' => $l->code === config('app.fallback_locale'),
                 ]),
             'total' => $total,
             'can_translate' => $translator->name() !== 'null',

@@ -15,6 +15,7 @@ interface Row {
     avatar: string | null;
     blocked: boolean;
     is_admin: boolean;
+    is_super: boolean;
     posts_count: number;
     created_at: string | null;
     last_seen_at: string | null;
@@ -58,7 +59,11 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                                     <span dir="auto" className="font-medium">
                                         {user.name}
                                     </span>
-                                    {user.is_admin && <Badge tone="brand">{t('Administrator')}</Badge>}
+                                    {user.is_super ? (
+                                        <Badge tone="brand">{t('Main administrator')}</Badge>
+                                    ) : (
+                                        user.is_admin && <Badge tone="brand">{t('Administrator')}</Badge>
+                                    )}
                                     {user.blocked && <Badge tone="red">{t('Blocked')}</Badge>}
                                 </div>
                                 <div className="text-muted-foreground truncate text-xs">
@@ -67,10 +72,13 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                                     {user.last_seen_at && <> · {relativeTime(user.last_seen_at, locale)}</>}
                                 </div>
                             </div>
-                            {!self && (
+                            {!self && !user.is_super && (
                                 <div className="flex flex-wrap gap-1">
                                     {user.posts_count > 0 && (
-                                        <Link href={route('admin.posts.index', { user: user.id })} className="text-brand hover:bg-brand-soft rounded-md px-2.5 py-1 text-xs font-medium">
+                                        <Link
+                                            href={route('admin.posts.index', { user: user.id })}
+                                            className="text-brand hover:bg-brand-soft rounded-md px-2.5 py-1 text-xs font-medium"
+                                        >
                                             {t('Posts')}
                                         </Link>
                                     )}
@@ -83,7 +91,10 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                                     {!user.is_admin && (
                                         <ActionButton
                                             danger
-                                            onClick={() => confirm(t('Block :name and delete all their posts and comments?', { name: user.name })) && send('post', route('admin.users.purge', user.id))}
+                                            onClick={() =>
+                                                confirm(t('Block :name and delete all their posts and comments?', { name: user.name })) &&
+                                                send('post', route('admin.users.purge', user.id))
+                                            }
                                         >
                                             {t('Delete as spam')}
                                         </ActionButton>

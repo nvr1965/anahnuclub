@@ -1,13 +1,11 @@
 import { ClubCard } from '@/components/club-card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
+import { UserAvatar } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
 import { Link } from '@inertiajs/react';
 
 export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
     const t = useT();
-    const getInitials = useInitials();
 
     return (
         <>
@@ -15,10 +13,7 @@ export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
                 <div className="grid grid-cols-6 gap-2">
                     {sidebar.members.map((member) => (
                         <Link key={member.id} href={route('people.show', member.id)} title={member.name}>
-                            <Avatar className="size-10 ring-2 ring-white dark:ring-neutral-900">
-                                <AvatarImage src={member.avatar ?? undefined} alt={member.name} className="object-cover" />
-                                <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(member.name)}</AvatarFallback>
-                            </Avatar>
+                            <UserAvatar person={member} className="size-10 ring-2 ring-white dark:ring-neutral-900" fallbackClassName="text-xs" />
                         </Link>
                     ))}
                 </div>

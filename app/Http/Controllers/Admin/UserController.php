@@ -35,6 +35,7 @@ class UserController extends AdminController
                 'avatar' => $u->avatar,
                 'blocked' => $u->blocked,
                 'is_admin' => $u->is_admin,
+                'is_super' => $u->isSuperAdmin(),
                 'posts_count' => $u->posts_count,
                 'created_at' => $u->created_at?->toIso8601String(),
                 'last_seen_at' => $u->last_seen_at?->toIso8601String(),
@@ -50,6 +51,7 @@ class UserController extends AdminController
             'is_admin' => ['sometimes', 'boolean'],
         ]);
         abort_if($user->is($request->user()), 422, 'You cannot change your own access.');
+        abort_if($user->isSuperAdmin(), 422, 'The main administrator keeps their access.');
 
         $user->forceFill($data)->save();
 

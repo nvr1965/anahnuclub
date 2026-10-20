@@ -197,12 +197,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                     <ArrowLeft className="size-5 rtl:rotate-180" />
                 </Link>
                 <Link href={route('people.show', conversation.with.id)} className="flex min-w-0 items-center gap-3">
-                    <span className="relative">
-                        <UserAvatar person={conversation.with} className="size-10" />
-                        {online && (
-                            <span className="absolute end-0 bottom-0 size-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-neutral-900" />
-                        )}
-                    </span>
+                    <UserAvatar person={{ ...conversation.with, online: !!online }} className="size-10" />
                     <span className="min-w-0">
                         <span dir="auto" className="block truncate font-semibold">
                             {conversation.with.name}
