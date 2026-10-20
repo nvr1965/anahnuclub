@@ -23,7 +23,7 @@ class GroupController extends Controller
         $groups = Group::query()
             ->where('published', true)
             ->when($request->user(), fn ($q, $viewer) => $q->whereNotIn('id', $viewer->blockedGroupIds()))
-            ->withCount(['members', 'posts'])
+            ->withCount(['members' => fn ($q) => $q->where('group_user.approved', true), 'posts'])
             ->orderByDesc('posts_count')
             ->paginate(30)
             ->through(fn (Group $g) => [
@@ -62,7 +62,7 @@ class GroupController extends Controller
                 'is_private' => $group->is_private,
                 // The text as typed, for the settings form.
                 'description_text' => trim(html_entity_decode(strip_tags(preg_replace('~<br\s*/?>\R?|</p>~i', "\n", (string) $group->description)))),
-                'members_count' => $group->members()->count(),
+                'members_count' => $group->members()->wherePivot('approved', true)->count(),
                 'is_member' => $member,
                 'blocked' => (bool) $request->user()?->blockedGroupIds()->contains($group->id),
                 'role' => $role = $group->roleOf($request->user()),
@@ -215,7 +215,13 @@ class GroupController extends Controller
                 },
                 'offer' => ($o = $offers->get($u->id)) ? ['id' => $o->id, 'role' => $o->role] : null,
             ])
-            ->sortBy(fn ($m) => array_search($m['role'], ['pending', 'owner', 'admin', 'moderator', 'member'], true))
+            // Invited, not in yet: shown so the owner knows why they cannot be given a role.
+            ->concat($group->invitations()->with('user')->get()->filter->user->map(fn ($i) => PeopleController::card($i->user) + [
+                'role' => 'invited',
+                'offer' => null,
+                'invitation' => $i->id,
+            ]))
+            ->sortBy(fn ($m) => array_search($m['role'], ['pending', 'owner', 'admin', 'moderator', 'member', 'invited'], true))
             ->values()
             ->all();
     }

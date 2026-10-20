@@ -128,6 +128,7 @@ class GroupRolesTest extends TestCase
         $this->getJson('/groups/haifa/invite?q='.urlencode($other->name))->assertJsonPath('0.id', $other->id);
 
         $this->post('/groups/haifa/invite', ['user_ids' => [$friend->id, $other->id, $member->id]])->assertRedirect();
+        $this->get('/groups/haifa')->assertInertia(fn ($page) => $page->has('team', 4)->where('team.3.role', 'invited')->where('group.members_count', 2));
         $this->assertSame(2, $group->invitations()->count());
         $this->assertSame('group_invite', $friend->notifications()->first()->data['kind']);
         $this->actingAs(User::factory()->create())->post('/groups/haifa/invite', ['user_ids' => [$other->id]])->assertForbidden();

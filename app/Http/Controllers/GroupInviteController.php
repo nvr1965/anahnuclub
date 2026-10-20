@@ -76,10 +76,13 @@ class GroupInviteController extends Controller
         return back();
     }
 
+    /** Declined by the invited one, or taken back by whoever sent it or by those running the group. */
     public function decline(Request $request, Group $group, GroupInvitation $invitation): RedirectResponse
     {
-        abort_unless($invitation->group_id === $group->id && $invitation->user_id === $request->user()->id, 404);
-        ClubActivity::retract($request->user(), 'group_invite', $invitation->from, 'group:'.$group->id);
+        $me = $request->user();
+        abort_unless($invitation->group_id === $group->id, 404);
+        abort_unless(in_array($me->id, [$invitation->user_id, $invitation->from_id], true) || in_array($group->roleOf($me), ['owner', 'admin'], true), 403);
+        ClubActivity::retract($invitation->user, 'group_invite', $invitation->from, 'group:'.$group->id);
         $invitation->delete();
 
         return back();

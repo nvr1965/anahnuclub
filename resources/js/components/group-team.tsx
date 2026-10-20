@@ -8,12 +8,13 @@ import { Crown, MoreHorizontal, Shield, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member';
-type TeamRole = GroupRole | 'pending';
+type TeamRole = GroupRole | 'pending' | 'invited';
 export type OfferRole = 'owner' | 'admin' | 'moderator';
 
 export interface TeamMember extends Person {
     role: TeamRole;
     offer: { id: number; role: OfferRole } | null;
+    invitation?: number;
 }
 
 export function useRoleNames() {
@@ -25,6 +26,12 @@ export function RoleBadge({ role }: { role: TeamRole }) {
     const t = useT();
     const names = useRoleNames();
     if (role === 'member') return null;
+    if (role === 'invited')
+        return (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-neutral-800">
+                {t('Invited, not joined yet')}
+            </span>
+        );
     if (role === 'pending')
         return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{t('Wants to join')}</span>;
     const icon = { owner: <Crown className="size-3.5" />, admin: <ShieldCheck className="size-3.5" />, moderator: <Shield className="size-3.5" /> }[
@@ -56,7 +63,11 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
         <>
             <button
                 type="button"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                    setOpen(true);
+                    // Someone may have joined since the page was opened.
+                    router.reload({ only: ['team', 'group'] });
+                }}
                 className="inline-flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700"
             >
                 <ShieldCheck className="size-4" /> {t('Team')}
@@ -66,7 +77,9 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                     <DialogHeader>
                         <DialogTitle>{t('Group team')}</DialogTitle>
                         <DialogDescription>
-                            {t('Admins and moderators can remove posts in the group. A role is given only after the member accepts the offer.')}
+                            {t(
+                                'Here are the members of the group. Press ⋯ next to a member to make them an admin or moderator or to hand the group over; they get an offer and must accept it. Admins and moderators can remove posts in the group.',
+                            )}
                         </DialogDescription>
                     </DialogHeader>
                     <input
@@ -75,10 +88,18 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                         placeholder={t('Search by name')}
                         className="w-full rounded-full bg-slate-100 px-4 py-2 text-sm outline-none dark:bg-neutral-800"
                     />
+                    {shown.length === 0 && (
+                        <p className="text-muted-foreground rounded-lg bg-slate-50 p-4 text-center text-sm dark:bg-neutral-800">
+                            {t(
+                                'Nobody with this name in the group. Only members of the group can get a role: first invite the person with “Invite to the group” and wait until they join.',
+                            )}
+                        </p>
+                    )}
                     <ul className="space-y-1">
                         {shown.map((m) => {
                             const canAct =
                                 m.role !== 'owner' &&
+                                m.role !== 'invited' &&
                                 (myRole === 'owner' ||
                                     (myRole === 'admin' && (m.role === 'member' || m.role === 'moderator' || m.role === 'pending')));
                             return (
@@ -93,6 +114,15 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                             {m.offer && <span className="text-muted-foreground text-xs">{offerText[m.offer.role]}</span>}
                                         </div>
                                     </div>
+                                    {m.role === 'invited' && m.invitation && (
+                                        <button
+                                            type="button"
+                                            onClick={() => router.delete(route('groups.invitations.destroy', [group.slug, m.invitation!]), opts)}
+                                            className="text-muted-foreground text-sm hover:underline"
+                                        >
+                                            {t('Cancel the invitation')}
+                                        </button>
+                                    )}
                                     {m.role === 'pending' && (
                                         <button
                                             type="button"
