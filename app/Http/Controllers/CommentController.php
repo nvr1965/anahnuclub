@@ -16,6 +16,7 @@ class CommentController extends Controller
     public function store(Request $request, Post $post): RedirectResponse
     {
         abort_unless($post->isVisibleTo($request->user()), 404);
+        abort_if($post->isOfficial(), 403);
         $data = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
             'parent_id' => ['nullable', 'integer'],

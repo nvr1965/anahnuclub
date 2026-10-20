@@ -17,6 +17,8 @@ class PostResource extends JsonResource
     {
         $translator = app(ContentTranslator::class);
         $locale = app()->getLocale();
+        $official = $this->relationLoaded('user') && $this->isOfficial();
+        $mine = $request->user()?->id === $this->user_id;
 
         return [
             'id' => $this->id,
@@ -24,7 +26,9 @@ class PostResource extends JsonResource
             'title' => $this->title,
             'body' => Html::clean($this->body),
             'created_at' => $this->created_at?->toIso8601String(),
-            'author' => AuthorResource::make($this->whenLoaded('user')),
+            // A club post names nobody to readers; its author still sees themself, to edit it.
+            'author' => $official && ! $mine ? null : AuthorResource::make($this->whenLoaded('user')),
+            'official' => $official,
             'group' => $this->whenLoaded('group', fn () => $this->group?->only('id', 'name', 'slug')),
             'likes_count' => $this->likes_count ?? 0,
             'liked' => ($this->my_reaction ?? null) !== null,
@@ -33,7 +37,7 @@ class PostResource extends JsonResource
             'reactions' => collect(Like::TYPES)
                 ->mapWithKeys(fn ($type) => [$type => (int) ($this->{$type.'_reactions'} ?? 0)])
                 ->filter()->sortDesc()->keys()->take(3)->values()->all(),
-            'comments' => CommentResource::collection($this->whenLoaded('comments')),
+            'comments' => $official ? [] : CommentResource::collection($this->whenLoaded('comments')),
             'translation' => TranslationPayload::for($this->resource, $locale, $translator),
             'url' => route('posts.show', $this->id),
             'audience' => $this->audience ?? 'public',
