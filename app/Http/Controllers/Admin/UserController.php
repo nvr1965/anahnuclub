@@ -39,6 +39,7 @@ class UserController extends AdminController
                 'posts_count' => $u->posts_count,
                 'created_at' => $u->created_at?->toIso8601String(),
                 'last_seen_at' => $u->last_seen_at?->toIso8601String(),
+                'rules_accepted_at' => $u->rules_accepted_at?->toIso8601String(),
             ]);
 
         return Inertia::render('admin/users', ['users' => $users, 'q' => $q, 'filter' => $filter]);

@@ -148,7 +148,14 @@ function Editor({ edit, languages, canTranslate }: { edit: NonNullable<Props['ed
     const blank = Object.fromEntries(
         languages.map((l) => [l.code, { ...edit.content[l.code], title: edit.content[l.code]?.title ?? '', body: edit.content[l.code]?.body ?? '' }]),
     ) as Content;
-    const form = useForm({ slug: edit.slug ?? '', content: blank, in_footer: edit.in_footer, published: edit.published, sort: edit.sort });
+    const form = useForm({
+        slug: edit.slug ?? '',
+        content: blank,
+        in_footer: edit.in_footer,
+        published: edit.published,
+        sort: edit.sort,
+        ask_again: false,
+    });
     const current = form.data.content[tab] ?? { title: '', body: '' };
     const rtl = languages.find((l) => l.code === tab)?.rtl;
     const missing = languages.filter((l) => !form.data.content[l.code]?.title.trim());
@@ -236,6 +243,17 @@ function Editor({ edit, languages, canTranslate }: { edit: NonNullable<Props['ed
                     />
                     {t('Published')}
                 </label>
+                {edit.slug === 'rules' && (
+                    <label className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            className="accent-brand size-4"
+                            checked={form.data.ask_again}
+                            onChange={(e) => form.setData('ask_again', e.target.checked)}
+                        />
+                        {t('Ask all members to accept the rules again')}
+                    </label>
+                )}
                 <label className="flex items-center gap-2 whitespace-nowrap">
                     {t('Order')}
                     <input

@@ -20,6 +20,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [FeedController::class, 'welcome'])->name('home');
@@ -35,6 +36,11 @@ Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:10,1')->name('contact.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('welcome', [WelcomeController::class, 'show'])->name('welcome');
+    Route::post('welcome', [WelcomeController::class, 'accept'])->name('welcome.accept');
+});
+
+Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
     Route::get('search', SearchController::class)->name('search');
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');

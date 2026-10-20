@@ -16,6 +16,7 @@ interface Row {
     blocked: boolean;
     is_admin: boolean;
     is_super: boolean;
+    rules_accepted_at: string | null;
     posts_count: number;
     created_at: string | null;
     last_seen_at: string | null;
@@ -70,6 +71,10 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                                     {user.username && <>@{user.username} · </>}
                                     {user.email} · {t(':count posts', { count: user.posts_count })}
                                     {user.last_seen_at && <> · {relativeTime(user.last_seen_at, locale)}</>}
+                                    {' · '}
+                                    {user.rules_accepted_at
+                                        ? t('Rules accepted :date', { date: new Date(user.rules_accepted_at).toLocaleDateString(locale) })
+                                        : t('Rules not accepted yet')}
                                 </div>
                             </div>
                             {!self && !user.is_super && (

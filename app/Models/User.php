@@ -73,6 +73,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             'blocked' => 'boolean',
             'is_admin' => 'boolean',
             'last_seen_at' => 'datetime',
+            'rules_accepted_at' => 'datetime',
             'birthdate' => 'date:Y-m-d',
             'privacy' => 'array',
         ];

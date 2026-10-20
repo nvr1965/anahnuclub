@@ -9,6 +9,7 @@ use App\Support\Html;
 use App\Translation\Translator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -54,6 +55,11 @@ class PageController extends AdminController
     public function update(Request $request, Page $page): RedirectResponse
     {
         $page->update($this->validated($request, $page));
+        // Changed rules: everyone accepts them again on their next visit.
+        if ($page->slug === 'rules' && $request->boolean('ask_again')) {
+            Setting::put('rules_changed_at', now()->toIso8601String());
+        }
+        Cache::forget('rules.published');
 
         return to_route('admin.pages.index', ['page' => $page->slug]);
     }
