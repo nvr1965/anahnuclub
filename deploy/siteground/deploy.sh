@@ -34,7 +34,7 @@ done
 if [ ! -f .env ]; then
     cp .env.example .env
     host="$(basename "$SITE_DIR")"
-    sed -i "s#^APP_ENV=.*#APP_ENV=production#; s#^APP_DEBUG=.*#APP_DEBUG=false#; s#^APP_URL=.*#APP_URL=https://$host#" .env
+    sed -i "s#^APP_ENV=.*#APP_ENV=production#; s#^APP_DEBUG=.*#APP_DEBUG=false#; s#^APP_URL=.*#APP_URL=https://$host#; s#^MAIL_MAILER=.*#MAIL_MAILER=smtp#; s#^MAIL_USERNAME=$#MAIL_USERNAME=noreply@anahnu.club#" .env
     echo
     echo "Created .env. Fill in DB_*, MAIL_PASSWORD and JOOMLA_DB_* (nano .env), then run this script again."
     exit 0
