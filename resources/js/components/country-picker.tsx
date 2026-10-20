@@ -1,7 +1,19 @@
-import { countryFlag, countryName, countryOptions } from '@/lib/countries';
+import { countryFlagUrl, countryName, countryOptions } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
 import { ChevronDown, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+
+/** A country's flag as a small picture. */
+export function CountryFlag({ code, className = '' }: { code: string; className?: string }) {
+    const src = countryFlagUrl(code);
+    return src ? (
+        <img
+            src={src}
+            alt=""
+            className={`inline-block h-3.5 w-[18px] shrink-0 rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(0,0,0,0.08)] ${className}`}
+        />
+    ) : null;
+}
 
 /** A country field you can type into: the list narrows to names that match, in the reader's language or English. */
 export function CountryPicker({
@@ -64,9 +76,9 @@ export function CountryPicker({
                 type="text"
                 role="combobox"
                 aria-expanded={open}
-                className={`${className} pe-14`}
+                className={`${className} pe-14 ${value && !open ? 'ps-10' : ''}`}
                 placeholder={value ? '' : t('Start typing a country')}
-                value={open ? query : value ? `${countryFlag(value)} ${countryName(value, locale)}` : ''}
+                value={open ? query : value ? countryName(value, locale) : ''}
                 onFocus={() => {
                     setOpen(true);
                     setActive(0);
@@ -92,6 +104,11 @@ export function CountryPicker({
                     if (e.key === 'Escape') setOpen(false);
                 }}
             />
+            {value && !open && (
+                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center">
+                    <CountryFlag code={value} />
+                </span>
+            )}
             <div className="text-muted-foreground pointer-events-none absolute inset-y-0 end-2 flex items-center gap-1">
                 {value && !open && (
                     <button
@@ -124,7 +141,10 @@ export function CountryPicker({
                             onMouseEnter={() => setActive(i)}
                             className={`cursor-pointer px-3 py-1.5 text-[15px] ${i === active ? 'bg-slate-100 dark:bg-neutral-800' : ''} ${o.code === value ? 'font-semibold' : ''}`}
                         >
-                            {o.label}
+                            <span className="flex items-center gap-2">
+                                <CountryFlag code={o.code} />
+                                {o.label}
+                            </span>
                         </li>
                     ))}
                 </ul>

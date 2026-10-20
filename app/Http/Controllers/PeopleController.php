@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
+use App\Models\Language;
 use App\Models\Photo;
 use App\Models\User;
 use App\Support\ImageStore;
@@ -125,6 +126,7 @@ class PeopleController extends Controller
                 'friends_count' => $user->shows('friends', $viewer) ? (clone $friends)->count() : null,
                 'posts_count' => $user->posts()->visibleTo($viewer)->count(),
                 'is_me' => $me,
+                'locale' => $me ? $user->locale : null,
                 'friendship' => $me ? null : $viewer->friendshipWith($user),
                 'blocked_by_me' => $blockedByMe,
                 'messages_blocked_by_me' => ! $me && $viewer->hasMessengerBlocked($user),
@@ -154,12 +156,18 @@ class PeopleController extends Controller
             'gender' => ['nullable', Rule::in(['male', 'female'])],
             'privacy' => ['nullable', 'array'],
             'privacy.*' => ['in:public,friends,only_me'],
+            'locale' => ['sometimes', 'string', Rule::in(Language::enabled()->pluck('code')->all())],
         ]);
         if (isset($data['privacy'])) {
             $data['privacy'] = array_intersect_key($data['privacy'], array_flip(User::PRIVATE_FIELDS));
         }
 
-        $request->user()->update($data);
+        if (isset($data['locale'])) {
+            // The default language: the interface switches to it now and on other devices.
+            $data['ui_locale'] = $data['locale'];
+            $request->session()->put('locale', $data['locale']);
+        }
+        $request->user()->forceFill($data)->save();
 
         return back();
     }

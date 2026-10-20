@@ -151,4 +151,13 @@ class ProfileAndFriendsTest extends TestCase
         $this->get('/feed')->assertInertia(fn ($page) => $page->where('locale', 'he'));
         $this->patch('/settings/profile', ['name' => $me->name, 'email' => $me->email, 'locale' => 'xx'])->assertSessionHasErrors('locale');
     }
+
+    public function test_the_default_language_is_also_set_in_the_profile_dialog()
+    {
+        $me = User::factory()->create(['locale' => 'ru']);
+
+        $this->actingAs($me)->get('/people/'.$me->id)->assertInertia(fn ($page) => $page->where('profile.locale', 'ru'));
+        $this->patch('/profile/about', ['name' => $me->name, 'locale' => 'he'])->assertSessionHasNoErrors();
+        $this->assertSame(['he', 'he'], [$me->fresh()->locale, $me->fresh()->ui_locale]);
+    }
 }

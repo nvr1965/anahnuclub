@@ -15,13 +15,16 @@ export function countryName(code: string, locale: string): string {
     }
 }
 
-export function countryFlag(code: string): string {
-    return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+// Flag pictures (emoji flags do not show on Windows). Only the address is in the page; a flag loads when shown.
+const FLAGS = import.meta.glob<string>('/node_modules/flag-icons/flags/4x3/*.svg', { query: '?url', import: 'default', eager: true });
+
+export function countryFlagUrl(code: string): string | null {
+    return FLAGS[`/node_modules/flag-icons/flags/4x3/${code.toLowerCase()}.svg`] ?? null;
 }
 
-/** [code, "🇮🇱 Israel"] pairs: the usual countries first, then the rest by name. */
+/** [code, "Israel"] pairs: the usual countries first, then the rest by name. */
 export function countryOptions(locale: string): [string, string][] {
-    const label = (code: string) => `${countryFlag(code)} ${countryName(code, locale)}`;
+    const label = (code: string) => countryName(code, locale);
     const rest = CODES.filter((c) => !FIRST.includes(c))
         .map((c) => [c, countryName(c, locale)] as const)
         .sort((a, b) => a[1].localeCompare(b[1], locale));

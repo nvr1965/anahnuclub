@@ -1,7 +1,7 @@
 import { InviteButton } from '@/components/invite-button';
 import { PersonCard, primary, secondary } from '@/components/person-card';
 import AppLayout from '@/layouts/app-layout';
-import { countryFlag, countryName } from '@/lib/countries';
+import { countryName } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
 import { type Paginated, type Person, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -78,7 +78,7 @@ export default function People({ people, total, q, country, lang, countries, lan
                             .sort((a, b) => a[1].localeCompare(b[1], locale))
                             .map(([code, name, n]) => (
                                 <option key={code} value={code}>
-                                    {countryFlag(code)} {name} ({n})
+                                    {name} ({n})
                                 </option>
                             ))}
                     </select>

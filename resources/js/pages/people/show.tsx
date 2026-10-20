@@ -1,6 +1,6 @@
 import { AlbumForm } from '@/components/album-form';
 import { AudienceIcon, useAudienceLabels } from '@/components/audience-picker';
-import { CountryPicker } from '@/components/country-picker';
+import { CountryFlag, CountryPicker } from '@/components/country-picker';
 import { PhotoViewer } from '@/components/photo-viewer';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
@@ -10,7 +10,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { VideoGrid } from '@/components/video-grid';
 import ClubLayout from '@/layouts/club-layout';
 import { albumName } from '@/lib/albums';
-import { countryFlag, countryName } from '@/lib/countries';
+import { countryName } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Paginated, type Person, type PhotoItem, type Post, type SharedData, type VideoItem } from '@/types';
@@ -54,6 +54,7 @@ interface Profile {
     joined_at: string | null;
     last_seen_at: string | null;
     online?: boolean;
+    locale?: string | null;
     friends_count: number | null;
     friends_hidden: boolean;
     privacy: Record<PrivateField, Visibility> | null;
@@ -392,7 +393,14 @@ function Details({ profile, locale, short = false }: { profile: Profile; locale:
                 {profile.location_translated ?? profile.location}
             </span>,
         ]);
-    if (profile.country) rows.push([<Flag key="i" />, `${countryFlag(profile.country)} ${countryName(profile.country, locale)}`]);
+    if (profile.country)
+        rows.push([
+            <Flag key="i" />,
+            <span className="inline-flex items-center gap-2">
+                <CountryFlag code={profile.country} />
+                {countryName(profile.country, locale)}
+            </span>,
+        ]);
     if (profile.website)
         rows.push([
             <Globe key="i" />,
@@ -594,13 +602,14 @@ function PictureButton({
 
 function EditProfile({ profile, open, onClose }: { profile: Profile; open: boolean; onClose: () => void }) {
     const t = useT();
-    const { locale } = usePage<SharedData>().props;
+    const { locale, languages } = usePage<SharedData>().props;
     const form = useForm({
         name: profile.name,
         status: profile.status ?? '',
         about: profile.about ?? '',
         location: profile.location ?? '',
         country: profile.country ?? '',
+        locale: profile.locale ?? locale,
         website: profile.website ?? '',
         birthdate: profile.birthdate ?? '',
         gender: profile.gender ?? '',
@@ -672,6 +681,17 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
                             onChange={(code) => form.setData('country', code)}
                         />,
                         'country',
+                    )}
+                    {row(
+                        t('Default language'),
+                        'locale',
+                        <select className={field} value={form.data.locale} onChange={(e) => form.setData('locale', e.target.value)}>
+                            {languages.map((l) => (
+                                <option key={l.code} value={l.code}>
+                                    {l.native_name}
+                                </option>
+                            ))}
+                        </select>,
                     )}
                     {row(t('Website'), 'website', text('website', 'url'), 'website')}
                     <div className="grid gap-3 sm:grid-cols-2">
