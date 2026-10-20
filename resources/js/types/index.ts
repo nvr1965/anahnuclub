@@ -84,6 +84,8 @@ export interface Post extends Translatable {
     group: { id: number; name: string; slug: string } | null;
     likes_count: number;
     liked: boolean;
+    my_reaction: Reaction | null;
+    reactions: Reaction[];
     comments: Comment[];
     url: string;
     can_delete: boolean;
@@ -95,6 +97,8 @@ export interface Post extends Translatable {
     event: EventItem | null;
     link: LinkCard | null;
 }
+
+export type Reaction = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';
 
 export interface LinkCard {
     url: string;

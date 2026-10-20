@@ -1,6 +1,7 @@
 import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
 import { LinkPreview } from '@/components/link-preview';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
+import { ReactionButton, ReactionFaces } from '@/components/reactions';
 import { ShareMenu } from '@/components/share-menu';
 import { TranslatedText } from '@/components/translated-text';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,7 +11,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, ThumbsUp, Trash2 } from 'lucide-react';
+import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -30,7 +31,6 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const [commenting, setCommenting] = useState(full);
     const [typing, setTyping] = useState(full);
     const form = useForm({ body: '' });
-    const like = useForm({});
     const reply = useForm({ body: '' });
     const [replyTo, setReplyTo] = useState<{ thread: number; id: number } | null>(null);
     const [expanded, setExpanded] = useState<number[]>([]);
@@ -321,9 +321,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     <span className="inline-flex items-center gap-1.5">
                         {post.likes_count > 0 && (
                             <>
-                                <span className="bg-brand inline-flex size-[18px] items-center justify-center rounded-full">
-                                    <ThumbsUp className="size-2.5 fill-white text-white" />
-                                </span>
+                                <ReactionFaces types={post.reactions} />
                                 {post.likes_count}
                             </>
                         )}
@@ -337,14 +335,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             )}
 
             <div className="mx-4 grid grid-cols-3 border-t border-slate-200 py-1 dark:border-neutral-800">
-                <button
-                    type="button"
+                <ReactionButton
+                    mine={post.my_reaction}
                     disabled={!auth.user}
-                    className={`${action} ${post.liked ? 'text-brand' : 'text-muted-foreground'}`}
-                    onClick={() => like.post(route('posts.like', post.id), { preserveScroll: true })}
-                >
-                    <ThumbsUp className={`size-5 ${post.liked ? 'fill-current' : ''}`} /> {t('Like')}
-                </button>
+                    className={action}
+                    onReact={(type) => router.post(route('posts.like', post.id), type ? { type } : {}, { preserveScroll: true })}
+                />
                 <button
                     type="button"
                     disabled={!auth.user}

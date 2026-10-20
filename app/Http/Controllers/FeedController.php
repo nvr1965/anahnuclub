@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
+use App\Models\Like;
 use App\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -51,6 +52,7 @@ class FeedController extends Controller
         $hidden = $viewer?->hiddenUserIds() ?? collect();
 
         return Post::query()
+            ->select('posts.*')
             ->with([
                 'user', 'group', 'photos', 'video', 'event', 'linkPreview',
                 'comments' => fn ($q) => $q->where(fn ($q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)),
@@ -68,7 +70,11 @@ class FeedController extends Controller
                 fn (Builder $q) => $q->whereNull('group_id')->orWhereNotIn('group_id', $viewer->blockedGroupIds())
             ))
             ->withCount('likes')
-            ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $viewer?->id)])
+            // How many of each reaction, for the faces beside the count.
+            ->withCount(collect(Like::TYPES)->mapWithKeys(fn ($type) => ["likes as {$type}_reactions" => fn ($q) => $q->where('type', $type)])->all())
+            ->addSelect(['my_reaction' => Like::select('type')
+                ->whereColumn('likeable_id', 'posts.id')->where('likeable_type', (new Post)->getMorphClass())
+                ->where('user_id', $viewer?->id)->limit(1)])
             ->latest();
     }
 }

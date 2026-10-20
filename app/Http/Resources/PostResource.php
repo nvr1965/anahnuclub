@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Controllers\EventController;
+use App\Models\Like;
 use App\Models\Post;
 use App\Support\Html;
 use App\Translation\ContentTranslator;
@@ -26,7 +27,12 @@ class PostResource extends JsonResource
             'author' => AuthorResource::make($this->whenLoaded('user')),
             'group' => $this->whenLoaded('group', fn () => $this->group?->only('id', 'name', 'slug')),
             'likes_count' => $this->likes_count ?? 0,
-            'liked' => (bool) ($this->liked ?? false),
+            'liked' => ($this->my_reaction ?? null) !== null,
+            'my_reaction' => $this->my_reaction ?? null,
+            // The most left reactions first, three at most, as Facebook shows them.
+            'reactions' => collect(Like::TYPES)
+                ->mapWithKeys(fn ($type) => [$type => (int) ($this->{$type.'_reactions'} ?? 0)])
+                ->filter()->sortDesc()->keys()->take(3)->values()->all(),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
             'translation' => TranslationPayload::for($this->resource, $locale, $translator),
             'url' => route('posts.show', $this->id),

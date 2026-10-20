@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Like;
 use App\Models\Photo;
 use App\Models\Post;
 use App\Models\Video;
@@ -9,6 +10,7 @@ use App\Notifications\ClubActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class LikeController extends Controller
 {
@@ -32,14 +34,18 @@ class LikeController extends Controller
     private function like(Request $request, Model $model, string $kind, string $url, ?string $excerpt): RedirectResponse
     {
         $user = $request->user();
+        // No reaction named means a plain like, or taking back whatever reaction was left.
+        $type = $request->validate(['type' => ['nullable', Rule::in(Like::TYPES)]])['type'] ?? null;
         $like = $model->likes()->where('user_id', $user->id)->first();
         $subject = $model->getMorphClass().':'.$model->getKey();
 
-        if ($like) {
+        if ($like && $type && $like->type !== $type) {
+            $like->update(['type' => $type]);
+        } elseif ($like) {
             $like->delete();
             ClubActivity::retract($model->user, $kind, $user, $subject);
         } else {
-            $model->likes()->create(['user_id' => $user->id]);
+            $model->likes()->create(['user_id' => $user->id, 'type' => $type ?? 'like']);
             ClubActivity::send($model->user, $kind, $user, $url, $subject, $excerpt);
         }
 
