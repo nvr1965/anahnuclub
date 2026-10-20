@@ -22,6 +22,16 @@ class PostPageTest extends TestCase
             ->assertSee('content="Приходите все"', false);
     }
 
+    public function test_a_shared_post_link_shows_its_photo_large_or_else_the_invitation()
+    {
+        $plain = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Без фото']);
+        $this->get("/posts/{$plain->id}")->assertSee('/images/invite/', false);
+
+        $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'С фото']);
+        $post->photos()->create(['user_id' => $post->user_id, 'path' => 'photos/invite.jpg']);
+        $this->get("/posts/{$post->id}")->assertSee('<meta property="og:image" content="'.asset('storage/photos/invite.jpg').'">', false);
+    }
+
     public function test_posts_of_private_groups_stay_private()
     {
         $group = Group::create(['name' => 'Secret', 'slug' => 'secret', 'is_private' => true]);
