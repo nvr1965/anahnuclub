@@ -91,14 +91,68 @@ cd ~/www/test.anahnu.club/app && git pull && bash deploy/siteground/deploy.sh
 
 Звонки в сообщениях работают сразу: браузеры соединяются напрямую, сайт только передаёт
 им данные для соединения. В некоторых сетях (часть мобильных операторов, офисные сети)
-прямое соединение невозможно, и звонок пишет «Не удалось соединиться». Для таких случаев
-нужен TURN-сервер, который передаёт видео через себя. Бесплатный вариант: зарегистрироваться
-на metered.ca (Open Relay, 20 ГБ в месяц бесплатно) и вписать в `.env` выданные данные:
+прямое соединение невозможно. Для них нужен TURN-сервер, который передаёт видео через себя.
+Подключён Cloudflare TURN (dash.cloudflare.com → Realtime → TURN Server), в `.env`:
 
 ```
-TURN_URLS=turn:...:80,turn:...:443
-TURN_USERNAME=...
-TURN_CREDENTIAL=...
+CLOUDFLARE_TURN_KEY_ID=...
+CLOUDFLARE_TURN_API_TOKEN=...
 ```
 
-После правки `.env` запустить `bash deploy/siteground/deploy.sh`.
+Сайт сам получает у Cloudflare временный логин. Проверка:
+`php artisan tinker --execute="echo json_encode(App\Http\Controllers\CallController::iceServers());"`
+должна показать `turn.cloudflare.com`. Другой TURN-сервер вписывается строками `TURN_URLS`,
+`TURN_USERNAME`, `TURN_CREDENTIAL`.
+
+## Переход на anahnu.club
+
+Новый сайт встаёт на место Joomla в `anahnu.club`. Старый сайт не удаляется: его файлы
+переименовываются в `~/www/anahnu.club/public_html_joomla`, база Joomla не трогается,
+так что вернуть всё назад можно одной командой.
+
+### Заранее, в Site Tools сайта anahnu.club
+
+1. **Security → Backups**: сделать резервную копию (Create Backup).
+2. **Devs → PHP Manager**: для `anahnu.club` поставить PHP 8.3, в **PHP Variables**
+   `upload_max_filesize` и `post_max_size` = `220M`. Joomla на PHP 8.3 может не открыться,
+   поэтому этот шаг делается прямо перед переходом.
+3. **Security → SSL Manager**: у `anahnu.club` должен быть сертификат (обычно уже есть).
+4. В консолях Google и Facebook добавить адреса входа
+   `https://anahnu.club/auth/google/callback` и `https://anahnu.club/auth/facebook/callback`.
+
+### Переход
+
+```bash
+cd ~/www/test.anahnu.club/app && git pull && bash deploy/siteground/go-live.sh
+```
+
+Скрипт:
+
+1. убирает Joomla в `public_html_joomla` и ставит заглушку «Сайт обновляется»;
+2. переносит код с базой и загруженными файлами в `~/www/anahnu.club/app` и меняет адрес
+   в `.env` на `https://anahnu.club`;
+3. дозабирает со старого сайта то, что там появилось после первого переноса (новые
+   участники, посты, фото). Что участники уже поменяли на новом сайте (имя, пароль, язык,
+   статус, права админа), остаётся как есть. Если новый участник старого сайта получил тот
+   же номер, что и участник, зарегистрированный на тестовом, скрипт останавливается и
+   ничего не переносит: тогда напиши разработчику;
+4. ставит сайт в `anahnu.club` и делает так, что `test.anahnu.club` переадресует на
+   `anahnu.club`.
+
+Старые ссылки на картинки Joomla (`/images/...`) в перенесённых постах продолжают работать.
+
+### После перехода
+
+- **Devs → Cron Jobs**: заменить старую задачу на ту, что скрипт напечатал в конце
+  (с путём `~/www/anahnu.club/app`).
+- Обновление теперь так:
+  `cd ~/www/anahnu.club/app && git pull && bash deploy/siteground/deploy.sh`
+
+### Если надо вернуть старый сайт
+
+```bash
+bash ~/www/anahnu.club/app/deploy/siteground/go-live.sh --back
+```
+
+Joomla снова откроется в `anahnu.club` (если PHP 8.3 ей не подходит, вернуть прежнюю
+версию в PHP Manager), cron новой версии надо выключить.

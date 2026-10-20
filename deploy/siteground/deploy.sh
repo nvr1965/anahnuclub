@@ -12,7 +12,11 @@ APP_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 SITE_DIR="$(dirname "$APP_DIR")"
 WEB_DIR="${WEB_DIR:-$SITE_DIR/public_html}"
 PHP="${PHP:-php}"
-JOOMLA_FILES="${JOOMLA_FILES:-$HOME/www/anahnu.club/public_html}"
+# The old site's files: public_html until the switch to anahnu.club, public_html_joomla after it (go-live.sh).
+if [ -z "${JOOMLA_FILES:-}" ]; then
+    JOOMLA_FILES="$HOME/www/anahnu.club/public_html"
+    [ -d "$HOME/www/anahnu.club/public_html_joomla" ] && JOOMLA_FILES="$HOME/www/anahnu.club/public_html_joomla"
+fi
 cd "$APP_DIR"
 
 if [ -f "$WEB_DIR/configuration.php" ]; then
@@ -86,6 +90,8 @@ fi
 
 echo "==> Database"
 "$PHP" artisan migrate --force --seed
+# The link holds an absolute path: after the code folder moves it points nowhere and is made again.
+[ -L public/storage ] && [ ! -e public/storage ] && rm public/storage
 [ -e public/storage ] || "$PHP" artisan storage:link
 
 if [ "${IMPORT:-}" = 1 ]; then

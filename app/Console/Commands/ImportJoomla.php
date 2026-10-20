@@ -89,26 +89,38 @@ class ImportJoomla extends Command
         $admins = $this->old->table('user_usergroup_map')->where('group_id', 8)->pluck('user_id')->flip();
 
         $rows = $this->old->table('users')->orderBy('id')->get();
-        $existing = DB::table('users')->get(['id', 'avatar_path', 'cover_path', 'email_verified_at'])->keyBy('id');
+        $existing = DB::table('users')->get(['id', 'name', 'username', 'email', 'password', 'locale', 'status', 'blocked', 'is_admin', 'avatar_path', 'cover_path', 'email_verified_at'])->keyBy('id');
+
+        // Someone who joined the old site after the first import can get the id of someone who joined here
+        // meanwhile; importing would put one person's posts under the other, so nothing is imported.
+        $taken = $rows->filter(fn ($row) => ($here = $existing->get($row->id))
+            && $here->username !== $row->username && Str::lower($here->email) !== Str::lower(trim($row->email)));
+        if ($taken->isNotEmpty()) {
+            throw new \RuntimeException('Old-site members whose id is taken by a member who joined here: '
+                .$taken->map(fn ($row) => "#{$row->id} {$row->email} (here: {$existing->get($row->id)->email})")->implode(', '));
+        }
+
         foreach ($rows as $row) {
             $profile = $profiles->get($row->id);
+            // A member already here keeps the name, password, language, status and admin choices set here since.
+            $here = $existing->get($row->id);
             // Pictures a member has since uploaded here are kept on a re-run.
             $mine = fn (string $column) => ($value = $existing->get($row->id)?->{$column}) && ! str_starts_with($value, 'joomla/') ? $value : null;
             $params = json_decode($row->params ?: '{}', true) ?: [];
             $locale = isset($params['language']) ? substr($params['language'], 0, 2) : 'ru';
 
             DB::table('users')->updateOrInsert(['id' => $row->id], [
-                'name' => $row->name,
+                'name' => $here->name ?? $row->name,
                 'username' => $row->username,
-                'email' => Str::lower(trim($row->email)),
+                'email' => $here->email ?? Str::lower(trim($row->email)),
                 // Joomla stores bcrypt ($2y$) hashes, which Laravel checks natively.
-                'password' => $row->password,
-                'locale' => in_array($locale, ['ru', 'en', 'he', 'ar'], true) ? $locale : 'ru',
+                'password' => $here->password ?? $row->password,
+                'locale' => $here->locale ?? (in_array($locale, ['ru', 'en', 'he', 'ar'], true) ? $locale : 'ru'),
                 'avatar_path' => $mine('avatar_path') ?? $this->filePath($profile?->avatar),
                 'cover_path' => $mine('cover_path') ?? $this->filePath($profile?->cover),
-                'status' => $profile?->status ?: null,
-                'blocked' => (bool) $row->block,
-                'is_admin' => $admins->has($row->id),
+                'status' => $here ? $here->status : ($profile?->status ?: null),
+                'blocked' => $here ? (bool) $here->blocked : (bool) $row->block,
+                'is_admin' => $here ? (bool) $here->is_admin : $admins->has($row->id),
                 // An email confirmed here since stays confirmed on a re-run.
                 'email_verified_at' => $existing->get($row->id)?->email_verified_at
                     ?? ($row->activation === '' || $row->activation === '0' ? $this->date($row->registerDate) : null),

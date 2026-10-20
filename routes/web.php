@@ -27,6 +27,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [FeedController::class, 'welcome'])->name('home');
 
+// Old posts point at pictures of the Joomla site (/images/...); the import copied them into storage.
+Route::get('images/{path}', function (string $path) {
+    abort_unless(! str_contains($path, '..') && is_file(storage_path("app/public/joomla/images/$path")), 404);
+
+    return redirect('/storage/joomla/images/'.$path, 301);
+})->where('path', '.*');
+
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 
