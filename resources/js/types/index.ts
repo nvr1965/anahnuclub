@@ -81,6 +81,8 @@ export interface Post extends Translatable {
     body: string;
     created_at: string | null;
     author: Author | null;
+    /** A post of the main administrator, shown as the club's, with comments closed. */
+    official: boolean;
     group: { id: number; name: string; slug: string } | null;
     likes_count: number;
     liked: boolean;

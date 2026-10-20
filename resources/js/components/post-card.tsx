@@ -157,15 +157,23 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     return (
         <article className="rounded-lg bg-white shadow-sm dark:bg-neutral-900">
             <header className="flex items-center gap-2.5 px-4 pt-3">
-                <Link href={profile(post.author?.id) ?? '#'} className="shrink-0">
-                    <Avatar className="size-10">
-                        <AvatarImage src={post.author?.avatar ?? undefined} alt={post.author?.name} className="object-cover" />
-                        <AvatarFallback className="bg-brand-soft text-brand">{getInitials(post.author?.name ?? '?')}</AvatarFallback>
+                {post.official ? (
+                    <Avatar className="size-10 shrink-0">
+                        <AvatarImage src="/images/logo-mark.png" alt="anahnu.club" />
                     </Avatar>
-                </Link>
+                ) : (
+                    <Link href={profile(post.author?.id) ?? '#'} className="shrink-0">
+                        <Avatar className="size-10">
+                            <AvatarImage src={post.author?.avatar ?? undefined} alt={post.author?.name} className="object-cover" />
+                            <AvatarFallback className="bg-brand-soft text-brand">{getInitials(post.author?.name ?? '?')}</AvatarFallback>
+                        </Avatar>
+                    </Link>
+                )}
                 <div className="min-w-0 flex-1 text-[15px] leading-tight">
                     <div>
-                        {post.author ? (
+                        {post.official ? (
+                            <span className="font-semibold">anahnu.club</span>
+                        ) : post.author ? (
                             <Link href={route('people.show', post.author.id)} className="font-semibold hover:underline">
                                 {post.author.name}
                             </Link>
@@ -334,29 +342,31 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 </div>
             )}
 
-            <div className="mx-4 grid grid-cols-3 border-t border-slate-200 py-1 dark:border-neutral-800">
+            <div className={`mx-4 grid ${post.official ? 'grid-cols-2' : 'grid-cols-3'} border-t border-slate-200 py-1 dark:border-neutral-800`}>
                 <ReactionButton
                     mine={post.my_reaction}
                     disabled={!auth.user}
                     className={action}
                     onReact={(type) => router.post(route('posts.like', post.id), type ? { type } : {}, { preserveScroll: true })}
                 />
-                <button
-                    type="button"
-                    disabled={!auth.user}
-                    className={`${action} text-muted-foreground`}
-                    onClick={() => {
-                        setCommenting(true);
-                        setTyping(true);
-                    }}
-                >
-                    <MessageCircle className="size-5" /> {t('Comment')}
-                </button>
+                {!post.official && (
+                    <button
+                        type="button"
+                        disabled={!auth.user}
+                        className={`${action} text-muted-foreground`}
+                        onClick={() => {
+                            setCommenting(true);
+                            setTyping(true);
+                        }}
+                    >
+                        <MessageCircle className="size-5" /> {t('Comment')}
+                    </button>
+                )}
                 <ShareMenu url={post.url} title={plainTitle} className={`${action} text-muted-foreground outline-none`} />
             </div>
 
             {/* In the feed comments stay folded behind their count, as on Facebook; a post's own page shows them. */}
-            {commenting && (
+            {commenting && !post.official && (
                 <div className="space-y-2 border-t border-slate-200 px-4 py-3 dark:border-neutral-800">
                     {threads.map(({ comment, replies }) => {
                         const open = expanded.includes(comment.id) || replies.length <= 2;

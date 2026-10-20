@@ -102,6 +102,12 @@ class Post extends Model
         });
     }
 
+    /** The main administrator's posts speak for the club: no author shown, no comments. */
+    public function isOfficial(): bool
+    {
+        return (bool) $this->user?->isSuperAdmin();
+    }
+
     public function isVisibleTo(?User $viewer): bool
     {
         return self::query()->whereKey($this->id)->visibleTo($viewer)->exists();

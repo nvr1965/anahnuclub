@@ -154,9 +154,9 @@ class PostController extends Controller
             'sidebar' => CommunitySidebar::for($request->user()),
         ])->withViewData(['meta' => [
             'url' => route('posts.show', $post),
-            'title' => $post->title ?: ($post->user?->name ?? 'anahnu.club'),
+            'title' => $post->title ?: ($post->isOfficial() ? 'anahnu.club' : ($post->user?->name ?? 'anahnu.club')),
             'description' => mb_strimwidth($text, 0, 200, '…'),
-            'image' => isset($image[1]) ? url($image[1]) : $post->user?->avatar,
+            'image' => isset($image[1]) ? url($image[1]) : ($post->isOfficial() ? url('/images/logo-mark.png') : $post->user?->avatar),
         ]]);
     }
 
