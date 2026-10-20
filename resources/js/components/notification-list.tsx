@@ -44,7 +44,7 @@ export function NotificationList({ notifications }: { notifications: ClubNotific
                         {/* A plain link: the server redirects to the post, profile or event. */}
                         <a
                             href={route('notifications.open', n.id)}
-                            className="flex items-start gap-3 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            className={`flex items-start gap-3 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 ${n.read ? 'opacity-60 hover:opacity-100' : 'bg-brand/5'}`}
                         >
                             <span className="relative shrink-0">
                                 <UserAvatar person={n.actor} className="size-14" />

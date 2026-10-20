@@ -46,6 +46,7 @@ interface Props {
     conversations: ConversationRow[];
     /** Chats non-friends started that wait to be accepted, as on Facebook. */
     requests: ConversationRow[];
+    friends: Person[];
     conversation: {
         id: number;
         with: Person & { last_seen_at: string | null };
@@ -61,7 +62,7 @@ interface Props {
 /** How often an open chat asks for new messages (there is no live connection on shared hosting). */
 const POLL_MS = 4000;
 
-export default function Messages({ conversations, requests, conversation, messages }: Props) {
+export default function Messages({ conversations, requests, friends, conversation, messages }: Props) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
     const [showRequests, setShowRequests] = useState(Boolean(conversation?.request));
@@ -75,7 +76,7 @@ export default function Messages({ conversations, requests, conversation, messag
     useEffect(() => {
         const timer = setInterval(
             () => {
-                if (document.visibilityState === 'visible') router.reload({ only: ['conversations', 'requests', 'messages', 'counts'] });
+                if (document.visibilityState === 'visible') router.reload({ only: ['conversations', 'requests', 'friends', 'messages', 'counts'] });
             },
             conversation ? POLL_MS : POLL_MS * 3,
         );
@@ -111,7 +112,7 @@ export default function Messages({ conversations, requests, conversation, messag
                         {showRequests && (
                             <p className="text-muted-foreground px-2 pb-2 text-[13px]">{t('Messages from people who are not your friends.')}</p>
                         )}
-                        {rows.length === 0 && (
+                        {rows.length === 0 && (showRequests || friends.length === 0) && (
                             <p className="text-muted-foreground px-2 py-6 text-center text-[15px]">
                                 {showRequests ? t('No requests.') : t('No conversations yet. Open a member’s profile and press “Message”.')}
                             </p>
@@ -142,6 +143,26 @@ export default function Messages({ conversations, requests, conversation, messag
                                 {row.unread && <span className="bg-brand size-3 shrink-0 rounded-full" />}
                             </Link>
                         ))}
+                        {!showRequests && friends.length > 0 && (
+                            <>
+                                <h2 className="text-muted-foreground px-2 pt-3 pb-1 text-[13px] font-semibold">
+                                    {rows.length === 0 ? t('Choose a friend to start a conversation') : t('Friends')}
+                                </h2>
+                                {friends.map((friend) => (
+                                    <button
+                                        key={friend.id}
+                                        type="button"
+                                        onClick={() => router.post(route('messages.start', friend.id))}
+                                        className="flex w-full items-center gap-3 rounded-lg p-2 text-start hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    >
+                                        <UserAvatar person={friend} className="size-14" />
+                                        <div dir="auto" className="min-w-0 flex-1 truncate text-[15px] font-medium">
+                                            {friend.name}
+                                        </div>
+                                    </button>
+                                ))}
+                            </>
+                        )}
                     </div>
                 </aside>
 

@@ -92,4 +92,20 @@ class MessengerTest extends TestCase
         // Someone outside the chat gets nothing.
         $this->actingAs($eve)->postJson('/translations', ['items' => [['type' => 'message', 'id' => $message->id]]])->assertJsonPath('results', []);
     }
+
+    public function test_friends_without_a_chat_are_listed_to_start_one()
+    {
+        [$anna, $dana, $eli] = User::factory()->count(3)->create();
+        DB::table('friendships')->insert([
+            ['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true],
+            ['user_id' => $eli->id, 'friend_id' => $anna->id, 'accepted' => true],
+        ]);
+        $chat = Conversation::between($anna, $dana);
+        $this->actingAs($anna)->post("/messages/{$chat->id}", ['body' => 'Привет']);
+
+        $this->get('/messages')->assertInertia(fn ($page) => $page
+            ->has('conversations', 1)
+            ->has('friends', 1)
+            ->where('friends.0.id', $eli->id));
+    }
 }

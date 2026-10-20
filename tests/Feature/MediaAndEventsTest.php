@@ -141,6 +141,12 @@ class MediaAndEventsTest extends TestCase
         $this->get("/notifications/{$id}")->assertRedirect("/posts/{$post->id}");
         $this->post('/notifications/read');
         $this->assertSame(0, $author->unreadNotifications()->count());
+
+        // Read notices leave the bell after a few hours but stay on the full page.
+        $this->getJson('/notifications/latest')->assertJsonCount(2, 'notifications');
+        $this->travel(4)->hours();
+        $this->getJson('/notifications/latest')->assertJsonCount(0, 'notifications');
+        $this->get('/notifications')->assertInertia(fn ($page) => $page->has('notifications', 2));
     }
 
     public function test_friend_requests_notify_both_ways()

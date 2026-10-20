@@ -179,10 +179,15 @@ class MessageController extends Controller
     private function lists(User $user): array
     {
         $rows = collect($this->conversations($user));
+        // Friends there is no chat with yet, so one can be started from here.
+        $friends = $user->friends()->where('blocked', false)
+            ->whereNotIn('id', $rows->pluck('with.id')->merge($user->hiddenUserIds()))
+            ->onlineFirst()->orderBy('name')->limit(200)->get();
 
         return [
             'conversations' => $rows->where('request', false)->values()->all(),
             'requests' => $rows->where('request', true)->values()->all(),
+            'friends' => $friends->map(fn (User $u) => PeopleController::card($u))->all(),
         ];
     }
 

@@ -13,6 +13,8 @@ use Inertia\Response;
 /** The bell: likes, comments, friend requests and event answers that concern the member. */
 class NotificationController extends Controller
 {
+    public const KEEP_READ_HOURS = 3;
+
     public function index(Request $request): Response
     {
         return Inertia::render('notifications/index', [
@@ -23,7 +25,10 @@ class NotificationController extends Controller
     /** The newest ones, for the menu under the bell. */
     public function latest(Request $request, int $limit = 20): JsonResponse|array
     {
-        $notifications = $request->user()->notifications()->latest()->limit($limit)->get();
+        $notifications = $request->user()->notifications()
+            // Under the bell a read notice fades and is gone after a few hours; the full page keeps them all.
+            ->when($request->routeIs('notifications.latest'), fn ($q) => $q->where(fn ($q) => $q->whereNull('read_at')->orWhere('read_at', '>', now()->subHours(self::KEEP_READ_HOURS))))
+            ->latest()->limit($limit)->get();
         // Names and pictures as they are now, not as they were when the notice was made.
         $actors = User::whereIn('id', $notifications->pluck('data.actor.id')->filter()->unique())->get()->keyBy('id');
         $rows = $notifications->map(fn (DatabaseNotification $n) => [
