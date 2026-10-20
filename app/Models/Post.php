@@ -32,8 +32,11 @@ class Post extends Model
         });
         static::saved(function (Post $post) {
             if (($post->wasRecentlyCreated || $post->wasChanged('link_url')) && $post->link_url !== '' && ! LinkPreview::where('url', $post->link_url)->exists()) {
-                // Right after the response for a new post; older posts go through the queue (posts:link-previews).
-                FetchLinkPreview::dispatchAfterResponse($post->link_url);
+                // Right after the response for a new post. From the console (the import) it goes to the
+                // queue instead: "after the response" there means the end of the command, page after page.
+                app()->runningInConsole()
+                    ? FetchLinkPreview::dispatch($post->link_url)
+                    : FetchLinkPreview::dispatchAfterResponse($post->link_url);
             }
         });
     }

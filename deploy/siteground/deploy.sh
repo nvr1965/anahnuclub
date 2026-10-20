@@ -39,6 +39,19 @@ if [ ! -f .env ]; then
     echo "Created .env. Fill in DB_*, MAIL_PASSWORD and JOOMLA_DB_* (nano .env), then run this script again."
     exit 0
 fi
+# The old site's database settings come straight from its Joomla configuration.php.
+if ! grep -q '^JOOMLA_DB_PASSWORD=.\+' .env && [ -f "$JOOMLA_FILES/configuration.php" ]; then
+    "$PHP" -r '
+        require $argv[1];
+        $j = new JConfig;
+        $env = file_get_contents(".env");
+        foreach (["HOST" => $j->host, "DATABASE" => $j->db, "USERNAME" => $j->user, "PASSWORD" => $j->password, "PREFIX" => $j->dbprefix] as $key => $value) {
+            $env = preg_replace_callback("/^JOOMLA_DB_$key=.*$/m", fn () => "JOOMLA_DB_$key=\x27$value\x27", $env);
+        }
+        file_put_contents(".env", $env);
+    ' "$JOOMLA_FILES/configuration.php"
+    echo "Old site database settings copied into .env from $JOOMLA_FILES/configuration.php"
+fi
 grep -q '^DB_PASSWORD=.\+' .env || { echo "DB_PASSWORD in .env is empty: fill in the database settings first." >&2; exit 1; }
 
 echo "==> Composer"
@@ -50,6 +63,8 @@ else
 fi
 "${COMPOSER[@]}" install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 grep -q '^APP_KEY=base64' .env || "$PHP" artisan key:generate --force
+# Drop the cached config of the last run, so edits to .env apply to the steps below.
+"$PHP" artisan config:clear >/dev/null
 
 echo "==> Frontend"
 # Built on GitHub (.github/workflows/build-assets.yml): building here would hit the shared
@@ -71,13 +86,14 @@ fi
 
 echo "==> Database"
 "$PHP" artisan migrate --force --seed
-"$PHP" artisan storage:link 2>/dev/null || true
+[ -e public/storage ] || "$PHP" artisan storage:link
 
 if [ "${IMPORT:-}" = 1 ]; then
     echo "==> Import from the old site"
     "$PHP" artisan import:joomla ${JOOMLA_FILES:+--files="$JOOMLA_FILES"}
-    "$PHP" artisan posts:link-previews
 fi
+# Queues link cards still missing; the cron queue worker reads the pages a few at a time.
+"$PHP" artisan posts:link-previews
 
 "$PHP" artisan optimize
 
