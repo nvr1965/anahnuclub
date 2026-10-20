@@ -1,3 +1,4 @@
+import { InviteButton } from '@/components/invite-button';
 import { PersonCard, primary, secondary } from '@/components/person-card';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
@@ -21,6 +22,10 @@ export default function Friends({ requests, sent, friends, suggestions }: Props)
         <AppLayout>
             <Head title={t('Friends')} />
             <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h1 className="text-2xl font-bold">{t('Friends')}</h1>
+                    <InviteButton />
+                </div>
                 {requests.length > 0 && (
                     <Section title={t('Friend requests')} count={requests.length}>
                         {requests.map((person) => (

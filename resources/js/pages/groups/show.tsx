@@ -1,3 +1,4 @@
+import { InviteButton } from '@/components/invite-button';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import AppLayout from '@/layouts/app-layout';
@@ -48,6 +49,7 @@ export default function GroupShow({ group, posts, sidebar }: { group: Group; pos
                                 </button>
                             ) : (
                                 <>
+                                    <InviteButton group={group} />
                                     {!group.is_member && (
                                         <button
                                             onClick={() => router.post(route('groups.join', group.slug))}

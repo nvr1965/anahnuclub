@@ -1,3 +1,4 @@
+import { InviteButton } from '@/components/invite-button';
 import { PersonCard, primary, secondary } from '@/components/person-card';
 import AppLayout from '@/layouts/app-layout';
 import { countryFlag, countryName } from '@/lib/countries';
@@ -46,9 +47,12 @@ export default function People({ people, total, q, country, lang, countries, lan
             <Head title={t('All members')} />
             <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h1 className="text-2xl font-bold">
-                        {t('All members')} <span className="text-muted-foreground font-normal">{total}</span>
-                    </h1>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-bold">
+                            {t('All members')} <span className="text-muted-foreground font-normal">{total}</span>
+                        </h1>
+                        <InviteButton />
+                    </div>
                     <label className="relative w-full sm:w-64">
                         <Search className="text-muted-foreground absolute start-3 top-1/2 size-4 -translate-y-1/2" />
                         <input

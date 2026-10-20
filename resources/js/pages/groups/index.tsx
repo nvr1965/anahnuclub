@@ -1,3 +1,4 @@
+import { InviteButton } from '@/components/invite-button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
@@ -25,7 +26,10 @@ export default function GroupsIndex({
     return (
         <AppLayout sidebar={sidebar}>
             <Head title={t('Groups')} />
-            <h1 className="mb-4 text-2xl font-semibold">{t('Groups')}</h1>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h1 className="text-2xl font-semibold">{t('Groups')}</h1>
+                <InviteButton />
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
                 {groups.data.map((group) => (
                     <Link
