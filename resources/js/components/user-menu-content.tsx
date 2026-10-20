@@ -3,9 +3,11 @@ import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSep
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { useT } from '@/lib/i18n';
+import { canPrompt, isInstalled, isIos, onInstallChange, promptInstall } from '@/lib/install-app';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
-import { CalendarDays, Clapperboard, Images, LogOut, Settings, Shield, UserRound } from 'lucide-react';
+import { CalendarDays, Clapperboard, Images, LogOut, Settings, Shield, Smartphone, UserRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface UserMenuContentProps {
     user: User;
@@ -61,6 +63,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                         </Link>
                     </DropdownMenuItem>
                 )}
+                <InstallAppItem />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
@@ -70,5 +73,21 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 </Link>
             </DropdownMenuItem>
         </>
+    );
+}
+
+/** Puts the club on the home screen: the browser's own prompt, or on iPhone the steps in Safari. */
+function InstallAppItem() {
+    const t = useT();
+    const [, refresh] = useState(0);
+    useEffect(() => onInstallChange(() => refresh((n) => n + 1)), []);
+
+    if (isInstalled() || (!canPrompt() && !isIos())) return null;
+
+    return (
+        <DropdownMenuItem onSelect={() => (canPrompt() ? promptInstall() : window.alert(t('In Safari, tap Share and then “Add to Home Screen”.')))}>
+            <Smartphone className="me-2" />
+            {t('Install the app')}
+        </DropdownMenuItem>
     );
 }

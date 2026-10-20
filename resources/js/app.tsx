@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
+import { setUpInstall } from './lib/install-app';
 
 declare global {
     const route: typeof routeFn;
@@ -47,6 +48,8 @@ function syncDocumentLanguage(pageProps: Record<string, unknown>) {
 
 router.on('navigate', (event) => syncDocumentLanguage(event.detail.page.props));
 router.on('success', (event) => syncDocumentLanguage(event.detail.page.props));
+
+setUpInstall();
 
 // This will set light / dark mode on load...
 initializeTheme();
