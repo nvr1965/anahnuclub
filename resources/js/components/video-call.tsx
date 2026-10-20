@@ -411,21 +411,44 @@ export function CallRoot() {
         const s = session.current;
         if (!s) return;
         const next = facing === 'user' ? 'environment' : 'user';
+        const old = s.local.getVideoTracks()[0];
+        const oldDevice = old?.getSettings().deviceId;
+        // Phones open one camera at a time: the current one is let go before asking for the other.
+        old?.stop();
+        const video = (constraints: MediaTrackConstraints) =>
+            navigator.mediaDevices.getUserMedia({ audio: false, video: { width: { ideal: 1280 }, height: { ideal: 720 }, ...constraints } });
+        let stream: MediaStream | null = null;
         try {
-            const fresh = (await getMedia(true, next)).getVideoTracks()[0];
-            const sender = s.pc.getSenders().find((x) => x.track?.kind === 'video');
-            await sender?.replaceTrack(fresh);
-            s.local.getVideoTracks().forEach((track) => {
-                track.stop();
-                s.local.removeTrack(track);
-            });
-            s.local.addTrack(fresh);
-            fresh.enabled = camOn;
-            setFacing(next);
-            // Let the preview pick up the new camera.
-            if (localVideo.current) localVideo.current.srcObject = null;
+            stream = await video({ facingMode: { exact: next } });
         } catch {
-            /* keep the camera that works */
+            // Some phones do not tell front from back: take the next camera in the list.
+            try {
+                const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+                const at = cams.findIndex((d) => d.deviceId === oldDevice);
+                const other = cams[(at + 1) % cams.length];
+                if (other && other.deviceId !== oldDevice) stream = await video({ deviceId: { exact: other.deviceId } });
+            } catch {
+                stream = null;
+            }
+        }
+        try {
+            // Nothing else worked: back to the camera that was on.
+            stream ??= await video(oldDevice ? { deviceId: { exact: oldDevice } } : { facingMode: facing });
+        } catch {
+            return;
+        }
+        const fresh = stream.getVideoTracks()[0];
+        const sender = s.pc.getSenders().find((x) => x.track?.kind === 'video' || x.track === old);
+        await sender?.replaceTrack(fresh).catch(() => undefined);
+        if (old) s.local.removeTrack(old);
+        s.local.addTrack(fresh);
+        fresh.enabled = camOn;
+        const actual = fresh.getSettings().facingMode;
+        setFacing(actual === 'environment' || actual === 'user' ? actual : next);
+        // Let the preview pick up the new camera.
+        if (localVideo.current) {
+            localVideo.current.srcObject = null;
+            localVideo.current.srcObject = s.local;
         }
     };
 
