@@ -9,6 +9,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { VideoGrid } from '@/components/video-grid';
 import ClubLayout from '@/layouts/club-layout';
 import { albumName } from '@/lib/albums';
+import { countryFlag, countryName, countryOptions } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Paginated, type Person, type PhotoItem, type Post, type SharedData, type VideoItem } from '@/types';
@@ -21,6 +22,7 @@ import {
     ChevronDown,
     Clock,
     Ellipsis,
+    Flag,
     Globe,
     Images,
     MapPin,
@@ -43,6 +45,7 @@ interface Profile {
     status: string | null;
     about: string | null;
     location: string | null;
+    country: string | null;
     website: string | null;
     birthdate: string | null;
     gender: 'male' | 'female' | null;
@@ -59,7 +62,7 @@ interface Profile {
     can_message: boolean;
 }
 
-type PrivateField = 'location' | 'website' | 'birthdate' | 'gender' | 'friends';
+type PrivateField = 'location' | 'country' | 'website' | 'birthdate' | 'gender' | 'friends';
 type Visibility = 'public' | 'friends' | 'only_me';
 
 type Photo = PhotoItem;
@@ -380,6 +383,7 @@ function Details({ profile, locale, short = false }: { profile: Profile; locale:
     const date = (iso: string, options: Intl.DateTimeFormatOptions) => new Date(iso).toLocaleDateString(locale, options);
 
     if (profile.location) rows.push([<MapPin key="i" />, profile.location]);
+    if (profile.country) rows.push([<Flag key="i" />, `${countryFlag(profile.country)} ${countryName(profile.country, locale)}`]);
     if (profile.website)
         rows.push([
             <Globe key="i" />,
@@ -579,18 +583,24 @@ function PictureButton({
 
 function EditProfile({ profile, open, onClose }: { profile: Profile; open: boolean; onClose: () => void }) {
     const t = useT();
+    const { locale } = usePage<SharedData>().props;
     const form = useForm({
         name: profile.name,
         status: profile.status ?? '',
         about: profile.about ?? '',
         location: profile.location ?? '',
+        country: profile.country ?? '',
         website: profile.website ?? '',
         birthdate: profile.birthdate ?? '',
         gender: profile.gender ?? '',
-        privacy: (profile.privacy ?? { location: 'public', website: 'public', birthdate: 'public', gender: 'public', friends: 'public' }) as Record<
-            PrivateField,
-            Visibility
-        >,
+        privacy: (profile.privacy ?? {
+            location: 'public',
+            country: 'public',
+            website: 'public',
+            birthdate: 'public',
+            gender: 'public',
+            friends: 'public',
+        }) as Record<PrivateField, Visibility>,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -641,6 +651,19 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
                         />,
                     )}
                     {row(t('City'), 'location', text('location'), 'location')}
+                    {row(
+                        t('Country'),
+                        'country',
+                        <select className={field} value={form.data.country} onChange={(e) => form.setData('country', e.target.value)}>
+                            <option value="">{t('Not specified')}</option>
+                            {countryOptions(locale).map(([code, name]) => (
+                                <option key={code} value={code}>
+                                    {name}
+                                </option>
+                            ))}
+                        </select>,
+                        'country',
+                    )}
                     {row(t('Website'), 'website', text('website', 'url'), 'website')}
                     <div className="grid gap-3 sm:grid-cols-2">
                         {row(t('Birthday'), 'birthdate', text('birthdate', 'date'), 'birthdate')}

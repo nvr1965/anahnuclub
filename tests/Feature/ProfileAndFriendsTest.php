@@ -35,8 +35,10 @@ class ProfileAndFriendsTest extends TestCase
         Storage::fake('public');
         $member = User::factory()->create();
 
-        $this->actingAs($member)->patch('/profile/about', ['name' => 'Ника', 'about' => 'Привет', 'location' => 'Тель-Авив', 'website' => 'https://example.com', 'birthdate' => '1990-05-01', 'gender' => 'female'])->assertRedirect();
+        $this->actingAs($member)->patch('/profile/about', ['name' => 'Ника', 'about' => 'Привет', 'location' => 'Тель-Авив', 'country' => 'IL', 'website' => 'https://example.com', 'birthdate' => '1990-05-01', 'gender' => 'female'])->assertRedirect();
         $this->assertSame('Тель-Авив', $member->fresh()->location);
+        $this->assertSame('IL', $member->fresh()->country);
+        $this->patch('/profile/about', ['name' => 'Ника', 'country' => 'Israel'])->assertSessionHasErrors('country');
         $this->assertSame('1990-05-01', $member->fresh()->birthdate->format('Y-m-d'));
 
         $this->post('/profile/avatar', ['image' => UploadedFile::fake()->image('me.jpg', 1200, 900)])->assertRedirect();

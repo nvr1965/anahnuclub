@@ -98,6 +98,7 @@ class PeopleController extends Controller
                 'about' => $user->about,
                 // Details are left out for viewers their audience does not include.
                 'location' => $user->shows('location', $viewer) ? $user->location : null,
+                'country' => $user->shows('country', $viewer) ? $user->country : null,
                 'website' => $user->shows('website', $viewer) ? $user->website : null,
                 'birthdate' => $user->shows('birthdate', $viewer) ? $user->birthdate?->format('Y-m-d') : null,
                 'gender' => $user->shows('gender', $viewer) ? $user->gender : null,
@@ -131,6 +132,7 @@ class PeopleController extends Controller
             'status' => ['nullable', 'string', 'max:500'],
             'about' => ['nullable', 'string', 'max:5000'],
             'location' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'regex:/^[A-Z]{2}$/'],
             'website' => ['nullable', 'url:http,https', 'max:255'],
             'birthdate' => ['nullable', 'date', 'before:today'],
             'gender' => ['nullable', Rule::in(['male', 'female'])],

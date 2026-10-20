@@ -40,6 +40,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         'status',
         'about',
         'location',
+        'country',
         'website',
         'birthdate',
         'gender',
@@ -187,7 +188,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /** Profile details that each have their own audience. */
-    public const PRIVATE_FIELDS = ['location', 'website', 'birthdate', 'gender', 'friends'];
+    public const PRIVATE_FIELDS = ['location', 'country', 'website', 'birthdate', 'gender', 'friends'];
 
     /** Whether $viewer may see this profile detail: public, friends or only me (public when never set). */
     public function shows(string $field, ?User $viewer): bool
