@@ -20,17 +20,26 @@ class PeopleController extends Controller
 {
     public const TABS = ['posts', 'about', 'friends', 'photos', 'videos'];
 
-    /** Every member the viewer can see, recently active first, with a search by name. */
+    /** Every member the viewer can see, recently active first, with a search by name and filters by country and language. */
     public function index(Request $request): Response
     {
         $viewer = $request->user();
         $q = trim((string) $request->query('q'));
         $op = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $country = strtoupper((string) $request->query('country'));
+        $lang = (string) $request->query('lang');
 
-        $people = User::query()
+        $visible = fn () => User::query()
             ->where('blocked', false)
             ->whereKeyNot($viewer->id)
-            ->whereNotIn('id', $viewer->hiddenUserIds())
+            ->whereNotIn('id', $viewer->hiddenUserIds());
+        // Only countries their owners show to everyone count for the filter.
+        $publicCountry = fn (Builder $b) => $b->whereNotNull('country')
+            ->where(fn (Builder $w) => $w->whereNull('privacy->country')->orWhere('privacy->country', 'public'));
+
+        $people = $visible()
+            ->when(preg_match('/^[A-Z]{2}$/', $country), fn (Builder $b) => $publicCountry($b)->where('country', $country))
+            ->when($lang !== '', fn (Builder $b) => $b->where('locale', $lang))
             ->when($q !== '', fn (Builder $b) => $b->where(fn (Builder $w) => $w
                 ->where('name', $op, '%'.addcslashes($q, '%_\\').'%')
                 ->orWhere('username', $op, '%'.addcslashes($q, '%_\\').'%')))
@@ -57,6 +66,11 @@ class PeopleController extends Controller
             }),
             'total' => $people->total(),
             'q' => $q,
+            'country' => $country ?: null,
+            'lang' => $lang ?: null,
+            // What the filters can offer: the countries and languages members actually have, with how many.
+            'countries' => $publicCountry($visible())->groupBy('country')->selectRaw('country, count(*) as n')->pluck('n', 'country'),
+            'langs' => $visible()->whereNotNull('locale')->groupBy('locale')->selectRaw('locale, count(*) as n')->pluck('n', 'locale'),
         ]);
     }
 

@@ -1,8 +1,9 @@
 import { PersonCard, primary, secondary } from '@/components/person-card';
 import AppLayout from '@/layouts/app-layout';
+import { countryFlag, countryName } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
-import { type Paginated, type Person } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { type Paginated, type Person, type SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -12,10 +13,19 @@ interface Props {
     people: Paginated<Member>;
     total: number;
     q: string;
+    country: string | null;
+    lang: string | null;
+    countries: Record<string, number>;
+    langs: Record<string, number>;
 }
 
-export default function People({ people, total, q }: Props) {
+export default function People({ people, total, q, country, lang, countries, langs }: Props) {
     const t = useT();
+    const { locale, languages } = usePage<SharedData>().props;
+    const params = (patch: Record<string, string | null>) =>
+        Object.fromEntries(Object.entries({ q: query || null, country, lang, ...patch }).filter(([, v]) => v));
+    const filter = (patch: Record<string, string | null>) => router.get(route('people.index'), params(patch), { preserveState: true, replace: true });
+    const select = 'focus:ring-brand rounded-full bg-white py-2 ps-3 pe-8 text-[15px] shadow-sm outline-none focus:ring-2 dark:bg-neutral-900';
     const [query, setQuery] = useState(q);
     const first = useRef(true);
 
@@ -24,7 +34,7 @@ export default function People({ people, total, q }: Props) {
             first.current = false;
             return;
         }
-        const timer = setTimeout(() => router.get(route('people.index'), query ? { q: query } : {}, { preserveState: true, replace: true }), 300);
+        const timer = setTimeout(() => filter({}), 300);
         return () => clearTimeout(timer);
     }, [query]);
 
@@ -49,6 +59,47 @@ export default function People({ people, total, q }: Props) {
                             className="focus:ring-brand w-full rounded-full bg-white py-2 ps-9 pe-3 text-[15px] shadow-sm outline-none focus:ring-2 dark:bg-neutral-900"
                         />
                     </label>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    <select
+                        aria-label={t('Country')}
+                        className={select}
+                        value={country ?? ''}
+                        onChange={(e) => filter({ country: e.target.value || null })}
+                    >
+                        <option value="">{t('All countries')}</option>
+                        {Object.entries(countries)
+                            .map(([code, n]) => [code, countryName(code, locale), n] as const)
+                            .sort((a, b) => a[1].localeCompare(b[1], locale))
+                            .map(([code, name, n]) => (
+                                <option key={code} value={code}>
+                                    {countryFlag(code)} {name} ({n})
+                                </option>
+                            ))}
+                    </select>
+                    <select
+                        aria-label={t('Language')}
+                        className={select}
+                        value={lang ?? ''}
+                        onChange={(e) => filter({ lang: e.target.value || null })}
+                    >
+                        <option value="">{t('All languages')}</option>
+                        {Object.entries(langs).map(([code, n]) => (
+                            <option key={code} value={code}>
+                                {languages.find((l) => l.code === code)?.native_name ?? code} ({n})
+                            </option>
+                        ))}
+                    </select>
+                    {(country || lang) && (
+                        <button
+                            type="button"
+                            className="text-brand px-2 text-sm font-semibold hover:underline"
+                            onClick={() => filter({ country: null, lang: null })}
+                        >
+                            {t('Reset filters')}
+                        </button>
+                    )}
                 </div>
 
                 {people.data.length === 0 ? (

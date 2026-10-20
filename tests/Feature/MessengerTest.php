@@ -75,4 +75,21 @@ class MessengerTest extends TestCase
         $this->get("/messages/files/{$file->id}")->assertOk()->assertDownload('plan.pdf');
         $this->actingAs($eve)->get("/messages/files/{$file->id}")->assertNotFound();
     }
+
+    public function test_older_messages_are_translated_when_the_reader_switches_language()
+    {
+        $fake = new FakeTranslator;
+        $this->app->instance(Translator::class, $fake);
+        [$anna, $dana, $eve] = User::factory()->count(3)->create(['locale' => 'ru']);
+        $conversation = Conversation::between($anna, $dana);
+        $message = $conversation->messages()->create(['user_id' => $anna->id, 'body' => 'Привет', 'locale' => 'ru', 'created_at' => now()->subDay()]);
+
+        $this->actingAs($dana)->post('/locale', ['locale' => 'he']);
+        $this->get("/messages/{$conversation->id}")->assertInertia(fn ($page) => $page->where('messages.0.translation.pending', true));
+        $this->postJson('/translations', ['items' => [['type' => 'message', 'id' => $message->id]]])
+            ->assertJsonPath('results.0.fields.body', '[he] Привет');
+
+        // Someone outside the chat gets nothing.
+        $this->actingAs($eve)->postJson('/translations', ['items' => [['type' => 'message', 'id' => $message->id]]])->assertJsonPath('results', []);
+    }
 }

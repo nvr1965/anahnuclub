@@ -20,7 +20,7 @@ class TranslationController extends Controller
     {
         $items = $request->validate([
             'items' => ['required', 'array', 'max:5'],
-            'items.*.type' => ['required', 'in:post,comment,group,event,video'],
+            'items.*.type' => ['required', 'in:post,comment,group,event,video,message'],
             'items.*.id' => ['required', 'integer'],
         ])['items'];
 
@@ -32,12 +32,15 @@ class TranslationController extends Controller
             $hidden = match ($item['type']) {
                 'event' => ! EventController::visible($request)->whereKey($item['id'])->exists(),
                 'video' => ! VideoController::visible($request)->whereKey($item['id'])->exists(),
+                // Only the people in the chat, and not their own messages.
+                'message' => ! $model || $model->user_id === $request->user()?->id
+                    || ! $model->conversation->users()->whereKey($request->user()?->id)->exists(),
                 default => false,
             };
             if (! $model || $hidden) {
                 continue;
             }
-            $onDemand = config('services.translation.on_demand');
+            $onDemand = config('services.translation.on_demand') || $item['type'] === 'message';
             if (! $onDemand && ! TranslationPayload::isFresh($model)) {
                 continue;
             }

@@ -21,6 +21,8 @@ class ProfileController extends Controller
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'locale' => $request->user()->locale,
+            'canDelete' => ! $request->user()->isSuperAdmin(),
         ]);
     }
 
@@ -30,6 +32,11 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $request->user()->fill($request->validated());
+        if ($request->has('locale')) {
+            // Takes over from any earlier switch in the header, now and on other devices.
+            $request->user()->ui_locale = $request->validated('locale');
+            $request->session()->put('locale', $request->validated('locale'));
+        }
 
         $emailChanged = $request->user()->isDirty('email');
         if ($emailChanged) {

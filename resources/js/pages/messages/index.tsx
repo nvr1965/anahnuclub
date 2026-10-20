@@ -1,6 +1,7 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
 import { startCall } from '@/components/video-call';
+import { useAutoTranslate } from '@/hooks/use-auto-translate';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
@@ -162,6 +163,8 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
     const { locale } = usePage<SharedData>().props;
     const form = useForm<{ body: string; files: File[] }>({ body: '', files: [] });
     const picker = useRef<HTMLInputElement>(null);
+    // Messages not yet in the reader's language (say, after switching it) are translated on opening the chat.
+    const fetched = useAutoTranslate(messages, locale);
     const scroller = useRef<HTMLDivElement>(null);
     const lastId = messages.at(-1)?.id;
     const online = conversation.with.last_seen_at && Date.now() - new Date(conversation.with.last_seen_at).getTime() < 5 * 60 * 1000;
@@ -254,7 +257,12 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                     </div>
                 )}
                 {messages.map((message, i) => (
-                    <Bubble key={message.id} message={message} showTime={i === 0 || gap(messages[i - 1], message)} />
+                    <Bubble
+                        key={message.id}
+                        message={message}
+                        fetched={fetched('message', message.id)?.body}
+                        showTime={i === 0 || gap(messages[i - 1], message)}
+                    />
                 ))}
             </div>
 
@@ -468,11 +476,11 @@ function gap(a: Message, b: Message) {
     return !a.created_at || !b.created_at || new Date(b.created_at).getTime() - new Date(a.created_at).getTime() > 15 * 60 * 1000;
 }
 
-function Bubble({ message, showTime }: { message: Message; showTime: boolean }) {
+function Bubble({ message, fetched, showTime }: { message: Message; fetched?: string; showTime: boolean }) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
     const [original, setOriginal] = useState(false);
-    const translated = message.translation?.fields.body;
+    const translated = message.translation?.fields.body ?? fetched;
     const text = translated && !original ? translated : message.body;
 
     return (

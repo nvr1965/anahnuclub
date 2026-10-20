@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Models\Language;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,6 +28,9 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+
+            // The member's own language: the interface opens in it and texts are translated into it.
+            'locale' => ['sometimes', 'string', Rule::in(Language::enabled()->pluck('code')->all())],
         ];
     }
 }

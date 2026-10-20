@@ -20,6 +20,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** Private messages between members, translated into each reader's language. */
 class MessageController extends Controller
 {
+    /** How many of the latest messages in an open chat are translated for the reader on the spot. */
+    public const TRANSLATE_ON_OPEN = 50;
+
     /** Files a browser or a computer could run; they are not passed on. */
     private const BLOCKED = ['php', 'phtml', 'phar', 'html', 'htm', 'xhtml', 'svg', 'js', 'mjs', 'exe', 'bat', 'cmd', 'com', 'msi', 'sh', 'ps1', 'vbs', 'jar', 'scr', 'apk'];
 
@@ -49,14 +52,17 @@ class MessageController extends Controller
             ->limit(200)
             ->get()
             ->reverse()
-            ->values()
+            ->values();
+        // The latest ones are translated while the reader waits, e.g. after switching language.
+        $recent = $messages->slice(-self::TRANSLATE_ON_OPEN)->pluck('id')->all();
+        $messages = $messages
             ->map(fn (Message $m) => [
                 'id' => $m->id,
                 'body' => $m->body,
                 'files' => $m->attachments->map->card()->all(),
                 'mine' => $m->user_id === $user->id,
                 'created_at' => $m->created_at?->toIso8601String(),
-                'translation' => $m->user_id === $user->id ? null : TranslationPayload::for($m, $locale, $translator),
+                'translation' => $m->user_id === $user->id ? null : TranslationPayload::for($m, $locale, $translator, in_array($m->id, $recent, true)),
             ]);
 
         return Inertia::render('messages/index', [

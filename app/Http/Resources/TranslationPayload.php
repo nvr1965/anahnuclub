@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 class TranslationPayload
 {
     /** @return array{type: string, pending: bool, fields: array<string, string>}|null */
-    public static function for(Model $model, string $locale, ContentTranslator $translator): ?array
+    public static function for(Model $model, string $locale, ContentTranslator $translator, bool $onDemand = false): ?array
     {
         $fields = [];
         $pending = false;
@@ -34,8 +34,9 @@ class TranslationPayload
         }
 
         // Old content is shown as written; only content just published waits for its translation
-        // (being made right after publishing), unless translating while the reader waits is turned on.
-        $pending = $pending && (config('services.translation.on_demand') || self::isFresh($model));
+        // (being made right after publishing), unless translating while the reader waits is turned on
+        // (always for private messages: they were translated only into the language the reader had then).
+        $pending = $pending && ($onDemand || config('services.translation.on_demand') || self::isFresh($model));
 
         if (! $pending && $fields === []) {
             return null;

@@ -105,7 +105,8 @@ class AdminTest extends TestCase
         $this->get('/admin/users')->assertInertia(fn ($page) => $page->where('users.data.1.is_super', true));
         $this->assertTrue($this->admin->fresh()->is_admin);
 
-        $this->actingAs($this->admin)->delete('/settings/profile', ['password' => 'password'])->assertSessionHasErrors('password');
+        $this->actingAs($this->admin)->get('/settings/profile')->assertInertia(fn ($page) => $page->where('canDelete', false));
+        $this->delete('/settings/profile', ['password' => 'password'])->assertSessionHasErrors('password');
         $this->assertNotNull($this->admin->fresh());
 
         // A named address picks someone else.

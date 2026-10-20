@@ -20,13 +20,24 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
+export default function Profile({
+    mustVerifyEmail,
+    status,
+    locale,
+    canDelete,
+}: {
+    mustVerifyEmail: boolean;
+    status?: string;
+    locale: string | null;
+    canDelete: boolean;
+}) {
     const t = useT();
-    const { auth } = usePage<SharedData>().props;
+    const { auth, languages, locale: current } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         name: auth.user.name,
         email: auth.user.email,
+        locale: locale && languages.some((l) => l.code === locale) ? locale : current,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -77,6 +88,26 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             <InputError className="mt-2" message={errors.email} />
                         </div>
 
+                        <div className="grid gap-2">
+                            <Label htmlFor="locale">{t('Default language')}</Label>
+                            <select
+                                id="locale"
+                                className="border-input mt-1 block h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs"
+                                value={data.locale}
+                                onChange={(e) => setData('locale', e.target.value)}
+                            >
+                                {languages.map((l) => (
+                                    <option key={l.code} value={l.code}>
+                                        {l.native_name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-muted-foreground text-sm">
+                                {t('The site opens in this language, and posts and messages are translated into it.')}
+                            </p>
+                            <InputError className="mt-2" message={errors.locale} />
+                        </div>
+
                         {mustVerifyEmail && auth.user.email_verified_at === null && (
                             <div>
                                 <p className="mt-2 text-sm text-neutral-800">
@@ -115,7 +146,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                     </form>
                 </div>
 
-                <DeleteUser />
+                {canDelete && <DeleteUser />}
             </SettingsLayout>
         </AppLayout>
     );

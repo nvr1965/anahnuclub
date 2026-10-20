@@ -126,4 +126,29 @@ class ProfileAndFriendsTest extends TestCase
         $this->actingAs($me)->get('/friends')->assertInertia(fn ($page) => $page->where('friends.0.id', $zoe->id)->where('friends.1.id', $anna->id));
         $this->get('/people/'.$me->id)->assertInertia(fn ($page) => $page->where('friends.0.id', $zoe->id)->where('friends.2.id', $never->id));
     }
+
+    public function test_members_are_filtered_by_country_and_language()
+    {
+        $me = User::factory()->create();
+        $il = User::factory()->create(['country' => 'IL', 'locale' => 'he']);
+        $hidden = User::factory()->create(['country' => 'IL', 'locale' => 'ru', 'privacy' => ['country' => 'only_me']]);
+        $ru = User::factory()->create(['country' => 'RU', 'locale' => 'ru']);
+
+        $this->actingAs($me)->get('/people?country=IL')->assertInertia(fn ($page) => $page
+            ->where('people.data', fn ($rows) => collect($rows)->pluck('id')->all() === [$il->id])
+            ->where('countries.IL', 1)->where('countries.RU', 1));
+        $this->get('/people?lang=ru')->assertInertia(fn ($page) => $page
+            ->where('people.data', fn ($rows) => collect($rows)->pluck('id')->sort()->values()->all() === collect([$hidden->id, $ru->id])->sort()->values()->all()));
+    }
+
+    public function test_members_pick_their_default_language_in_settings()
+    {
+        $me = User::factory()->create(['locale' => 'ru']);
+
+        $this->actingAs($me)->get('/settings/profile')->assertInertia(fn ($page) => $page->where('locale', 'ru')->where('canDelete', true));
+        $this->patch('/settings/profile', ['name' => $me->name, 'email' => $me->email, 'locale' => 'he'])->assertSessionHasNoErrors();
+        $this->assertSame(['he', 'he'], [$me->fresh()->locale, $me->fresh()->ui_locale]);
+        $this->get('/feed')->assertInertia(fn ($page) => $page->where('locale', 'he'));
+        $this->patch('/settings/profile', ['name' => $me->name, 'email' => $me->email, 'locale' => 'xx'])->assertSessionHasErrors('locale');
+    }
 }
