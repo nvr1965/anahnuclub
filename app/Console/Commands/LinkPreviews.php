@@ -41,7 +41,8 @@ class LinkPreviews extends Command
             }
         });
 
-        $missing = Post::where('link_url', '!=', '')->whereNotIn('link_url', LinkPreview::select('url'))->distinct()->pluck('link_url');
+        // Pages not read yet, and ones that failed before (each is asked again only after a few hours).
+        $missing = Post::where('link_url', '!=', '')->whereNotIn('link_url', LinkPreview::where(fn ($q) => $q->whereNotNull('title')->orWhereNotNull('image'))->select('url'))->distinct()->pluck('link_url');
         $missing->each(fn ($url) => FetchLinkPreview::dispatch($url));
         $this->info("Links found: $found, pages queued: {$missing->count()}");
     }

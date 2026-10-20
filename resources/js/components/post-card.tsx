@@ -14,19 +14,29 @@ import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
 
-/** A shared link drawn as on Facebook: the page's picture, then its site, title and summary. */
+/**
+ * A shared link drawn as on Facebook: a big picture above the site, title and summary,
+ * or, when the page only offers a small picture, a thumbnail beside them.
+ */
 function LinkPreview({ link }: { link: LinkCard }) {
-    const [broken, setBroken] = useState(false);
-    const picture = link.image && !broken;
+    const [image, setImage] = useState<'loading' | 'big' | 'small' | 'none'>(link.image ? 'loading' : 'none');
+    const small = image === 'small' || image === 'none';
     return (
         <a
             href={link.url}
             target="_blank"
             rel="noopener noreferrer nofollow ugc"
-            className={`block overflow-hidden border-y border-slate-200 bg-slate-100 transition hover:bg-slate-200/70 dark:border-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 ${picture ? '' : 'flex items-stretch'}`}
+            className={`overflow-hidden border-y border-slate-200 bg-slate-100 transition hover:bg-slate-200/70 dark:border-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 ${small ? 'flex items-center' : 'block'}`}
         >
-            {picture && (
-                <img src={link.image!} alt="" loading="lazy" className="aspect-[1.91/1] w-full object-cover" onError={() => setBroken(true)} />
+            {link.image && image !== 'none' && (
+                <img
+                    src={link.image}
+                    alt=""
+                    loading="lazy"
+                    className={small ? 'size-24 shrink-0 object-cover sm:size-32' : 'aspect-[1.91/1] w-full object-cover'}
+                    onLoad={(e) => setImage(e.currentTarget.naturalWidth >= 400 ? 'big' : 'small')}
+                    onError={() => setImage('none')}
+                />
             )}
             <div dir="auto" className="min-w-0 px-4 py-2.5">
                 <div className="text-muted-foreground truncate text-[13px] uppercase">{link.domain}</div>
