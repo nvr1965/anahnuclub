@@ -7,6 +7,9 @@ use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Video and audio calls in a chat. The browsers connect to each other directly (WebRTC); the site
@@ -138,9 +141,49 @@ class CallController extends Controller
     public static function iceServers(): array
     {
         $servers = [['urls' => array_values(array_filter(explode(',', (string) config('services.webrtc.stun'))))]];
+        if ($cloudflare = self::cloudflareTurn()) {
+            return [...$servers, ...$cloudflare];
+        }
         if ($turn = array_values(array_filter(explode(',', (string) config('services.webrtc.turn_urls'))))) {
             $servers[] = ['urls' => $turn, 'username' => config('services.webrtc.turn_username'), 'credential' => config('services.webrtc.turn_credential')];
         }
+
+        return $servers;
+    }
+
+    /**
+     * Cloudflare hands out TURN logins that expire, so the site asks for a day-long one and
+     * reuses it for half a day. Null when Cloudflare is not set up or does not answer.
+     */
+    private static function cloudflareTurn(): ?array
+    {
+        $keyId = config('services.webrtc.cloudflare_key_id');
+        $token = config('services.webrtc.cloudflare_api_token');
+        if (! $keyId || ! $token) {
+            return null;
+        }
+
+        // Calls ask for their details every second, so a failure is also remembered, for a few minutes.
+        $servers = Cache::get('webrtc.cloudflare_turn');
+        if ($servers !== null) {
+            return $servers ?: null;
+        }
+
+        try {
+            $response = Http::withToken($token)->timeout(5)
+                ->post("https://rtc.live.cloudflare.com/v1/turn/keys/{$keyId}/credentials/generate-ice-servers", ['ttl' => 86400]);
+            $servers = $response->successful() ? $response->json('iceServers') : null;
+        } catch (\Throwable $e) {
+            $servers = null;
+        }
+        if (! is_array($servers) || $servers === []) {
+            Log::warning('Cloudflare TURN credentials failed', ['status' => isset($response) ? $response->status() : null]);
+            Cache::put('webrtc.cloudflare_turn', [], now()->addMinutes(5));
+
+            return null;
+        }
+
+        Cache::put('webrtc.cloudflare_turn', $servers, now()->addHours(12));
 
         return $servers;
     }

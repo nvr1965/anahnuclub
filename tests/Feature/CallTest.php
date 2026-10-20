@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\CallController;
 use App\Models\Call;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CallTest extends TestCase
@@ -100,5 +102,33 @@ class CallTest extends TestCase
         $eve = User::factory()->create();
         $request = Conversation::between($eve, $anna);
         $this->actingAs($eve)->get("/messages/{$request->id}")->assertInertia(fn ($page) => $page->where('conversation.can_call', false));
+    }
+
+    public function test_cloudflare_turn_logins_are_fetched_once_and_reused()
+    {
+        config(['services.webrtc.cloudflare_key_id' => 'key', 'services.webrtc.cloudflare_api_token' => 'token']);
+        Http::fake(['rtc.live.cloudflare.com/*' => Http::response(['iceServers' => [
+            ['urls' => ['turn:turn.cloudflare.com:3478?transport=udp'], 'username' => 'u', 'credential' => 'c'],
+        ]])]);
+
+        $servers = CallController::iceServers();
+        CallController::iceServers();
+
+        $this->assertSame('u', $servers[1]['username']);
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer token') && str_contains($r->url(), '/keys/key/') && $r['ttl'] === 86400);
+    }
+
+    public function test_calls_still_work_when_cloudflare_does_not_answer()
+    {
+        config(['services.webrtc.cloudflare_key_id' => 'key', 'services.webrtc.cloudflare_api_token' => 'token', 'services.webrtc.turn_urls' => null]);
+        Http::fake(['rtc.live.cloudflare.com/*' => Http::response('down', 500)]);
+
+        $servers = CallController::iceServers();
+        CallController::iceServers();
+
+        $this->assertCount(1, $servers);
+        Http::assertSentCount(1);
+        $this->assertStringStartsWith('stun:', $servers[0]['urls'][0]);
     }
 }

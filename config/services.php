@@ -97,12 +97,15 @@ return [
         'redirect' => env('APP_URL').'/auth/facebook/callback',
     ],
 
-    // Video calls. STUN is free and enough for most networks; a TURN relay (e.g. metered.ca) helps the rest.
+    // Video calls. STUN is free and enough for most networks; a TURN relay (Cloudflare, or any other such as metered.ca) helps the rest.
     'webrtc' => [
         'stun' => env('WEBRTC_STUN', 'stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302'),
         'turn_urls' => env('TURN_URLS'),
         'turn_username' => env('TURN_USERNAME'),
         'turn_credential' => env('TURN_CREDENTIAL'),
+        // Cloudflare Realtime TURN: the TURN Token ID and its API token. When set, they take the place of the TURN_* lines.
+        'cloudflare_key_id' => env('CLOUDFLARE_TURN_KEY_ID'),
+        'cloudflare_api_token' => env('CLOUDFLARE_TURN_API_TOKEN'),
     ],
 
 ];
