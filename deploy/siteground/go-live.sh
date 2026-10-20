@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Moves the club from test.anahnu.club to anahnu.club, in place of the old Joomla site.
+# Members and content are imported anew from Joomla; only the administrator settings of the test
+# site stay (languages, translators and their keys, site pages, interface texts).
 #
 #   bash deploy/siteground/go-live.sh          from ~/www/test.anahnu.club/app
 #
@@ -40,8 +42,12 @@ mv "$TEST_DIR/app" "$LIVE_DIR/app"
 cd "$LIVE_DIR/app"
 sed -i "s#^APP_URL=.*#APP_URL=https://$DOMAIN#" .env
 
-trap 'echo; echo "Stopped. Fix the error above and go on with: cd $LIVE_DIR/app && JOOMLA_FILES=$JOOMLA IMPORT=1 bash deploy/siteground/deploy.sh"; echo "or bring the old site back: bash $LIVE_DIR/app/deploy/siteground/go-live.sh --back"' ERR
-echo "==> Bringing over what was posted on the old site since the last import"
+trap 'echo; echo "Stopped. Fix the error above and go on with: cd $LIVE_DIR/app && php artisan site:reset --force && JOOMLA_FILES=$JOOMLA IMPORT=1 bash deploy/siteground/deploy.sh"; echo "or bring the old site back: bash $LIVE_DIR/app/deploy/siteground/go-live.sh --back"' ERR
+echo "==> Emptying the database: what was tried on the test site does not go live"
+"$PHP" artisan config:clear >/dev/null
+"$PHP" artisan site:reset --force
+
+echo "==> Importing everything from the old site anew"
 JOOMLA_FILES="$JOOMLA" IMPORT=1 PHP="$PHP" bash deploy/siteground/deploy.sh
 
 trap - ERR
