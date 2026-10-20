@@ -32,7 +32,8 @@ class Post extends Model
         });
         static::saved(function (Post $post) {
             if (($post->wasRecentlyCreated || $post->wasChanged('link_url')) && $post->link_url !== '' && ! LinkPreview::where('url', $post->link_url)->exists()) {
-                FetchLinkPreview::dispatch($post->link_url);
+                // Right after the response for a new post; older posts go through the queue (posts:link-previews).
+                FetchLinkPreview::dispatchAfterResponse($post->link_url);
             }
         });
     }
