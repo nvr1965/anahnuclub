@@ -2,16 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\TranslateInterface;
 use App\Models\Language;
 use App\Models\User;
-use App\Models\Setting;
 use App\Translation\InterfaceStrings;
 use App\Translation\Providers\DeepL;
 use App\Translation\Providers\Gemini;
+use App\Translation\Providers\Microsoft;
 use App\Translation\Providers\MyMemory;
 use App\Translation\Providers\Provider;
-use App\Translation\TranslatorChain;
 use App\Translation\Translator;
+use App\Translation\TranslatorChain;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -99,7 +100,7 @@ class TranslatorChainTest extends TestCase
     public function test_admins_order_switch_and_check_the_services()
     {
         $admin = User::factory()->create(['is_admin' => true]);
-        $this->actingAs($admin)->get('/admin/translators')->assertInertia(fn ($page) => $page->component('admin/translators')->has('translators', 6));
+        $this->actingAs($admin)->get('/admin/translators')->assertInertia(fn ($page) => $page->component('admin/translators')->has('translators', 7));
 
         $this->put('/admin/translators', ['translators' => [
             ['id' => 'mymemory', 'on' => true, 'daily_chars' => 4500],
@@ -193,5 +194,40 @@ class TranslatorChainTest extends TestCase
 
         $this->assertSame('Delete the language :name?', InterfaceStrings::read('uz')['Delete the language :name?']);
         $this->assertSame('tarjima', InterfaceStrings::read('uz')['Cancel']);
+    }
+
+    public function test_microsoft_translates_a_batch()
+    {
+        Http::fake(['api.cognitive.microsofttranslator.com/*' => Http::response([['translations' => [['text' => 'Hallo', 'to' => 'de']]], ['translations' => [['text' => 'Welt', 'to' => 'de']]]])]);
+
+        $this->assertSame(['Hallo', 'Welt'], (new Microsoft('key', 'westeurope'))->translateMany(['Hello', 'World'], 'de', 'en'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'to=de') && $r->header('Ocp-Apim-Subscription-Region')[0] === 'westeurope' && $r[0]['Text'] === 'Hello');
+    }
+
+    public function test_interface_translation_pauses_at_the_daily_limit_and_picks_up_again()
+    {
+        $this->app->instance(Translator::class, $this->chain([['id' => 'used-up']])->with('used-up', new class extends Provider
+        {
+            public function translateMany(array $texts, string $targetLocale, ?string $sourceLocale = null): array
+            {
+                throw new \RuntimeException('daily limit reached');
+            }
+
+            public function name(): string
+            {
+                return 'used-up';
+            }
+        }));
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin)->post('/admin/languages', ['code' => 'uk', 'name' => 'Ukrainian', 'native_name' => 'Українська'])->assertRedirect();
+        $this->assertFalse(Language::find('uk')->enabled);
+        $this->assertNotSame([], InterfaceStrings::missing('uk'));
+
+        $this->app->instance(Translator::class, new FakeTranslator);
+        TranslateInterface::resumeAll();
+
+        $this->assertSame([], InterfaceStrings::missing('uk'));
+        $this->assertTrue(Language::find('uk')->enabled);
+        InterfaceStrings::forget('uk');
     }
 }

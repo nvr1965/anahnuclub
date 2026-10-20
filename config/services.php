@@ -64,6 +64,12 @@ return [
         'key' => env('GOOGLE_TRANSLATE_KEY'),
     ],
 
+    'microsoft_translator' => [
+        'key' => env('MICROSOFT_TRANSLATOR_KEY'),
+        // The Azure region of the resource, e.g. westeurope; not needed for a "Global" resource.
+        'region' => env('MICROSOFT_TRANSLATOR_REGION'),
+    ],
+
     'libretranslate' => [
         'url' => env('LIBRETRANSLATE_URL'),
         'key' => env('LIBRETRANSLATE_KEY'),

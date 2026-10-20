@@ -9,6 +9,7 @@ use App\Translation\Providers\DeepL;
 use App\Translation\Providers\Gemini;
 use App\Translation\Providers\Google;
 use App\Translation\Providers\LibreTranslate;
+use App\Translation\Providers\Microsoft;
 use App\Translation\Providers\MyMemory;
 use App\Translation\Providers\Provider;
 use Illuminate\Support\Facades\Cache;
@@ -219,6 +220,7 @@ class TranslatorChain implements Translator
     {
         return match ($id) {
             'deepl' => new DeepL(config('services.deepl.key')),
+            'microsoft' => new Microsoft(config('services.microsoft_translator.key'), config('services.microsoft_translator.region')),
             'google' => new Google(config('services.google_translate.key')),
             'gemini' => new Gemini(config('services.gemini.key'), config('services.gemini.translation_model')),
             'libretranslate' => new LibreTranslate(config('services.libretranslate.url'), config('services.libretranslate.key')),

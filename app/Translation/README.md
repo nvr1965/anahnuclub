@@ -7,6 +7,7 @@ Everything about machine translation lives here, apart from the app code that ca
 | id | service | price | needs in `.env` |
 |---|---|---|---|
 | `deepl` | DeepL | free up to 500,000 chars/month | `DEEPL_API_KEY` |
+| `microsoft` | Microsoft Translator (Azure) | free up to 2,000,000 chars/month | `MICROSOFT_TRANSLATOR_KEY` (`MICROSOFT_TRANSLATOR_REGION`) |
 | `google` | Google Cloud Translation | free up to 500,000 chars/month | `GOOGLE_TRANSLATE_KEY` |
 | `gemini` | Google Gemini | free tier with request limits | `GEMINI_API_KEY` (`GEMINI_TRANSLATION_MODEL`) |
 | `libretranslate` | LibreTranslate | free, own server | `LIBRETRANSLATE_URL` (`LIBRETRANSLATE_KEY`) |
