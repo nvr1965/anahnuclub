@@ -52,10 +52,11 @@ fi
 grep -q '^APP_KEY=base64' .env || "$PHP" artisan key:generate --force
 
 echo "==> Frontend"
-if command -v npm >/dev/null; then
+# Built on GitHub (.github/workflows/build-assets.yml): building here would hit the shared
+# hosting memory limits. BUILD=local builds with this host's npm instead.
+if [ "${BUILD:-}" = local ]; then
     npm ci --no-audit --no-fund && npm run build
 else
-    # Built on GitHub (.github/workflows/build-assets.yml); wait for the build of this commit.
     want="$(git rev-parse HEAD)" got=""
     for _ in $(seq 1 30); do
         git fetch -q origin build && got="$(git show FETCH_HEAD:build/.commit 2>/dev/null || true)"
