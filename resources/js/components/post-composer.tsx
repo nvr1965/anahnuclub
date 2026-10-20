@@ -59,7 +59,7 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                     headers: { Accept: 'application/json' },
                     signal: ask.signal,
                 });
-                setLink(response.ok ? await response.json() : null);
+                setLink(response.ok ? ((await response.json()).link ?? null) : null);
             } catch {
                 // A page that cannot be read leaves just the link.
             }

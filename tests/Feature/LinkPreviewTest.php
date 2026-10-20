@@ -95,8 +95,8 @@ class LinkPreviewTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->getJson('/link-preview?url='.urlencode('Глядите http://93.184.216.34/item/1'))
-            ->assertOk()->assertJsonPath('title', 'Марокко: министр уволена через два дня')->assertJsonPath('domain', '93.184.216.34');
-        $this->getJson('/link-preview?url=nothing')->assertOk()->assertExactJson([]);
+            ->assertOk()->assertJsonPath('link.title', 'Марокко: министр уволена через два дня')->assertJsonPath('link.domain', '93.184.216.34');
+        $this->getJson('/link-preview?url=nothing')->assertOk()->assertExactJson(['link' => null]);
 
         $this->post('/posts', ['body' => 'http://93.184.216.34/item/1', 'no_link_preview' => true])->assertRedirect();
         $post = Post::latest('id')->first();

@@ -93,7 +93,7 @@ class PostController extends Controller
             (new FetchLinkPreview($url))->handle($fetcher);
         }
 
-        return response()->json($url ? LinkPreview::where('url', $url)->first()?->card() : null);
+        return response()->json(['link' => $url ? LinkPreview::where('url', $url)->first()?->card() : null]);
     }
 
     /** Changes who sees a post, from its menu. */
