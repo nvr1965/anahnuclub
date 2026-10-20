@@ -2,6 +2,7 @@ import { card } from '@/components/admin-ui';
 import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Stats {
     users: number;
@@ -14,8 +15,30 @@ interface Stats {
     translations: number;
 }
 
-export default function AdminIndex({ stats, translation_driver }: { stats: Stats; translation_driver: string }) {
+export default function AdminIndex({
+    stats,
+    mail,
+    translation_driver,
+}: {
+    stats: Stats;
+    mail: { mailer: string; problems: string[] };
+    translation_driver: string;
+}) {
     const t = useT();
+    const [test, setTest] = useState<'busy' | { ok: boolean; text: string } | null>(null);
+    const sendTest = async () => {
+        setTest('busy');
+        const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+        try {
+            const response = await fetch(route('admin.mail.test'), {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token },
+            });
+            setTest(response.ok ? await response.json() : { ok: false, text: `HTTP ${response.status}` });
+        } catch {
+            setTest({ ok: false, text: t('No connection.') });
+        }
+    };
     const tiles = [
         { label: t('Users'), value: stats.users, note: t(':count blocked', { count: stats.blocked }), href: route('admin.users.index') },
         { label: t('Administrators'), value: stats.admins, href: route('admin.users.index', { filter: 'admins' }) },
@@ -50,6 +73,30 @@ export default function AdminIndex({ stats, translation_driver }: { stats: Stats
                         </div>
                     );
                 })}
+            </div>
+
+            <div className={`${card} mt-4 space-y-2 p-4 text-sm`}>
+                <div className="font-semibold">{t('Letters')}</div>
+                {mail.problems.length ? (
+                    mail.problems.map((problem) => (
+                        <p key={problem} className="text-red-600 dark:text-red-400">
+                            {problem}
+                        </p>
+                    ))
+                ) : (
+                    <p className="text-muted-foreground">{t('Letters are sent with :mailer and no problems were found.', { mailer: mail.mailer })}</p>
+                )}
+                <button
+                    type="button"
+                    onClick={sendTest}
+                    disabled={test === 'busy'}
+                    className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                >
+                    {test === 'busy' ? t('Sending…') : t('Send me a test letter')}
+                </button>
+                {test && test !== 'busy' && (
+                    <p className={test.ok ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{test.text}</p>
+                )}
             </div>
         </AdminLayout>
     );

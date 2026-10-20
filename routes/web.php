@@ -135,6 +135,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', Admin\DashboardController::class)->name('index');
+    Route::post('mail/test', [Admin\MailController::class, 'test'])->name('mail.test');
     Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
     Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
     Route::post('users/{user}/purge', [Admin\UserController::class, 'purge'])->name('users.purge');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Notifications\NewMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +83,9 @@ class SocialLoginController extends Controller
 
                 return $user;
             });
+            if ($user->wasRecentlyCreated) {
+                NewMember::send($user, $name);
+            }
         }
 
         if ($user->blocked) {

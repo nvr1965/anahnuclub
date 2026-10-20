@@ -7,6 +7,7 @@ use App\Models\ContentTranslation;
 use App\Models\Group;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\MailHealth;
 use App\Translation\TranslatorChain;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,6 +28,7 @@ class DashboardController extends AdminController
                 'translations' => ContentTranslation::count(),
             ],
             // The services that are set up and on, in the order they are tried.
+            'mail' => ['mailer' => config('mail.default'), 'problems' => MailHealth::problems()],
             'translation_driver' => collect(app(TranslatorChain::class)->describe())->filter(fn ($t) => $t['on'] && $t['ready'])->pluck('label')->implode(' → ') ?: 'null',
         ]);
     }

@@ -108,6 +108,9 @@ return [
     |
     */
 
+    // Where the letter about every new member goes; empty turns it off.
+    'team_address' => env('MAIL_TEAM_ADDRESS', 'team@anahnu.club'),
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
