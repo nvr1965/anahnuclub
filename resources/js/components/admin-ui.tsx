@@ -39,11 +39,23 @@ export function Pager({ page }: { page: Page<unknown> }) {
 
     return (
         <nav className="text-brand mt-4 flex items-center justify-between text-sm font-medium">
-            {page.prev_page_url ? <Link href={page.prev_page_url} preserveScroll>{t('Previous')}</Link> : <span />}
+            {page.prev_page_url ? (
+                <Link href={page.prev_page_url} preserveScroll>
+                    {t('Previous')}
+                </Link>
+            ) : (
+                <span />
+            )}
             <span className="text-muted-foreground">
                 {page.from}–{page.to} / {page.total}
             </span>
-            {page.next_page_url ? <Link href={page.next_page_url} preserveScroll>{t('Next')}</Link> : <span />}
+            {page.next_page_url ? (
+                <Link href={page.next_page_url} preserveScroll>
+                    {t('Next')}
+                </Link>
+            ) : (
+                <span />
+            )}
         </nav>
     );
 }

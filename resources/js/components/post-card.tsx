@@ -1,4 +1,5 @@
 import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
+import { LinkPreview } from '@/components/link-preview';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { ShareMenu } from '@/components/share-menu';
 import { TranslatedText } from '@/components/translated-text';
@@ -7,45 +8,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
-import { type Comment, type LinkCard, type Post, type SharedData } from '@/types';
+import { type Comment, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, ThumbsUp, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
-
-/**
- * A shared link drawn as on Facebook: a big picture above the site, title and summary,
- * or, when the page only offers a small picture, a thumbnail beside them.
- */
-function LinkPreview({ link }: { link: LinkCard }) {
-    const [image, setImage] = useState<'loading' | 'big' | 'small' | 'none'>(link.image ? 'loading' : 'none');
-    const small = image === 'small' || image === 'none';
-    return (
-        <a
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer nofollow ugc"
-            className={`overflow-hidden border-y border-slate-200 bg-slate-100 transition hover:bg-slate-200/70 dark:border-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 ${small ? 'flex items-center' : 'block'}`}
-        >
-            {link.image && image !== 'none' && (
-                <img
-                    src={link.image}
-                    alt=""
-                    loading="lazy"
-                    className={small ? 'size-24 shrink-0 object-cover sm:size-32' : 'aspect-[1.91/1] w-full object-cover'}
-                    onLoad={(e) => setImage(e.currentTarget.naturalWidth >= 400 ? 'big' : 'small')}
-                    onError={() => setImage('none')}
-                />
-            )}
-            <div dir="auto" className="min-w-0 px-4 py-2.5">
-                <div className="text-muted-foreground truncate text-[13px] uppercase">{link.domain}</div>
-                {link.title && <div className="line-clamp-2 text-[17px] leading-snug font-semibold">{link.title}</div>}
-                {link.description && <div className="text-muted-foreground mt-0.5 line-clamp-1 text-[15px]">{link.description}</div>}
-            </div>
-        </a>
-    );
-}
 
 const actions: Record<string, string> = {
     discussion: 'new discussion',

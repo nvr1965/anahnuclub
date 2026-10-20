@@ -48,7 +48,8 @@ export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
                                     alt=""
                                     loading="lazy"
                                     onError={(e) => ((e.currentTarget.parentElement as HTMLElement).style.display = 'none')}
-                                    className="aspect-square w-full object-cover transition hover:scale-105" />
+                                    className="aspect-square w-full object-cover transition hover:scale-105"
+                                />
                             </a>
                         ))}
                     </div>

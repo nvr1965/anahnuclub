@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
+use App\Jobs\FetchLinkPreview;
 use App\Jobs\TranslateContent;
 use App\Models\Album;
 use App\Models\Group;
+use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\Video;
 use App\Support\Html;
 use App\Support\ImageStore;
+use App\Support\LinkPreviewFetcher;
 use App\Translation\LanguageGuesser;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -28,6 +32,7 @@ class PostController extends Controller
             'images.*' => ['image', 'max:15360'],
             'video' => ['nullable', 'file', 'mimetypes:'.VideoController::FILE_TYPES, 'max:204800'],
             'video_thumb' => ['nullable', 'image', 'max:5120'],
+            'no_link_preview' => ['nullable', 'boolean'],
             ...self::audienceRules(),
         ]);
         $text = (string) ($data['body'] ?? '');
@@ -61,6 +66,10 @@ class PostController extends Controller
             'body' => Html::fromPlainText($text),
             'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
         ]);
+        // The author closed the link card while writing: the link stays in the text only.
+        if ($data['no_link_preview'] ?? false) {
+            $post->forceFill(['link_url' => ''])->saveQuietly();
+        }
         // In a group the group decides who reads; elsewhere the author picks the audience.
         if (! $post->group_id) {
             $this->applyAudience($request, $post, $data);
@@ -74,6 +83,17 @@ class PostController extends Controller
         TranslateContent::dispatchAfterResponse($post);
 
         return back();
+    }
+
+    /** The card for a link being typed into a new post, read now if it is not known yet. */
+    public function linkPreview(Request $request, LinkPreviewFetcher $fetcher): JsonResponse
+    {
+        $url = LinkPreviewFetcher::firstUrl((string) $request->validate(['url' => ['required', 'string', 'max:2048']])['url']);
+        if ($url) {
+            (new FetchLinkPreview($url))->handle($fetcher);
+        }
+
+        return response()->json($url ? LinkPreview::where('url', $url)->first()?->card() : null);
     }
 
     /** Changes who sees a post, from its menu. */

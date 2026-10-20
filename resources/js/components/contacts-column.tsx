@@ -36,7 +36,11 @@ export function ContactsColumn({ sidebar }: { sidebar: Sidebar }) {
                     <span className="font-normal">{sidebar.members_count}</span>
                 </h3>
                 {sidebar.members.map((member) => (
-                    <Link key={member.id} href={route('people.show', member.id)} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[15px] hover:bg-black/5 dark:hover:bg-white/10">
+                    <Link
+                        key={member.id}
+                        href={route('people.show', member.id)}
+                        className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[15px] hover:bg-black/5 dark:hover:bg-white/10"
+                    >
                         <Avatar className="size-9">
                             <AvatarImage src={member.avatar ?? undefined} alt="" className="object-cover" />
                             <AvatarFallback className="bg-brand-soft text-brand text-sm">{getInitials(member.name)}</AvatarFallback>

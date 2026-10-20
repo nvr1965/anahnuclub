@@ -13,7 +13,9 @@ export function PostList({ posts, full = false }: { posts: Paginated<Post> | { d
 
     return (
         <div className="space-y-4">
-            {posts.data.length === 0 && <p className="text-muted-foreground rounded-2xl bg-white p-6 text-center text-sm dark:bg-neutral-900">{t('No posts yet.')}</p>}
+            {posts.data.length === 0 && (
+                <p className="text-muted-foreground rounded-2xl bg-white p-6 text-center text-sm dark:bg-neutral-900">{t('No posts yet.')}</p>
+            )}
             {posts.data.map((post) => (
                 <PostCard key={post.id} post={post} translated={translated} full={full} />
             ))}

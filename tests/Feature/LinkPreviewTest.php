@@ -88,4 +88,19 @@ class LinkPreviewTest extends TestCase
         $this->artisan('posts:link-previews', ['--url' => 'http://93.184.216.34/blocked'])->expectsOutputToContain('HTTP 403')->assertSuccessful();
         $this->artisan('posts:link-previews', ['--url' => 'http://93.184.216.34/ok'])->expectsOutputToContain('site_name: NofInfo')->assertSuccessful();
     }
+
+    public function test_the_card_shows_while_writing_and_can_be_closed()
+    {
+        Http::fake(['http://93.184.216.34/*' => Http::response(self::PAGE, 200, ['Content-Type' => 'text/html'])]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson('/link-preview?url='.urlencode('Глядите http://93.184.216.34/item/1'))
+            ->assertOk()->assertJsonPath('title', 'Марокко: министр уволена через два дня')->assertJsonPath('domain', '93.184.216.34');
+        $this->getJson('/link-preview?url=nothing')->assertOk()->assertExactJson([]);
+
+        $this->post('/posts', ['body' => 'http://93.184.216.34/item/1', 'no_link_preview' => true])->assertRedirect();
+        $post = Post::latest('id')->first();
+        $this->assertSame('', $post->link_url);
+        $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page->where('post.data.link', null));
+    }
 }

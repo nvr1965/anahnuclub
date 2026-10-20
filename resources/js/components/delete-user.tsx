@@ -1,6 +1,6 @@
+import { useT } from '@/lib/i18n';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
-import { useT } from '@/lib/i18n';
 
 // Components...
 import InputError from '@/components/input-error';
@@ -35,19 +35,19 @@ export default function DeleteUser() {
 
     return (
         <div className="space-y-6">
-            <HeadingSmall title={t("Delete account")} description={t("Delete your account and all of its resources")} />
+            <HeadingSmall title={t('Delete account')} description={t('Delete your account and all of its resources')} />
             <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
                 <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">{t("Warning")}</p>
-                    <p className="text-sm">{t("Please proceed with caution, this cannot be undone.")}</p>
+                    <p className="font-medium">{t('Warning')}</p>
+                    <p className="text-sm">{t('Please proceed with caution, this cannot be undone.')}</p>
                 </div>
 
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="destructive">{t("Delete account")}</Button>
+                        <Button variant="destructive">{t('Delete account')}</Button>
                     </DialogTrigger>
                     <DialogContent>
-                        <DialogTitle>{t("Are you sure you want to delete your account?")}</DialogTitle>
+                        <DialogTitle>{t('Are you sure you want to delete your account?')}</DialogTitle>
                         <DialogDescription>
                             Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your password
                             to confirm you would like to permanently delete your account.
@@ -55,7 +55,7 @@ export default function DeleteUser() {
                         <form className="space-y-6" onSubmit={deleteUser}>
                             <div className="grid gap-2">
                                 <Label htmlFor="password" className="sr-only">
-                                    {t("Password")}
+                                    {t('Password')}
                                 </Label>
 
                                 <Input
@@ -65,7 +65,7 @@ export default function DeleteUser() {
                                     ref={passwordInput}
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
-                                    placeholder={t("Password")}
+                                    placeholder={t('Password')}
                                     autoComplete="current-password"
                                 />
 
@@ -75,12 +75,12 @@ export default function DeleteUser() {
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button variant="secondary" onClick={closeModal}>
-                                        {t("Cancel")}
+                                        {t('Cancel')}
                                     </Button>
                                 </DialogClose>
 
                                 <Button variant="destructive" disabled={processing} asChild>
-                                    <button type="submit">{t("Delete account")}</button>
+                                    <button type="submit">{t('Delete account')}</button>
                                 </Button>
                             </DialogFooter>
                         </form>

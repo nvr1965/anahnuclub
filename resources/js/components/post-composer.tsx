@@ -1,10 +1,11 @@
 import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
 import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
+import { LinkPreview } from '@/components/link-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame } from '@/lib/shrink-image';
-import { type Audience, type SharedData } from '@/types';
+import { type Audience, type LinkCard, type SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
 import { Camera, ChevronDown, ImagePlus, X } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,6 +33,7 @@ export function PostComposer({ groupId }: { groupId?: number }) {
         audience: Audience;
         audience_ids: number[];
         audience_default: boolean;
+        no_link_preview: boolean;
     }>({
         body: '',
         group_id: groupId ?? null,
@@ -41,7 +43,30 @@ export function PostComposer({ groupId }: { groupId?: number }) {
         audience: auth.user?.default_audience ?? 'public',
         audience_ids: [],
         audience_default: false,
+        no_link_preview: false,
     });
+    // The first link typed shows as a card, as on Facebook; closing it keeps the link as text only.
+    const [link, setLink] = useState<LinkCard | null>(null);
+    const [dismissed, setDismissed] = useState<string | null>(null);
+    const typedUrl = form.data.body.match(/https?:\/\/[^\s<>"']+/i)?.[0].replace(/[.,;:!?)\]}»]+$/, '') ?? null;
+    useEffect(() => {
+        if (!typedUrl || typedUrl === dismissed) return setLink(null);
+        if (link?.url === typedUrl) return;
+        const ask = new AbortController();
+        const wait = setTimeout(async () => {
+            try {
+                const response = await fetch(route('links.preview', { url: typedUrl }), {
+                    headers: { Accept: 'application/json' },
+                    signal: ask.signal,
+                });
+                setLink(response.ok ? await response.json() : null);
+            } catch {
+                // A page that cannot be read leaves just the link.
+            }
+        }, 600);
+        return () => (clearTimeout(wait), ask.abort());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [typedUrl, dismissed]);
     const firstName = auth.user?.name.split(' ')[0] ?? '';
     const previews = useMemo(() => form.data.images.map((file) => URL.createObjectURL(file)), [form.data.images]);
 
@@ -79,12 +104,15 @@ export function PostComposer({ groupId }: { groupId?: number }) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        form.transform((data) => ({ ...data, no_link_preview: typedUrl !== null && typedUrl === dismissed }));
         form.post(route('posts.store'), {
             preserveScroll: true,
             forceFormData: form.data.images.length > 0 || form.data.video !== null,
             onSuccess: () => {
                 // The audience stays as chosen for the next post, as on Facebook.
                 form.reset('body', 'images', 'video', 'video_thumb', 'audience_default');
+                setLink(null);
+                setDismissed(null);
                 setOpen(false);
             },
         });
@@ -210,6 +238,11 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                     >
                         <X className="size-4" />
                     </button>
+                </div>
+            )}
+            {link && previews.length === 0 && !videoPreview && (
+                <div className="mt-3">
+                    <LinkPreview link={link} onRemove={() => (setDismissed(link.url), setLink(null))} />
                 </div>
             )}
             {form.errors.video && <p className="mt-2 text-sm text-red-600">{form.errors.video}</p>}

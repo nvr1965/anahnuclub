@@ -41,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
 
     Route::post('posts', [PostController::class, 'store'])->name('posts.store');
+    Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->name('links.preview');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
