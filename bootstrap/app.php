@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Shared hosting (SiteGround) serves through a proxy; without this every URL comes out as http://.
+        $middleware->trustProxies(at: '*');
         $middleware->alias(['admin' => EnsureAdmin::class]);
         $middleware->web(append: [
             SetLocale::class,

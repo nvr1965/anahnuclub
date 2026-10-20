@@ -1,0 +1,53 @@
+name: build assets
+
+# Shared hosting has no Node, so the built frontend is kept on the `build` branch
+# and deploy/siteground/deploy.sh unpacks it from there.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-assets
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          composer install -q --no-interaction --no-scripts --prefer-dist
+          npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to the build branch
+        run: |
+          git rev-parse HEAD > public/build/.commit
+          cd public
+          git init -q -b build out
+          cp -r build out/
+          cd out
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com add -A
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "Build of ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" build
