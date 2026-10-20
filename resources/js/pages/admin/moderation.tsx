@@ -23,6 +23,7 @@ interface Item {
 interface Props {
     items: Item[];
     total: number;
+    found: number;
     counts: Record<Category, number>;
     authors: { id: number; name: string; blocked: boolean; count: number }[];
     category: Category | null;
@@ -46,7 +47,7 @@ function highlight(text: string, words: string[]): ReactNode {
     );
 }
 
-export default function AdminModeration({ items, total, counts, authors, category, words, builtin }: Props) {
+export default function AdminModeration({ items, total, found, counts, authors, category, words, builtin }: Props) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
     const [selected, setSelected] = useState<string[]>([]);
@@ -72,6 +73,18 @@ export default function AdminModeration({ items, total, counts, authors, categor
         send('post', route('admin.moderation.keep'), { items: keys.map(ref) });
         setSelected([]);
     };
+    // Everything flagged (in the chosen category), also beyond the list shown.
+    const removeAll = () => {
+        if (!confirm(t('Delete all :count found posts and comments? This cannot be undone.', { count: total }))) return;
+        send('delete', route('admin.moderation.destroy'), { all: true, category: category ?? undefined });
+        setSelected([]);
+    };
+    const keepAll = () => {
+        if (!confirm(t('Mark all :count found as fine?', { count: total }))) return;
+        send('post', route('admin.moderation.keep'), { all: true, category: category ?? undefined });
+        setSelected([]);
+    };
+    const allShown = items.length > 0 && selected.length === items.length;
     const filter = (c: Category | null) => router.get(route('admin.moderation.index', { category: c ?? undefined }), {}, { preserveScroll: true });
     const tab = 'rounded-full px-3 py-1.5 text-sm font-medium aria-pressed:bg-brand aria-pressed:text-white bg-white dark:bg-neutral-900';
 
@@ -79,12 +92,12 @@ export default function AdminModeration({ items, total, counts, authors, categor
         <AdminLayout title={t('Content check')}>
             <p className="text-muted-foreground mb-3 text-sm">
                 {t(
-                    'Posts and comments with words about drugs, porn, prostitution or gambling, in any language of the club (translations are checked too). It is only a hint: open the post and decide. “All fine” hides it until it is edited.',
+                    'Posts and comments with words about drugs, porn, prostitution or gambling, in any language of the club (translations are checked too). It is only a hint: open the post and decide. “Approve” hides it until it is edited.',
                 )}
             </p>
             <div className="mb-4 flex flex-wrap gap-2">
                 <button type="button" aria-pressed={category === null} onClick={() => filter(null)} className={tab}>
-                    {t('All')} ({Object.values(counts).reduce((a, b) => a + b, 0)})
+                    {t('All')} ({found})
                 </button>
                 {(Object.keys(names) as Category[]).map((c) => (
                     <button key={c} type="button" aria-pressed={category === c} onClick={() => filter(c)} className={tab}>
@@ -163,14 +176,46 @@ export default function AdminModeration({ items, total, counts, authors, categor
                 </div>
             )}
 
-            {selected.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2 text-sm">
-                    <button type="button" onClick={() => remove(selected)} className="rounded-full bg-red-600 px-3 py-1 font-medium text-white">
+            {items.length > 0 && (
+                <div className={`${card} mb-3 flex flex-wrap items-center gap-2 p-2 text-sm`}>
+                    <label className="flex items-center gap-2 px-1 font-medium">
+                        <input
+                            type="checkbox"
+                            className="accent-brand size-4"
+                            checked={allShown}
+                            onChange={() => setSelected(allShown ? [] : items.map((i) => i.key))}
+                        />
+                        {t('Select all')}
+                    </label>
+                    <span className="text-muted-foreground">·</span>
+                    <button
+                        type="button"
+                        disabled={selected.length === 0}
+                        onClick={() => keep(selected)}
+                        className="rounded-full bg-green-600 px-3 py-1 font-medium text-white disabled:opacity-40"
+                    >
+                        {t('Approve selected (:count)', { count: selected.length })}
+                    </button>
+                    <button
+                        type="button"
+                        disabled={selected.length === 0}
+                        onClick={() => remove(selected)}
+                        className="rounded-full bg-red-600 px-3 py-1 font-medium text-white disabled:opacity-40"
+                    >
                         {t('Delete selected (:count)', { count: selected.length })}
                     </button>
-                    <button type="button" onClick={() => keep(selected)} className="rounded-full bg-white px-3 py-1 font-medium dark:bg-neutral-900">
-                        {t('All fine (:count)', { count: selected.length })}
-                    </button>
+                    <span className="ms-auto flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={keepAll}
+                            className="rounded-full border border-green-600 px-3 py-1 font-medium text-green-700 dark:text-green-400"
+                        >
+                            {t('Approve all (:count)', { count: total })}
+                        </button>
+                        <button type="button" onClick={removeAll} className="rounded-full border border-red-600 px-3 py-1 font-medium text-red-600">
+                            {t('Delete all (:count)', { count: total })}
+                        </button>
+                    </span>
                 </div>
             )}
 
@@ -228,7 +273,7 @@ export default function AdminModeration({ items, total, counts, authors, categor
                                 >
                                     {t('Open')}
                                 </a>
-                                <ActionButton onClick={() => keep([item.key])}>{t('All fine')}</ActionButton>
+                                <ActionButton onClick={() => keep([item.key])}>{t('Approve')}</ActionButton>
                                 <ActionButton danger onClick={() => remove([item.key])}>
                                     {t('Delete')}
                                 </ActionButton>

@@ -9,6 +9,7 @@ use App\Moderation\ContentScanner;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -22,7 +23,36 @@ class ModerationController extends AdminController
 
     public function index(Request $request): Response
     {
-        $category = in_array($request->query('category'), ContentScanner::CATEGORIES, true) ? $request->query('category') : null;
+        $category = $this->category($request);
+        $items = $this->found();
+        $counts = collect(ContentScanner::CATEGORIES)->mapWithKeys(fn ($c) => [$c => $items->filter(fn ($i) => isset($i['hits'][$c]))->count()]);
+        $shown = $category ? $items->filter(fn ($i) => isset($i['hits'][$category])) : $items;
+        $authors = $shown->whereNotNull('author')->groupBy('author.id')
+            ->map(fn ($rows) => $rows->first()['author'] + ['count' => $rows->count()])
+            ->sortByDesc('count')->values()->take(30);
+
+        return Inertia::render('admin/moderation', [
+            'items' => $shown->sortByDesc('created_at')->values()->take(300),
+            'total' => $shown->count(),
+            'counts' => $counts,
+            'found' => $items->count(),
+            'authors' => $authors,
+            'category' => $category,
+            'words' => collect(ContentScanner::CATEGORIES)->mapWithKeys(fn ($c) => [$c => (json_decode(Setting::get('moderation_words') ?? '{}', true) ?: [])[$c] ?? ''])->all(),
+            'builtin' => collect(ContentScanner::WORDS)->map(fn ($words) => array_map(fn ($w) => str_replace(['^', '\b', '?', '.'], '', $w), $words))->all(),
+        ]);
+    }
+
+    private function category(Request $request): ?string
+    {
+        $category = $request->input('category', $request->query('category'));
+
+        return in_array($category, ContentScanner::CATEGORIES, true) ? $category : null;
+    }
+
+    /** Everything the word check flags now, newest first. */
+    private function found(): Collection
+    {
         $scanner = new ContentScanner;
         $items = collect();
 
@@ -68,34 +98,36 @@ class ModerationController extends AdminController
                 }
             });
 
-        $counts = collect(ContentScanner::CATEGORIES)->mapWithKeys(fn ($c) => [$c => $items->filter(fn ($i) => isset($i['hits'][$c]))->count()]);
-        $shown = $category ? $items->filter(fn ($i) => isset($i['hits'][$category])) : $items;
-        $authors = $shown->whereNotNull('author')->groupBy('author.id')
-            ->map(fn ($rows) => $rows->first()['author'] + ['count' => $rows->count()])
-            ->sortByDesc('count')->values()->take(30);
-
-        return Inertia::render('admin/moderation', [
-            'items' => $shown->sortByDesc('created_at')->values()->take(300),
-            'total' => $shown->count(),
-            'counts' => $counts,
-            'authors' => $authors,
-            'category' => $category,
-            'words' => collect(ContentScanner::CATEGORIES)->mapWithKeys(fn ($c) => [$c => (json_decode(Setting::get('moderation_words') ?? '{}', true) ?: [])[$c] ?? ''])->all(),
-            'builtin' => collect(ContentScanner::WORDS)->map(fn ($words) => array_map(fn ($w) => str_replace(['^', '\b', '?', '.'], '', $w), $words))->all(),
-        ]);
+        return $items;
     }
 
-    /** Deletes the chosen posts and comments; with "author", everything flagged of that author. */
-    public function destroy(Request $request): RedirectResponse
+    /**
+     * The chosen items, or with "all" every flagged one (of the category, if given).
+     *
+     * @return Collection<int, array{type: string, id: int}>
+     */
+    private function targets(Request $request): Collection
     {
+        if ($request->boolean('all')) {
+            $category = $this->category($request);
+
+            return $this->found()->filter(fn ($i) => ! $category || isset($i['hits'][$category]))->map(fn ($i) => ['type' => $i['type'], 'id' => $i['id']])->values();
+        }
         $data = $request->validate([
-            'items' => ['required', 'array', 'max:300'],
+            'items' => ['required', 'array', 'max:1000'],
             'items.*.type' => ['required', 'in:post,comment'],
             'items.*.id' => ['required', 'integer'],
         ]);
-        $items = collect($data['items']);
-        Post::whereIn('id', $items->where('type', 'post')->pluck('id'))->get()->each->delete();
-        Comment::whereIn('id', $items->where('type', 'comment')->pluck('id'))->get()->each->delete();
+
+        return collect($data['items']);
+    }
+
+    /** Deletes the chosen posts and comments, or all flagged ones. */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $items = $this->targets($request);
+        $items->where('type', 'post')->pluck('id')->chunk(500)->each(fn ($ids) => Post::whereIn('id', $ids)->get()->each->delete());
+        $items->where('type', 'comment')->pluck('id')->chunk(500)->each(fn ($ids) => Comment::whereIn('id', $ids)->get()->each->delete());
 
         return back();
     }
@@ -103,15 +135,10 @@ class ModerationController extends AdminController
     /** "Nothing wrong here": kept, and not shown again unless edited. */
     public function keep(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'items' => ['required', 'array', 'max:300'],
-            'items.*.type' => ['required', 'in:post,comment'],
-            'items.*.id' => ['required', 'integer'],
-        ]);
-        $items = collect($data['items']);
+        $items = $this->targets($request);
         // Without touching updated_at, which tells whether it was edited afterwards.
-        Post::whereIn('id', $items->where('type', 'post')->pluck('id'))->toBase()->update(['moderated_at' => now()]);
-        Comment::whereIn('id', $items->where('type', 'comment')->pluck('id'))->toBase()->update(['moderated_at' => now()]);
+        $items->where('type', 'post')->pluck('id')->chunk(500)->each(fn ($ids) => Post::whereIn('id', $ids)->toBase()->update(['moderated_at' => now()]));
+        $items->where('type', 'comment')->pluck('id')->chunk(500)->each(fn ($ids) => Comment::whereIn('id', $ids)->toBase()->update(['moderated_at' => now()]));
 
         return back();
     }

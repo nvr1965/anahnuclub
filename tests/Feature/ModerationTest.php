@@ -48,4 +48,22 @@ class ModerationTest extends TestCase
         Post::create(['user_id' => $spammer->id, 'body' => 'Настоящий Лохотрон']);
         $this->get('/admin/moderation?category=casino')->assertInertia(fn ($page) => $page->where('total', 1));
     }
+
+    public function test_admins_approve_or_delete_everything_found_at_once()
+    {
+        $admin = User::factory()->create();
+        $admin->forceFill(['is_admin' => true])->save();
+        $casino = Post::create(['user_id' => $admin->id, 'body' => 'Лучшее казино']);
+        $porn = Post::create(['user_id' => $admin->id, 'body' => 'порно тут']);
+        $more = Post::create(['user_id' => $admin->id, 'body' => 'ставки на спорт и казино']);
+
+        $this->actingAs($admin)->delete('/admin/moderation', ['all' => true, 'category' => 'casino'])->assertRedirect();
+        $this->assertNull(Post::find($casino->id));
+        $this->assertNull(Post::find($more->id));
+        $this->assertNotNull(Post::find($porn->id));
+
+        $this->post('/admin/moderation/keep', ['all' => true])->assertRedirect();
+        $this->get('/admin/moderation')->assertInertia(fn ($page) => $page->where('total', 0));
+        $this->assertNotNull(Post::find($porn->id));
+    }
 }
