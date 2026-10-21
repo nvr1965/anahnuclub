@@ -38,6 +38,8 @@ const PRESETS: [code: string, name: string, native: string, rtl?: boolean][] = [
     ['nl', 'Dutch', 'Nederlands'],
     ['ro', 'Romanian', 'Română'],
     ['cs', 'Czech', 'Čeština'],
+    ['sr', 'Serbian (Cyrillic)', 'Српски'],
+    ['hr', 'Croatian', 'Hrvatski'],
     ['bg', 'Bulgarian', 'Български'],
     ['el', 'Greek', 'Ελληνικά'],
     ['hu', 'Hungarian', 'Magyar'],
