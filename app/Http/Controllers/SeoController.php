@@ -93,6 +93,8 @@ class SeoController extends Controller
 
     private function xml(string $body): Response
     {
-        return response($body)->header('Content-Type', 'application/xml; charset=UTF-8');
+        // The declaration is added here, not in the view: where PHP's short_open_tag is on (SiteGround),
+        // "<?xml" in a compiled view is read as PHP and the page fails.
+        return response('<?xml version="1.0" encoding="UTF-8"?>'."\n".ltrim($body))->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 }
