@@ -1,4 +1,5 @@
 import { PhotoViewer } from '@/components/photo-viewer';
+import { coverStyle, defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type EventItem, type PhotoItem, type SharedData, type VideoItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -130,7 +131,7 @@ export function EventCard({ event }: { event: EventItem }) {
         >
             <div
                 className="from-brand to-header-to aspect-[1640/624] bg-gradient-to-br bg-cover bg-center"
-                style={event.cover ? { backgroundImage: `url(${event.cover})` } : undefined}
+                style={coverStyle(event.cover, defaultImages.eventCover)}
             />
             <div className="flex gap-3 px-4 py-3">
                 {start && (

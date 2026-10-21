@@ -1,8 +1,8 @@
 import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
 import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
 import { LinkPreview } from '@/components/link-preview';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame } from '@/lib/shrink-image';
 import { type Audience, type LinkCard, type SharedData } from '@/types';
@@ -25,7 +25,6 @@ export function PostComposer({
     onCancel?: () => void;
 }) {
     const t = useT();
-    const getInitials = useInitials();
     const { auth } = usePage<SharedData>().props;
     const [open, setOpen] = useState(!!initialBody);
     const [preparing, setPreparing] = useState(false);
@@ -166,7 +165,7 @@ export function PostComposer({
             <div className="flex items-start gap-2">
                 <Avatar className="size-10">
                     <AvatarImage src={auth.user?.avatar} alt="" className="object-cover" />
-                    <AvatarFallback className="bg-brand-soft text-brand">{getInitials(auth.user?.name ?? '')}</AvatarFallback>
+                    <DefaultAvatarFallback />
                 </Avatar>
                 {open ? (
                     <textarea

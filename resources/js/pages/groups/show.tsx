@@ -4,6 +4,7 @@ import { GroupTeam, OfferBanner, RoleBadge, type GroupRole, type OfferRole, type
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import AppLayout from '@/layouts/app-layout';
+import { coverStyle, defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type Paginated, type Person, type Post, type Sidebar } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -49,7 +50,7 @@ export default function GroupShow({
                 <section className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-neutral-900">
                     <div
                         className="from-brand to-header-to h-48 bg-gradient-to-br bg-cover bg-center"
-                        style={group.cover ? { backgroundImage: `url(${group.cover})` } : undefined}
+                        style={coverStyle(group.cover, defaultImages.groupCover)}
                     />
                     <div className="flex flex-wrap items-start justify-between gap-4 p-5">
                         <div className="min-w-0">

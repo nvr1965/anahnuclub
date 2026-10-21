@@ -5,6 +5,7 @@ import { TranslatedText } from '@/components/translated-text';
 import { UserAvatar } from '@/components/user-avatar';
 import { useAutoTranslate } from '@/hooks/use-auto-translate';
 import AppLayout from '@/layouts/app-layout';
+import { coverStyle, defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type EventItem, type Person, type SharedData, type TranslationInfo } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -51,7 +52,7 @@ export default function EventShow({ event, going, interested, groups }: Props) {
                 <article className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-neutral-900">
                     <div
                         className="from-brand via-header-from to-header-to aspect-[1640/624] bg-gradient-to-br bg-cover bg-center"
-                        style={event.cover ? { backgroundImage: `url(${event.cover})` } : undefined}
+                        style={coverStyle(event.cover, defaultImages.eventCover)}
                     />
                     <div className="space-y-4 p-5">
                         <div className="text-[15px] font-semibold text-red-600 uppercase dark:text-red-400">

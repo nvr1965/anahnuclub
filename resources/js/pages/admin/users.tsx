@@ -1,6 +1,6 @@
 import { ActionButton, AdminSearch, Badge, card, type Page, Pager, send } from '@/components/admin-ui';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
@@ -24,7 +24,6 @@ interface Row {
 
 export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: string; filter: string | null }) {
     const t = useT();
-    const getInitials = useInitials();
     const { auth, locale } = usePage<SharedData>().props;
     const filters = [
         { key: null, label: t('All') },
@@ -53,7 +52,7 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                         <div key={user.id} className="flex flex-wrap items-center gap-3 p-3">
                             <Avatar className="size-10">
                                 <AvatarImage src={user.avatar ?? undefined} alt="" className="object-cover" />
-                                <AvatarFallback className="bg-brand-soft text-brand">{getInitials(user.name)}</AvatarFallback>
+                                <DefaultAvatarFallback />
                             </Avatar>
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">

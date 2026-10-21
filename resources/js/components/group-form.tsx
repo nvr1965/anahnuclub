@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { router, useForm } from '@inertiajs/react';
 import { ImagePlus, Plus, Settings } from 'lucide-react';
@@ -57,13 +58,11 @@ export function GroupForm({ group, isOwner = false }: { group?: EditableGroup; i
             <div className="space-y-1.5">
                 <span className="text-sm font-medium">{label}</span>
                 <div className="flex items-center gap-3">
-                    {preview ? (
-                        <img src={preview} alt="" className={`${key === 'avatar' ? 'size-14 rounded-xl' : 'h-14 w-36 rounded-md'} object-cover`} />
-                    ) : (
-                        <div
-                            className={`${key === 'avatar' ? 'size-14 rounded-xl' : 'h-14 w-36 rounded-md'} from-brand to-header-to bg-gradient-to-br`}
-                        />
-                    )}
+                    <img
+                        src={preview ?? (key === 'avatar' ? defaultImages.group : defaultImages.groupCover)}
+                        alt=""
+                        className={`${key === 'avatar' ? 'size-14 rounded-xl' : 'h-14 w-36 rounded-md'} object-cover`}
+                    />
                     <label className="text-brand inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold">
                         <ImagePlus className="size-4" /> {t('Choose a picture')}
                         <input

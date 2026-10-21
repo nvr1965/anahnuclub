@@ -1,6 +1,7 @@
 import { GroupForm } from '@/components/group-form';
 import { InviteButton } from '@/components/invite-button';
 import AppLayout from '@/layouts/app-layout';
+import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -41,13 +42,7 @@ export default function GroupsIndex({
                         href={route('groups.show', group.slug)}
                         className="group flex items-center gap-4 rounded-lg bg-white p-3 shadow-sm transition hover:shadow-md dark:bg-neutral-900"
                     >
-                        {group.avatar ? (
-                            <img src={group.avatar} alt="" className="size-14 rounded-xl object-cover" />
-                        ) : (
-                            <div className="from-brand to-brand-dark flex size-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xl font-semibold text-white">
-                                {group.name.trim().charAt(0).toUpperCase()}
-                            </div>
-                        )}
+                        <img src={group.avatar || defaultImages.group} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
                         <div className="min-w-0">
                             <div dir="auto" className="group-hover:text-brand truncate font-medium">
                                 {group.name}

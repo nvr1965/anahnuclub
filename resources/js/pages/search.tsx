@@ -1,8 +1,8 @@
 import { PostList } from '@/components/post-list';
 import { EventCard } from '@/components/post-media';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { VideoGrid } from '@/components/video-grid';
-import { useInitials } from '@/hooks/use-initials';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { type EventItem, type Person, type Post, type Sidebar, type VideoItem } from '@/types';
@@ -36,7 +36,6 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
     const posts = Array.isArray(raw.posts) ? raw.posts : raw.posts.data;
     const results = { ...raw, posts };
     const t = useT();
-    const getInitials = useInitials();
     const [query, setQuery] = useState(q);
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
     const labels: Record<Type, string> = {
@@ -124,7 +123,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                             >
                                 <Avatar className="size-10">
                                     <AvatarImage src={person.avatar ?? undefined} alt="" className="object-cover" />
-                                    <AvatarFallback className="bg-brand-soft text-brand">{getInitials(person.name)}</AvatarFallback>
+                                    <DefaultAvatarFallback />
                                 </Avatar>
                                 <span dir="auto" className="truncate text-[15px] font-medium">
                                     {person.name}

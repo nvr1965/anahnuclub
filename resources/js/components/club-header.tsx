@@ -1,9 +1,9 @@
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { NotificationBell } from '@/components/notification-bell';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -13,7 +13,6 @@ import { FormEventHandler, useEffect, useState } from 'react';
 /** Facebook-style top bar: logo and search at the start, section tabs in the middle, account at the end. */
 export function ClubHeader() {
     const t = useT();
-    const getInitials = useInitials();
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const [q, setQ] = useState(() => new URLSearchParams(page.url.split('?')[1] ?? '').get('q') ?? '');
@@ -113,7 +112,7 @@ export function ClubHeader() {
                             <DropdownMenuTrigger className="rounded-full outline-none">
                                 <Avatar className="size-10">
                                     <AvatarImage src={auth.user.avatar} alt={auth.user.name} className="object-cover" />
-                                    <AvatarFallback className="bg-brand-soft text-brand">{getInitials(auth.user.name)}</AvatarFallback>
+                                    <DefaultAvatarFallback />
                                 </Avatar>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end">

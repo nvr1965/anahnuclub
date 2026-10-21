@@ -4,9 +4,9 @@ import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { ReactionButton, ReactionFaces } from '@/components/reactions';
 import { ShareMenu } from '@/components/share-menu';
 import { TranslatedText } from '@/components/translated-text';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useInitials } from '@/hooks/use-initials';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type Post, type SharedData } from '@/types';
@@ -26,7 +26,6 @@ const actions: Record<string, string> = {
 
 export function PostCard({ post, translated, full = false }: { post: Post; translated: Lookup; full?: boolean }) {
     const t = useT();
-    const getInitials = useInitials();
     const { locale, auth } = usePage<SharedData>().props;
     const [commenting, setCommenting] = useState(full);
     const [typing, setTyping] = useState(full);
@@ -98,7 +97,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
         <div key={comment.id} className="flex gap-2">
             <Avatar className={small ? 'size-6' : 'size-8'}>
                 <AvatarImage src={comment.author?.avatar ?? undefined} alt="" className="object-cover" />
-                <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(comment.author?.name ?? '?')}</AvatarFallback>
+                <DefaultAvatarFallback />
             </Avatar>
             <div className="min-w-0">
                 <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[15px] dark:bg-neutral-800">
@@ -130,7 +129,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             <form onSubmit={isReply ? submitReply : submitComment} className="flex items-center gap-2 pt-1">
                 <Avatar className={isReply ? 'size-6' : 'size-8'}>
                     <AvatarImage src={auth.user.avatar} alt="" className="object-cover" />
-                    <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(auth.user.name)}</AvatarFallback>
+                    <DefaultAvatarFallback />
                 </Avatar>
                 <div className="flex flex-1 items-center rounded-full bg-slate-100 pe-1 dark:bg-neutral-800">
                     <input
@@ -165,7 +164,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     <Link href={profile(post.author?.id) ?? '#'} className="shrink-0">
                         <Avatar className="size-10">
                             <AvatarImage src={post.author?.avatar ?? undefined} alt={post.author?.name} className="object-cover" />
-                            <AvatarFallback className="bg-brand-soft text-brand">{getInitials(post.author?.name ?? '?')}</AvatarFallback>
+                            <DefaultAvatarFallback />
                         </Avatar>
                     </Link>
                 )}
