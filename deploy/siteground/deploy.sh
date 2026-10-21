@@ -112,6 +112,10 @@ sed "s#__DIR__.'/\.\./#'$APP_DIR/#g" public/index.php > "$WEB_DIR/index.php"
 ln -sfn "$APP_DIR/storage/app/public" "$WEB_DIR/storage"
 
 echo
+echo "==> Mail"
+"$PHP" artisan mail:check || true
+
+echo
 echo "Done: $(grep '^APP_URL=' .env | cut -d= -f2)"
 echo "Cron (Site Tools > Devs > Cron Jobs, every minute):"
 echo "    cd $APP_DIR && $PHP artisan schedule:run >> /dev/null 2>&1"
