@@ -17,8 +17,9 @@ class FetchLinkPreview implements ShouldQueue
     public function handle(LinkPreviewFetcher $fetcher): void
     {
         $known = LinkPreview::where('url', $this->url)->first();
-        // An unreachable page is stored empty too, and asked again only after a few hours.
-        if ($known && ($known->title || $known->image || $known->updated_at?->gt(now()->subHours(6)))) {
+        // An unreachable page is stored empty too, and asked again only after a few hours;
+        // a card without a picture after an hour, as news sites often add the photo later.
+        if ($known && ($known->image || $known->updated_at?->gt(now()->subHours($known->title ? 1 : 6)))) {
             return;
         }
         $found = $fetcher->fetch($this->url) ?? ['title' => null, 'description' => null, 'image' => null, 'site_name' => null];

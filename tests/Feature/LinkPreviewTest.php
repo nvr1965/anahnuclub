@@ -52,6 +52,19 @@ class LinkPreviewTest extends TestCase
         $this->assertNull($page('<aside><img src="/img/other-news.jpg"></aside><article><p>Только текст</p></article>'));
     }
 
+    public function test_a_card_without_a_picture_is_read_again_after_an_hour()
+    {
+        Http::fake(['http://93.184.216.34/*' => Http::response(self::PAGE, 200, ['Content-Type' => 'text/html'])]);
+        $card = LinkPreview::create(['url' => 'http://93.184.216.34/news', 'title' => 'Без фото']);
+        $this->actingAs(User::factory()->create());
+
+        $this->getJson('/link-preview?url=http://93.184.216.34/news')->assertJsonPath('link.image', null);
+        Http::assertNothingSent();
+
+        $card->forceFill(['updated_at' => now()->subHours(2)])->saveQuietly();
+        $this->getJson('/link-preview?url=http://93.184.216.34/news')->assertJsonPath('link.image', 'http://93.184.216.34/img/cover.jpg');
+    }
+
     public function test_private_addresses_are_never_fetched()
     {
         Http::fake();
