@@ -33,6 +33,12 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 </div>
             )}
 
+            {status === 'verification-link-expired' && (
+                <div className="mb-4 text-center text-sm font-medium text-amber-600">
+                    {t('This link is out of date. Press the button below and we will send a new one.')}
+                </div>
+            )}
+
             <form onSubmit={submit} className="space-y-6 text-center">
                 <Button disabled={processing} variant="secondary">
                     {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}

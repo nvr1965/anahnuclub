@@ -99,6 +99,11 @@ return [
         ],
     ],
 
+    // The "confirm your email" link: people often open the letter hours or days later.
+    'verification' => [
+        'expire' => (int) env('AUTH_VERIFICATION_EXPIRE', 60 * 24 * 7),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Password Confirmation Timeout
