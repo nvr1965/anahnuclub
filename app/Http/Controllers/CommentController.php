@@ -6,6 +6,7 @@ use App\Jobs\TranslateContent;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\ClubActivity;
+use App\Support\Background;
 use App\Support\Html;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\RedirectResponse;
@@ -35,7 +36,7 @@ class CommentController extends Controller
             'locale' => LanguageGuesser::guess($data['body']) ?? $request->user()->locale,
         ]);
 
-        TranslateContent::dispatchAfterResponse($comment);
+        Background::run(new TranslateContent($comment));
 
         // The author hears about every comment, the one answered about the reply;
         // others who commented hear that the talk goes on.

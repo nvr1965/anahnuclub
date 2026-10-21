@@ -8,6 +8,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
+use App\Support\Background;
 use App\Translation\ContentTranslator;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\RedirectResponse;
@@ -126,7 +127,7 @@ class MessageController extends Controller
         $readers = $conversation->users()->whereKeyNot($user->id)->get(['users.id', 'locale', 'ui_locale']);
         $locales = $readers->flatMap(fn (User $u) => [$u->locale, $u->ui_locale])->filter()->unique()->values()->all();
         if ($body !== '') {
-            TranslateContent::dispatchAfterResponse($message, $locales);
+            Background::run(new TranslateContent($message, $locales));
         }
 
         return back();

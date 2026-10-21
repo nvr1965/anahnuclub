@@ -6,6 +6,7 @@ use App\Http\Resources\PostResource;
 use App\Jobs\TranslateContent;
 use App\Models\Group;
 use App\Models\User;
+use App\Support\Background;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Support\SiteMeta;
@@ -106,7 +107,7 @@ class GroupController extends Controller
         $group->update(['slug' => trim($group->id.'-'.Str::limit(Str::slug($data['name'], '-', $group->locale ?? 'en'), 60, ''), '-')]);
         $group->members()->attach($me->id, ['role' => 'owner', 'approved' => true]);
         $this->pictures($request, $group);
-        TranslateContent::dispatchAfterResponse($group);
+        Background::run(new TranslateContent($group));
 
         return to_route('groups.show', $group);
     }
@@ -129,7 +130,7 @@ class GroupController extends Controller
         }
         $this->pictures($request, $group);
         if ($group->wasChanged(['name', 'description'])) {
-            TranslateContent::dispatchAfterResponse($group);
+            Background::run(new TranslateContent($group));
         }
 
         return back();

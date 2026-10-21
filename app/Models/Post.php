@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\FetchLinkPreview;
 use App\Models\Concerns\HasContentTranslations;
+use App\Support\Background;
 use App\Support\LinkPreviewFetcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -36,7 +37,7 @@ class Post extends Model
                 // queue instead: "after the response" there means the end of the command, page after page.
                 app()->runningInConsole()
                     ? FetchLinkPreview::dispatch($post->link_url)
-                    : FetchLinkPreview::dispatchAfterResponse($post->link_url);
+                    : Background::run(new FetchLinkPreview($post->link_url));
             }
         });
     }

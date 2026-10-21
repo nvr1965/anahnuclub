@@ -9,6 +9,7 @@ use App\Models\Group;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\ClubActivity;
+use App\Support\Background;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Translation\ContentTranslator;
@@ -65,7 +66,7 @@ class EventController extends Controller
         $data = $this->validated($request);
         $event = Event::create($data + ['user_id' => $request->user()->id]);
         $event->attendees()->attach($request->user()->id, ['status' => 'going']);
-        TranslateContent::dispatchAfterResponse($event);
+        Background::run(new TranslateContent($event));
 
         Post::create(['user_id' => $request->user()->id, 'group_id' => $event->group_id, 'type' => 'event', 'body' => '', 'event_id' => $event->id]);
 
@@ -76,7 +77,7 @@ class EventController extends Controller
     {
         abort_unless($request->user()->id === $event->user_id, 403);
         $event->update($this->validated($request, $event));
-        TranslateContent::dispatchAfterResponse($event);
+        Background::run(new TranslateContent($event));
 
         return back();
     }
