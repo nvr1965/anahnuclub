@@ -123,7 +123,8 @@ class LinkPreviewFetcher
             ? null
             : Str::limit(trim(preg_replace('/\s+/u', ' ', html_entity_decode($s, ENT_QUOTES | ENT_HTML5))), $max, '…');
 
-        $image = $pick(['og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src']);
+        $image = $pick(['og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src'])
+            ?? self::pagePicture($doc);
         $image = $image ? self::absolute($image, $url) : null;
 
         return [
@@ -132,6 +133,32 @@ class LinkPreviewFetcher
             'image' => $image && preg_match('~^https?://~i', $image) && strlen($image) <= 2048 ? $image : null,
             'site_name' => $clean($pick(['og:site_name']), 110),
         ];
+    }
+
+    /** A page without a preview picture: its image_src link, else the first picture of the article that is not a logo or an icon. */
+    private static function pagePicture(\DOMDocument $doc): ?string
+    {
+        foreach ($doc->getElementsByTagName('link') as $link) {
+            if (strtolower($link->getAttribute('rel')) === 'image_src' && $link->getAttribute('href') !== '') {
+                return trim($link->getAttribute('href'));
+            }
+        }
+        $xpath = new \DOMXPath($doc);
+        foreach (['//article//img', '//main//img'] as $where) {
+            foreach ($xpath->query($where) ?: [] as $img) {
+                // Pictures loaded later keep a placeholder in src and the real one in data-src.
+                $src = trim($img->getAttribute('data-src') ?: $img->getAttribute('src'));
+                $small = fn (string $side) => ($n = (int) $img->getAttribute($side)) > 0 && $n < 200;
+                if ($src === '' || str_starts_with($src, 'data:') || preg_match('~\.svg(\?|$)|logo|icon|avatar|sprite|emoji|pixel~i', $src)
+                    || $small('width') || $small('height')) {
+                    continue;
+                }
+
+                return $src;
+            }
+        }
+
+        return null;
     }
 
     /** Only http(s) to hosts whose every address is on the public internet. */

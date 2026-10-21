@@ -39,6 +39,19 @@ class LinkPreviewTest extends TestCase
             ->where('post.data.link.domain', '93.184.216.34'));
     }
 
+    public function test_a_page_without_a_preview_picture_shows_the_picture_of_its_article()
+    {
+        $fetcher = new LinkPreviewFetcher;
+        $page = fn (string $body) => $fetcher->parse("<html><head><title>T</title></head><body>{$body}</body></html>", 'https://nofinfo.com/?id=1')['image'];
+
+        $this->assertSame('https://nofinfo.com/img/photo.jpg', $page(
+            '<img src="/logo.png"><article><img src="/icons/share.png"><img src="/img/tiny.jpg" width="40"><img src="/img/photo.jpg"></article>'
+        ));
+        $this->assertSame('https://cdn.example.com/a.jpg', $page('<main><img data-src="https://cdn.example.com/a.jpg"></main>'));
+        // Pictures outside the article belong to other news, not to this page.
+        $this->assertNull($page('<aside><img src="/img/other-news.jpg"></aside><article><p>Только текст</p></article>'));
+    }
+
     public function test_private_addresses_are_never_fetched()
     {
         Http::fake();
