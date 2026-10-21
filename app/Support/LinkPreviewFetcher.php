@@ -125,12 +125,16 @@ class LinkPreviewFetcher
 
         $image = $pick(['og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src'])
             ?? self::pagePicture($doc);
+        // Some sites glue their own address in front: "https://site.com/ https://cdn.com/photo.jpg".
+        if ($image && preg_match_all('~https?://\S+~i', $image, $m) > 1) {
+            $image = end($m[0]);
+        }
         $image = $image ? self::absolute($image, $url) : null;
 
         return [
             'title' => $clean($pick(['og:title', 'twitter:title']) ?? $title, 290),
             'description' => $clean($pick(['og:description', 'twitter:description', 'description']), 490),
-            'image' => $image && preg_match('~^https?://~i', $image) && strlen($image) <= 2048 ? $image : null,
+            'image' => $image && preg_match('~^https?://\S+$~i', $image) && strlen($image) <= 2048 ? $image : null,
             'site_name' => $clean($pick(['og:site_name']), 110),
         ];
     }

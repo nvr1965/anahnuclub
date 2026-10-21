@@ -48,6 +48,8 @@ class LinkPreviewTest extends TestCase
             '<img src="/logo.png"><article><img src="/icons/share.png"><img src="/img/tiny.jpg" width="40"><img src="/img/photo.jpg"></article>'
         ));
         $this->assertSame('https://cdn.example.com/a.jpg', $page('<main><img data-src="https://cdn.example.com/a.jpg"></main>'));
+        $glued = $fetcher->parse('<html><head><meta property="og:image" content="https://nofinfo.com/ https://images.panet.com/a/1.jpg"></head></html>', 'https://nofinfo.com/?id=1');
+        $this->assertSame('https://images.panet.com/a/1.jpg', $glued['image']);
         // Pictures outside the article belong to other news, not to this page.
         $this->assertNull($page('<aside><img src="/img/other-news.jpg"></aside><article><p>Только текст</p></article>'));
     }
