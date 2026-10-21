@@ -7,6 +7,7 @@ use App\Jobs\TranslateContent;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Video;
+use App\Support\Background;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Translation\ContentTranslator;
@@ -106,7 +107,7 @@ class VideoController extends Controller
         $attributes['locale'] = LanguageGuesser::guess($attributes['title'].' '.$attributes['description']) ?? $request->user()->locale;
 
         $video = Video::create($attributes);
-        TranslateContent::dispatchAfterResponse($video);
+        Background::run(new TranslateContent($video));
 
         if ($request->boolean('share', true)) {
             Post::create(['user_id' => $request->user()->id, 'type' => 'video', 'body' => '', 'video_id' => $video->id]);
@@ -119,7 +120,7 @@ class VideoController extends Controller
     {
         abort_unless($request->user()->id === $video->user_id, 403);
         $video->update($request->validate(['title' => ['required', 'string', 'max:200'], 'description' => ['nullable', 'string', 'max:5000']]));
-        TranslateContent::dispatchAfterResponse($video);
+        Background::run(new TranslateContent($video));
 
         return back();
     }

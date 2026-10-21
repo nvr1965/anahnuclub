@@ -10,6 +10,7 @@ use App\Models\Group;
 use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\Video;
+use App\Support\Background;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Support\LinkPreviewFetcher;
@@ -81,7 +82,7 @@ class PostController extends Controller
         }
 
         // Translated right after the response is sent, so readers get it within seconds.
-        TranslateContent::dispatchAfterResponse($post);
+        Background::run(new TranslateContent($post));
 
         return back();
     }
@@ -177,7 +178,7 @@ class PostController extends Controller
         $body = (string) $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000']])['body'];
 
         $post->update(['body' => Html::fromPlainText($body), 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
-        TranslateContent::dispatchAfterResponse($post);
+        Background::run(new TranslateContent($post));
 
         return back();
     }
