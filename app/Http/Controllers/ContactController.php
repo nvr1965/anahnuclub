@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
 use App\Notifications\ContactReceived;
+use App\Support\SiteMeta;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -16,7 +17,8 @@ class ContactController extends Controller
 {
     public function create(): Response
     {
-        return Inertia::render('contact', ['sent' => session('contact_sent', false), 'email' => config('services.contact.email')]);
+        return Inertia::render('contact', ['sent' => session('contact_sent', false), 'email' => config('services.contact.email')])
+            ->withViewData(['meta' => SiteMeta::page(__('Contact us'))]);
     }
 
     public function store(Request $request): RedirectResponse

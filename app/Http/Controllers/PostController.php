@@ -147,18 +147,26 @@ class PostController extends Controller
         }
 
         $post = FeedController::postQuery($request)->whereKey($post->id)->firstOrFail();
-        $text = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '</p>'], ' ', $post->body)))));
-        preg_match('~<img[^>]+src=["\']([^"\']+)~i', Html::clean($post->body), $image);
+        // Search engines read the post in the language of the page (?lang=he), when it is translated.
+        $body = Html::clean($post->cachedTranslation('body', app()->getLocale()) ?? $post->body);
+        $title = $post->cachedTranslation('title', app()->getLocale()) ?? $post->title;
+        $author = $post->isOfficial() ? 'anahnu.club' : ($post->user?->name ?? 'anahnu.club');
+        preg_match('~<img[^>]+src=["\']([^"\']+)~i', $body, $image);
 
         return Inertia::render('posts/show', [
             'post' => PostResource::make($post),
             'sidebar' => CommunitySidebar::for($request->user()),
         ])->withViewData(['meta' => [
-            'url' => route('posts.show', $post),
-            'title' => $post->title ?: ($post->isOfficial() ? 'anahnu.club' : ($post->user?->name ?? 'anahnu.club')),
-            'description' => mb_strimwidth($text, 0, 200, '…'),
+            'url' => SiteMeta::canonical(),
+            'title' => $title ?: $author,
+            'description' => SiteMeta::plain($body),
             // The post's own picture, large enough for Facebook's big card; else the club's invitation.
             'image' => $post->photos->first()?->card()['url'] ?? (isset($image[1]) ? url($image[1]) : SiteMeta::image()),
+            'content' => [
+                'heading' => $title ?: $author.': '.SiteMeta::plain($body, 70),
+                'html' => $body,
+                'links' => [],
+            ],
         ]]);
     }
 

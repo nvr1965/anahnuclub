@@ -41,6 +41,8 @@ echo "==> Moving the code to $LIVE_DIR/app"
 mv "$TEST_DIR/app" "$LIVE_DIR/app"
 cd "$LIVE_DIR/app"
 sed -i "s#^APP_URL=.*#APP_URL=https://$DOMAIN#" .env
+# Search engines may index the site from now on (the test copy kept them out).
+if grep -q '^SEO_INDEXABLE=' .env; then sed -i 's#^SEO_INDEXABLE=.*#SEO_INDEXABLE=true#' .env; else echo 'SEO_INDEXABLE=true' >> .env; fi
 
 trap 'echo; echo "Stopped. Fix the error above and go on with: cd $LIVE_DIR/app && php artisan site:reset --force && JOOMLA_FILES=$JOOMLA IMPORT=1 bash deploy/siteground/deploy.sh"; echo "or bring the old site back: bash $LIVE_DIR/app/deploy/siteground/go-live.sh --back"' ERR
 echo "==> Emptying the database: what was tried on the test site does not go live"
@@ -65,4 +67,5 @@ echo "  1. Devs > Cron Jobs: replace the old job with"
 echo "       cd $LIVE_DIR/app && $PHP artisan schedule:run >> /dev/null 2>&1"
 echo "  2. Google and Facebook developer consoles: add https://$DOMAIN/auth/google/callback"
 echo "     and https://$DOMAIN/auth/facebook/callback"
+echo "  3. Google Search Console: send https://$DOMAIN/sitemap.xml (deploy/siteground/search-console.md)"
 echo "Going back to the old site: bash $LIVE_DIR/app/deploy/siteground/go-live.sh --back"

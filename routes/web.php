@@ -20,6 +20,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\WelcomeController;
@@ -33,6 +34,12 @@ Route::get('images/{path}', function (string $path) {
 
     return redirect('/storage/joomla/images/'.$path, 301);
 })->where('path', '.*');
+
+// For search engines.
+Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('sitemap.xml', [SeoController::class, 'index'])->name('sitemap');
+Route::get('sitemap-pages.xml', [SeoController::class, 'pages'])->name('sitemap.pages');
+Route::get('sitemap-posts-{part}.xml', [SeoController::class, 'posts'])->whereNumber('part')->name('sitemap.posts');
 
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
@@ -180,3 +187,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+// Any other address: the old Joomla site's ones lead to the same content here, the rest is "not found".
+Route::fallback([SeoController::class, 'legacy']);
