@@ -279,7 +279,7 @@ export function PostComposer({
                             disabled={form.processing || preparing || empty}
                             className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold whitespace-nowrap text-white disabled:opacity-40"
                         >
-                            {form.processing ? `${form.progress?.percentage ?? 0}%` : t('Publish')}
+                            {form.processing ? (form.progress ? `${form.progress.percentage ?? 0}%` : t('Publishing…')) : t('Publish')}
                         </button>
                     </div>
                 </div>
