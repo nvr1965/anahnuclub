@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { useInitials } from '@/hooks/use-initials';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { type Audience, type Author } from '@/types';
 import { ArrowLeft, Check, Globe, Lock, type LucideIcon, UserCheck, UserMinus, Users } from 'lucide-react';
@@ -50,7 +50,6 @@ export function AudiencePicker({
     showDefault?: boolean;
 }) {
     const t = useT();
-    const getInitials = useInitials();
     const labels = useAudienceLabels();
     const [choice, setChoice] = useState(value);
     const [step, setStep] = useState<'list' | 'people'>('list');
@@ -167,7 +166,7 @@ export function AudiencePicker({
                                     >
                                         <Avatar className="size-9">
                                             <AvatarImage src={friend.avatar ?? undefined} alt="" className="object-cover" />
-                                            <AvatarFallback className="bg-brand-soft text-brand text-xs">{getInitials(friend.name)}</AvatarFallback>
+                                            <DefaultAvatarFallback />
                                         </Avatar>
                                         <span className="min-w-0 flex-1 truncate font-medium">{friend.name}</span>
                                         <span

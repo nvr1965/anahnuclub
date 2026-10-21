@@ -1,7 +1,17 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
+import { defaultImages } from '@/lib/default-images';
+import { cn } from '@/lib/utils';
 
-/** A member's round picture, with their initials when they have none, and a green dot while they are online. */
+/** The default member picture, shown inside an avatar while a member has none of their own. */
+export function DefaultAvatarFallback({ className = '' }: { className?: string }) {
+    return (
+        <AvatarFallback className={cn('bg-brand-soft', className)}>
+            <img src={defaultImages.user} alt="" className="size-full object-cover" />
+        </AvatarFallback>
+    );
+}
+
+/** A member's round picture, with the default picture when they have none, and a green dot while they are online. */
 export function UserAvatar({
     person,
     className = 'size-10',
@@ -11,12 +21,10 @@ export function UserAvatar({
     className?: string;
     fallbackClassName?: string;
 }) {
-    const getInitials = useInitials();
-
     const avatar = (
         <Avatar className={className}>
             <AvatarImage src={person?.avatar ?? undefined} alt="" className="object-cover" />
-            <AvatarFallback className={`bg-brand-soft text-brand ${fallbackClassName}`}>{getInitials(person?.name ?? '?')}</AvatarFallback>
+            <DefaultAvatarFallback className={fallbackClassName} />
         </Avatar>
     );
     if (!person?.online) return avatar;

@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -8,7 +8,6 @@ import { CalendarDays, Clapperboard, Contact, House, Images, MessageCircle, Sett
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
     const t = useT();
-    const getInitials = useInitials();
     const { auth } = usePage<SharedData>().props;
     const row = 'flex items-center gap-3 rounded-lg px-2 py-2 text-[15px] font-medium hover:bg-black/5 dark:hover:bg-white/10';
 
@@ -18,7 +17,7 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                 <Link href={route('people.show', auth.user.id)} className={row}>
                     <Avatar className="size-9">
                         <AvatarImage src={auth.user.avatar} alt="" className="object-cover" />
-                        <AvatarFallback className="bg-brand-soft text-brand text-sm">{getInitials(auth.user.name)}</AvatarFallback>
+                        <DefaultAvatarFallback />
                     </Avatar>
                     {auth.user.name}
                 </Link>
