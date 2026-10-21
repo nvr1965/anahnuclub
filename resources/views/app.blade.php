@@ -7,9 +7,18 @@
         {{-- The site translates itself; the browser should not offer to translate it again. --}}
         <meta name="google" content="notranslate">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
         @php($meta ??= \App\Support\SiteMeta::default())
+        <title inertia>{{ $meta['title'] }}</title>
         @isset($meta)
+            {{-- Read by Google and other search engines: this page's address, the same page in each language. --}}
+            @if (! \App\Support\SiteMeta::indexable() || ! empty($meta['noindex']))
+                <meta name="robots" content="noindex, nofollow">
+            @else
+                <link rel="canonical" href="{{ $meta['url'] }}">
+                @foreach (\App\Support\SiteMeta::alternates() as $hreflang => $href)
+                    <link rel="alternate" hreflang="{{ $hreflang }}" href="{{ $href }}">
+                @endforeach
+            @endif
             {{-- Read by Facebook, Telegram, WhatsApp and others when a link to this page is shared. --}}
             <meta property="og:site_name" content="anahnu.club">
             <meta property="og:type" content="article">
@@ -47,6 +56,12 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-        @inertia
+        @isset($meta['content'])
+            {{-- The page's text right in the HTML, for search engines and link previews that don't run
+                 JavaScript; React replaces it as soon as it starts. (The site has no SSR server.) --}}
+            <div id="app" data-page="{{ json_encode($page) }}">@include('partials.page-text', ['content' => $meta['content']])</div>
+        @else
+            @inertia
+        @endisset
     </body>
 </html>

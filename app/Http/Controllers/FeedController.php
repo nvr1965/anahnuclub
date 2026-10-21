@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\PostResource;
 use App\Models\Like;
 use App\Models\Post;
+use App\Support\LegacyUrl;
+use App\Support\SiteMeta;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +30,10 @@ class FeedController extends Controller
     /** Guests see the club's front page: who is here and the latest public posts. */
     public function welcome(Request $request): Response|RedirectResponse
     {
+        // The old site without friendly URLs: index.php?option=com_community&view=…
+        if (LegacyUrl::isLegacy($request)) {
+            return redirect(LegacyUrl::find($request) ?? route('home'), 301);
+        }
         if ($request->user()) {
             return to_route('dashboard');
         }
@@ -41,7 +47,19 @@ class FeedController extends Controller
             'posts' => PostResource::collection($posts),
             'sidebar' => CommunitySidebar::for(null),
             'canResetPassword' => true,
-        ]);
+        ])->withViewData(['meta' => array_merge(SiteMeta::default(), [
+            'title' => 'anahnu.club - '.__('The best social network without censorship'),
+            // The latest posts as plain links, so search engines find them without running the page.
+            'content' => [
+                'heading' => __('The best social network without censorship'),
+                'html' => '<p>'.e(__('Write in your language, everything is translated for you.')).'</p>',
+                'links' => $posts->map(fn (Post $post) => [
+                    'href' => route('posts.show', $post),
+                    'text' => $post->cachedTranslation('title', app()->getLocale()) ?? $post->title
+                        ?: SiteMeta::plain($post->cachedTranslation('body', app()->getLocale()) ?? $post->body, 90),
+                ])->all(),
+            ],
+        ])]);
     }
 
     /** Posts with everything a post card shows, newest first. */

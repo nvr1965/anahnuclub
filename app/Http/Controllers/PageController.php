@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Page;
 use App\Support\Html;
+use App\Support\SiteMeta;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,14 +17,19 @@ class PageController extends Controller
         abort_if(! $page->published && ! $request->user()?->is_admin, 404);
         $text = $page->in(app()->getLocale());
 
+        $body = Html::clean($text['body']);
+
         return Inertia::render('pages/show', [
             'page' => [
                 'slug' => $page->slug,
                 'title' => $text['title'],
-                'body' => Html::clean($text['body']),
+                'body' => $body,
                 'locale' => $text['locale'],
                 'updated_at' => $page->updated_at?->toIso8601String(),
             ],
-        ]);
+        ])->withViewData(['meta' => SiteMeta::page($text['title'], SiteMeta::plain($body), [
+            'noindex' => ! $page->published,
+            'content' => ['heading' => $text['title'], 'html' => $body, 'links' => []],
+        ])]);
     }
 }

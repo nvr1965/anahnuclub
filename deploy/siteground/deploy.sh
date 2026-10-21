@@ -105,7 +105,8 @@ fi
 
 echo "==> Web root $WEB_DIR"
 mkdir -p "$WEB_DIR"
-rm -rf "$WEB_DIR/build" "$WEB_DIR/index.html" "$WEB_DIR/default.html"
+# robots.txt is made by the site now (it differs between the test copy and anahnu.club).
+rm -rf "$WEB_DIR/build" "$WEB_DIR/index.html" "$WEB_DIR/default.html" "$WEB_DIR/robots.txt"
 (cd public && find . -mindepth 1 -maxdepth 1 ! -name storage ! -name index.php ! -name hot -exec cp -a {} "$WEB_DIR/" \;)
 sed "s#__DIR__.'/\.\./#'$APP_DIR/#g" public/index.php > "$WEB_DIR/index.php"
 ln -sfn "$APP_DIR/storage/app/public" "$WEB_DIR/storage"
