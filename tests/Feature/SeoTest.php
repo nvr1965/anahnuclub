@@ -79,6 +79,7 @@ class SeoTest extends TestCase
         $hidden = Post::create(['user_id' => $author->id, 'group_id' => $secret->id, 'body' => 'Своим']);
         Page::create(['slug' => 'club-rules', 'published' => true, 'content' => ['ru' => ['title' => 'Правила', 'body' => '…']]]);
 
+        $this->assertStringStartsWith('<?xml version="1.0" encoding="UTF-8"?>'."\n<sitemapindex", $this->get('/sitemap.xml')->getContent());
         $this->get('/sitemap.xml')->assertOk()
             ->assertSee(route('sitemap.pages'), false)
             ->assertSee(route('sitemap.posts', 1), false);
