@@ -13,11 +13,21 @@ import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 const MAX_PHOTOS = 20;
 
 /** "What's on your mind?" box: a pill that opens into a text area, with pictures or a video, picked or shot with the camera. */
-export function PostComposer({ groupId }: { groupId?: number }) {
+export function PostComposer({
+    groupId,
+    initialBody,
+    onPosted,
+    onCancel,
+}: {
+    groupId?: number;
+    initialBody?: string;
+    onPosted?: () => void;
+    onCancel?: () => void;
+}) {
     const t = useT();
     const getInitials = useInitials();
     const { auth } = usePage<SharedData>().props;
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(!!initialBody);
     const [preparing, setPreparing] = useState(false);
     const [shooting, setShooting] = useState(false);
     const [choosingAudience, setChoosingAudience] = useState(false);
@@ -35,7 +45,7 @@ export function PostComposer({ groupId }: { groupId?: number }) {
         audience_default: boolean;
         no_link_preview: boolean;
     }>({
-        body: '',
+        body: initialBody ?? '',
         group_id: groupId ?? null,
         images: [],
         video: null,
@@ -107,6 +117,8 @@ export function PostComposer({ groupId }: { groupId?: number }) {
         form.transform((data) => ({ ...data, no_link_preview: typedUrl !== null && typedUrl === dismissed }));
         form.post(route('posts.store'), {
             preserveScroll: true,
+            // Shared from another site, the page stays to say it is done.
+            preserveState: !!onPosted,
             forceFormData: form.data.images.length > 0 || form.data.video !== null,
             onSuccess: () => {
                 // The audience stays as chosen for the next post, as on Facebook.
@@ -114,6 +126,7 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                 setLink(null);
                 setDismissed(null);
                 setOpen(false);
+                onPosted?.();
             },
         });
     };
@@ -257,7 +270,7 @@ export function PostComposer({ groupId }: { groupId?: number }) {
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={() => (form.reset('body', 'images', 'video', 'video_thumb', 'audience_default'), setOpen(false))}
+                            onClick={() => (form.reset('body', 'images', 'video', 'video_thumb', 'audience_default'), setOpen(false), onCancel?.())}
                             className="text-muted-foreground rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap hover:bg-slate-100 dark:hover:bg-neutral-800"
                         >
                             {t('Cancel')}

@@ -21,6 +21,7 @@ use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\WelcomeController;
@@ -77,6 +78,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::delete('groups/{group}/roles/{user}', [GroupRoleController::class, 'demote'])->name('groups.roles.destroy');
 
     Route::post('posts', [PostController::class, 'store'])->name('posts.store');
+    Route::get('share', ShareController::class)->name('share');
     Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->name('links.preview');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
