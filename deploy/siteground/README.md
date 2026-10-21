@@ -69,6 +69,29 @@ cd /home/ПОЛЬЗОВАТЕЛЬ/www/test.anahnu.club/app && php artisan schedu
 Без cron не уходят письма и не работают переводы и карточки ссылок.
 Если меньше 1 минуты Site Tools не позволяет, поставить самый частый вариант.
 
+## Если не приходят письма
+
+```bash
+cd ~/www/anahnu.club/app && php artisan mail:check ваш@адрес
+```
+
+Команда показывает настройки почты, когда последний раз работал cron и сколько писем ждёт
+в очереди, и сразу отправляет тестовое письмо (без очереди). Что делать по её ответу:
+
+- **cron has not run** / **Cron last ran: never**: в **Devs → Cron Jobs** нет задачи или
+  она смотрит в старую папку (после перехода это `~/www/test.anahnu.club/app`, которой уже нет).
+  Нужна ровно та строка, что `deploy.sh` печатает в конце.
+- **Ошибка при тестовом письме** (`Authentication failed`, `Connection refused`): неверные
+  `MAIL_*` в `.env`. На SiteGround: `MAIL_HOST=mail.anahnu.club`, порт `465`, `ssl`,
+  `MAIL_USERNAME` и `MAIL_FROM_ADDRESS` = `noreply@anahnu.club`, пароль этого ящика из
+  **Email → Accounts**. После правки `.env` запустить `bash deploy/siteground/deploy.sh`
+  (или `php artisan optimize`), иначе сайт работает со старыми значениями.
+- **Тестовое письмо дошло, а подтверждения нет**: искать в «Спаме»; проверить SPF, DKIM и
+  DMARC в **Email → Authentication** (если DNS домена не на SiteGround, их надо внести у
+  регистратора).
+
+`deploy.sh` в конце сам запускает эту проверку без отправки письма.
+
 ## Обновление
 
 ```bash

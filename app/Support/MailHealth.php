@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -20,12 +21,12 @@ class MailHealth
         $mailer = (string) config('mail.default');
         if (in_array($mailer, ['log', 'array'], true)) {
             $problems[] = __('Letters are not sent: MAIL_MAILER=:mailer in .env only writes them to the log. Set MAIL_MAILER=smtp and the password of the mail box, then run php artisan optimize.', ['mailer' => $mailer]);
-        }
-
-        if (config('queue.default') === 'database') {
+        } elseif (config('queue.default') !== 'sync' && (self::lastCronRun() ?? 0) < now()->subMinutes(5)->getTimestamp()) {
+            $problems[] = __('Letters wait in the queue and nobody sends them: cron has not run php artisan schedule:run for more than 5 minutes. In Site Tools > Devs > Cron Jobs it must run every minute in :dir.', ['dir' => base_path()]);
+        } elseif (config('queue.default') === 'database') {
             $oldest = DB::table('jobs')->where('queue', 'mail')->min('created_at');
-            if ($oldest && $oldest < now()->subMinutes(5)->getTimestamp()) {
-                $problems[] = __('Letters have been waiting in the queue for more than 5 minutes: cron does not run php artisan schedule:run every minute.');
+            if ($oldest && $oldest < now()->subMinutes(10)->getTimestamp()) {
+                $problems[] = __('Letters have been waiting in the queue for more than 10 minutes although cron runs: see storage/logs/laravel.log.');
             }
         }
 
@@ -35,6 +36,20 @@ class MailHealth
         }
 
         return $problems;
+    }
+
+    /** When cron last ran the scheduler (a Unix time), or null when it never did. */
+    public static function lastCronRun(): ?int
+    {
+        $time = Cache::get('schedule:last-run');
+
+        return $time === null ? null : (int) $time;
+    }
+
+    /** Letters waiting to be sent. */
+    public static function waiting(): int
+    {
+        return config('queue.default') === 'database' ? DB::table('jobs')->where('queue', 'mail')->count() : 0;
     }
 
     /** Sends a short letter right away, without the queue; returns the mail server's error, or null when it was accepted. */

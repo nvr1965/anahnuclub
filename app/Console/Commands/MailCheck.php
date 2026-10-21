@@ -16,7 +16,12 @@ class MailCheck extends Command
     {
         $this->line('MAIL_MAILER: '.config('mail.default'));
         $this->line('MAIL_HOST: '.config('mail.mailers.smtp.host').':'.config('mail.mailers.smtp.port'));
+        $this->line('MAIL_USERNAME: '.config('mail.mailers.smtp.username'));
         $this->line('MAIL_FROM_ADDRESS: '.config('mail.from.address'));
+        $this->line('MAIL_PASSWORD: '.(config('mail.mailers.smtp.password') ? 'set' : 'EMPTY'));
+        $cron = MailHealth::lastCronRun();
+        $this->line('Cron last ran: '.($cron ? now()->setTimestamp($cron)->diffForHumans() : 'never'));
+        $this->line('Letters waiting in the queue: '.MailHealth::waiting());
         foreach (MailHealth::problems() as $problem) {
             $this->warn($problem);
         }
