@@ -40,7 +40,7 @@ class SeoTest extends TestCase
         $post = Post::create(['user_id' => User::factory()->create(['name' => 'Анна'])->id, 'body' => '<p>Шаббат в парке в пятницу</p>']);
 
         $this->get("/posts/{$post->id}")
-            ->assertSee('<title inertia>Анна</title>', false)
+            ->assertSee('<title inertia>Анна: Шаббат в парке в пятницу</title>', false)
             ->assertSee('<h1>Анна: Шаббат в парке в пятницу</h1>', false)
             ->assertSee('<p>Шаббат в парке в пятницу</p>', false);
 

@@ -165,16 +165,32 @@ class PostController extends Controller
             'sidebar' => CommunitySidebar::for($request->user()),
         ])->withViewData(['meta' => [
             'url' => SiteMeta::canonical(),
-            'title' => $title ?: $author,
+            // Facebook's card shows only the title, so a post without one is named by its own words:
+            // "Author: the beginning of the text" (the club's own posts by the text alone).
+            'title' => $title ?: self::cardTitle($author, SiteMeta::plain($body, $post->isOfficial() ? 110 : 80), $post->isOfficial()),
             'description' => SiteMeta::plain($body),
-            // The post's own picture, large enough for Facebook's big card; else the club's invitation.
-            'image' => $post->photos->first()?->card()['url'] ?? (isset($image[1]) ? url($image[1]) : SiteMeta::image()),
+            // The post's own picture, large enough for Facebook's big card; else that of its video or link;
+            // else the club's invitation.
+            'image' => $post->photos->first()?->card()['url']
+                ?? (isset($image[1]) ? url($image[1]) : null)
+                ?? $post->video?->thumbUrl()
+                ?? ($post->linkPreview?->image ?: null)
+                ?? SiteMeta::image(),
             'content' => [
                 'heading' => $title ?: $author.': '.SiteMeta::plain($body, 70),
                 'html' => $body,
                 'links' => [],
             ],
         ]]);
+    }
+
+    private static function cardTitle(string $author, string $text, bool $official): string
+    {
+        if ($text === '') {
+            return $author;
+        }
+
+        return $official ? $text : $author.': '.$text;
     }
 
     /** Authors can rewrite what they typed; the new text is translated again. */
