@@ -108,4 +108,23 @@ class MessengerTest extends TestCase
             ->has('friends', 1)
             ->where('friends.0.id', $eli->id));
     }
+
+    public function test_the_row_of_friends_puts_those_online_first()
+    {
+        [$anna, $dana, $eli] = User::factory()->count(3)->create();
+        DB::table('friendships')->insert([
+            ['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true],
+            ['user_id' => $anna->id, 'friend_id' => $eli->id, 'accepted' => true],
+        ]);
+        $dana->forceFill(['last_seen_at' => now()->subDay()])->save();
+        $eli->forceFill(['last_seen_at' => now()])->save();
+        Conversation::between($anna, $dana);
+
+        // Friends with a chat stay in the row too, unlike the list for starting one.
+        $this->actingAs($anna)->get('/messages')->assertInertia(fn ($page) => $page
+            ->has('contacts', 2)
+            ->where('contacts.0.id', $eli->id)
+            ->where('contacts.0.online', true)
+            ->where('contacts.1.id', $dana->id));
+    }
 }
