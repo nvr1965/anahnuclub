@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PostPageTest extends TestCase
@@ -43,6 +44,18 @@ class PostPageTest extends TestCase
         $boss = User::factory()->create(['email' => 'boss@example.com', 'is_admin' => true]);
         $official = Post::create(['user_id' => $boss->id, 'body' => '<p>Новости клуба</p>']);
         $this->get("/posts/{$official->id}")->assertSee('<meta property="og:title" content="Новости клуба">', false);
+    }
+
+    public function test_a_post_that_is_only_a_youtube_link_is_named_by_the_clip()
+    {
+        Http::fake(['www.youtube.com/oembed*' => Http::response(['title' => 'Песни у костра'])]);
+        $post = Post::create(['user_id' => User::factory()->create(['name' => 'Дана'])->id, 'body' => 'https://www.youtube.com/embed/gj2LCn7lam8?si=PyLPngodTflJOtbj']);
+
+        $this->get("/posts/{$post->id}")
+            ->assertSee('<meta property="og:title" content="Дана: Песни у костра">', false)
+            ->assertSee('<meta property="og:image" content="https://i.ytimg.com/vi/gj2LCn7lam8/hqdefault.jpg">', false)
+            ->assertDontSee('<meta property="og:description" content="https://', false);
+        Http::assertSent(fn ($request) => str_contains($request->url(), urlencode('https://www.youtube.com/watch?v=gj2LCn7lam8')));
     }
 
     public function test_posts_for_friends_only_give_strangers_no_preview_of_their_text()
