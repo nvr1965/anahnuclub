@@ -57,6 +57,8 @@ if ! grep -q '^JOOMLA_DB_PASSWORD=.\+' .env && [ -f "$JOOMLA_FILES/configuration
     echo "Old site database settings copied into .env from $JOOMLA_FILES/configuration.php"
 fi
 grep -q '^DB_PASSWORD=.\+' .env || { echo "DB_PASSWORD in .env is empty: fill in the database settings first." >&2; exit 1; }
+# The stock two-hour session logged members out between visits; keep them in for 30 days.
+sed -i 's#^SESSION_LIFETIME=120$#SESSION_LIFETIME=43200#' .env
 
 echo "==> Composer"
 if command -v composer >/dev/null; then
