@@ -13,7 +13,11 @@ use Throwable;
  */
 class LibreTranslate extends Provider
 {
-    public function __construct(private string $url, private ?string $apiKey = null) {}
+    public function __construct(private string $url, private ?string $apiKey = null)
+    {
+        // An address typed in as "libretranslate.com" would fail every request; it means https.
+        $this->url = preg_match('#^https?://#i', trim($url)) ? trim($url) : 'https://'.ltrim(trim($url), '/');
+    }
 
     public function translateMany(array $texts, string $targetLocale, ?string $sourceLocale = null): array
     {
