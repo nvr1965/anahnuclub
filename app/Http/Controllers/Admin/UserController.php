@@ -24,6 +24,7 @@ class UserController extends AdminController
                 ->orWhere('email', $this->like(), $this->pattern($q))))
             ->when($filter === 'blocked', fn (Builder $b) => $b->where('blocked', true))
             ->when($filter === 'admins', fn (Builder $b) => $b->where('is_admin', true))
+            ->when($filter === 'unverified', fn (Builder $b) => $b->whereNull('email_verified_at'))
             ->withCount(['posts'])
             ->latest('id')
             ->paginate(30)->withQueryString()
@@ -34,6 +35,7 @@ class UserController extends AdminController
                 'email' => $u->email,
                 'avatar' => $u->avatar,
                 'blocked' => $u->blocked,
+                'verified' => $u->email_verified_at !== null,
                 'is_admin' => $u->is_admin,
                 'is_super' => $u->isSuperAdmin(),
                 'posts_count' => $u->posts_count,
@@ -42,7 +44,35 @@ class UserController extends AdminController
                 'rules_accepted_at' => $u->rules_accepted_at?->toIso8601String(),
             ]);
 
-        return Inertia::render('admin/users', ['users' => $users, 'q' => $q, 'filter' => $filter]);
+        return Inertia::render('admin/users', [
+            'users' => $users,
+            'q' => $q,
+            'filter' => $filter,
+            'unverified' => User::whereNull('email_verified_at')->count(),
+        ]);
+    }
+
+    /** Confirms the email of members whose letter never reached them, so they can come in. */
+    public function verify(Request $request): RedirectResponse
+    {
+        User::whereIn('id', $this->ids($request))->whereNull('email_verified_at')->update(['email_verified_at' => now()]);
+
+        return back();
+    }
+
+    /** Deletes sign-ups that never confirmed their email (mostly spam bots); confirmed members and admins are kept. */
+    public function destroy(Request $request): RedirectResponse
+    {
+        User::whereIn('id', $this->ids($request))->whereNull('email_verified_at')->where('is_admin', false)
+            ->get()->reject->isSuperAdmin()->each->delete();
+
+        return back();
+    }
+
+    /** @return list<int> */
+    private function ids(Request $request): array
+    {
+        return $request->validate(['ids' => ['required', 'array', 'max:100'], 'ids.*' => ['integer']])['ids'];
     }
 
     public function update(Request $request, User $user): RedirectResponse

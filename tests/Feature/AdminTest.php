@@ -45,6 +45,30 @@ class AdminTest extends TestCase
         $this->assertTrue($this->admin->fresh()->is_admin);
     }
 
+    public function test_sign_ups_without_a_confirmed_email_are_listed_and_confirmed_or_deleted_together()
+    {
+        [$late, $bot] = User::factory()->unverified()->count(2)->create();
+        $member = User::factory()->create();
+        $unverifiedAdmin = User::factory()->unverified()->create(['is_admin' => true]);
+
+        $this->actingAs($this->admin)->get('/admin/users?filter=unverified')->assertInertia(fn ($page) => $page
+            ->where('unverified', 3)
+            ->has('users.data', 3)
+            ->where('users.data.0.verified', false));
+
+        $this->post('/admin/users/verify', ['ids' => [$late->id]])->assertRedirect();
+        $this->assertTrue($late->fresh()->hasVerifiedEmail());
+
+        // Only the unconfirmed are deleted: a confirmed member or an admin in the same pick stays.
+        $this->delete('/admin/users', ['ids' => [$bot->id, $member->id, $unverifiedAdmin->id, $late->id]])->assertRedirect();
+        $this->assertNull(User::find($bot->id));
+        $this->assertNotNull(User::find($member->id));
+        $this->assertNotNull(User::find($unverifiedAdmin->id));
+        $this->assertNotNull(User::find($late->id));
+
+        $this->actingAs($member)->post('/admin/users/verify', ['ids' => [$unverifiedAdmin->id]])->assertForbidden();
+    }
+
     public function test_delete_as_spam_blocks_the_user_and_removes_their_posts_and_comments()
     {
         $spammer = User::factory()->create();

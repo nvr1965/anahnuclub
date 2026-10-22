@@ -6,6 +6,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Row {
     id: number;
@@ -14,6 +15,7 @@ interface Row {
     email: string;
     avatar: string | null;
     blocked: boolean;
+    verified: boolean;
     is_admin: boolean;
     is_super: boolean;
     rules_accepted_at: string | null;
@@ -22,18 +24,33 @@ interface Row {
     last_seen_at: string | null;
 }
 
-export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: string; filter: string | null }) {
+export default function AdminUsers({ users, q, filter, unverified }: { users: Page<Row>; q: string; filter: string | null; unverified: number }) {
     const t = useT();
     const { auth, locale } = usePage<SharedData>().props;
     const filters = [
         { key: null, label: t('All') },
+        { key: 'unverified', label: `${t('Email not confirmed')} (${unverified})` },
         { key: 'blocked', label: t('Blocked users') },
         { key: 'admins', label: t('Administrators') },
     ];
+    // Only sign-ups that never confirmed their email can be picked: they are confirmed or deleted together.
+    const selectable = users.data.filter((u) => !u.verified && !u.is_admin && !u.is_super).map((u) => u.id);
+    const [selected, setSelected] = useState<number[]>([]);
+    const picked = selected.filter((id) => selectable.includes(id));
+    const toggle = (id: number) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    const confirmEmail = (ids: number[]) => {
+        send('post', route('admin.users.verify'), { ids });
+        setSelected([]);
+    };
+    const remove = (ids: number[]) => {
+        if (!confirm(t('Delete :count members who did not confirm their email? This cannot be undone.', { count: ids.length }))) return;
+        send('delete', route('admin.users.destroy'), { ids });
+        setSelected([]);
+    };
 
     return (
         <AdminLayout title={t('Users')} actions={<AdminSearch value={q} routeName="admin.users.index" params={{ filter: filter ?? undefined }} />}>
-            <div className="mb-3 flex gap-2">
+            <div className="mb-3 flex flex-wrap gap-2">
                 {filters.map((f) => (
                     <Link
                         key={f.label}
@@ -44,27 +61,66 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                     </Link>
                 ))}
             </div>
+            {selectable.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            className="accent-brand size-4"
+                            checked={picked.length === selectable.length}
+                            onChange={() => setSelected(picked.length === selectable.length ? [] : selectable)}
+                        />
+                        {t('Select all on this page')}
+                    </label>
+                    {picked.length > 0 && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => confirmEmail(picked)}
+                                className="bg-brand rounded-full px-3 py-1 font-medium text-white"
+                            >
+                                {t('Confirm email (:count)', { count: picked.length })}
+                            </button>
+                            <button type="button" onClick={() => remove(picked)} className="rounded-full bg-red-600 px-3 py-1 font-medium text-white">
+                                {t('Delete selected (:count)', { count: picked.length })}
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
             <div className={`${card} divide-y dark:divide-neutral-800`}>
                 {users.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
                 {users.data.map((user) => {
                     const self = user.id === auth.user.id;
                     return (
                         <div key={user.id} className="flex flex-wrap items-center gap-3 p-3">
-                            <Avatar className="size-10">
-                                <AvatarImage src={user.avatar ?? undefined} alt="" className="object-cover" />
-                                <DefaultAvatarFallback />
-                            </Avatar>
+                            {selectable.length > 0 && (
+                                <input
+                                    type="checkbox"
+                                    className="accent-brand size-4 disabled:invisible"
+                                    disabled={!selectable.includes(user.id)}
+                                    checked={selected.includes(user.id)}
+                                    onChange={() => toggle(user.id)}
+                                />
+                            )}
+                            <Link href={route('people.show', user.id)}>
+                                <Avatar className="size-10">
+                                    <AvatarImage src={user.avatar ?? undefined} alt="" className="object-cover" />
+                                    <DefaultAvatarFallback />
+                                </Avatar>
+                            </Link>
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span dir="auto" className="font-medium">
+                                    <Link href={route('people.show', user.id)} dir="auto" className="font-medium hover:underline">
                                         {user.name}
-                                    </span>
+                                    </Link>
                                     {user.is_super ? (
                                         <Badge tone="brand">{t('Main administrator')}</Badge>
                                     ) : (
                                         user.is_admin && <Badge tone="brand">{t('Administrator')}</Badge>
                                     )}
                                     {user.blocked && <Badge tone="red">{t('Blocked')}</Badge>}
+                                    {!user.verified && <Badge>{t('Email not confirmed')}</Badge>}
                                 </div>
                                 <div className="text-muted-foreground truncate text-xs">
                                     {user.username && <>@{user.username} · </>}
@@ -78,6 +134,7 @@ export default function AdminUsers({ users, q, filter }: { users: Page<Row>; q: 
                             </div>
                             {!self && !user.is_super && (
                                 <div className="flex flex-wrap gap-1">
+                                    {!user.verified && <ActionButton onClick={() => confirmEmail([user.id])}>{t('Confirm email')}</ActionButton>}
                                     {user.posts_count > 0 && (
                                         <Link
                                             href={route('admin.posts.index', { user: user.id })}

@@ -153,6 +153,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/', Admin\DashboardController::class)->name('index');
     Route::post('mail/test', [Admin\MailController::class, 'test'])->name('mail.test');
     Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
+    Route::post('users/verify', [Admin\UserController::class, 'verify'])->name('users.verify');
+    Route::delete('users', [Admin\UserController::class, 'destroy'])->name('users.destroy');
     Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
     Route::post('users/{user}/purge', [Admin\UserController::class, 'purge'])->name('users.purge');
     Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
