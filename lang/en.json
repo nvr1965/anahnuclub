@@ -294,6 +294,7 @@
     "Join the group “:name” on anahnu.club": "Join the group “:name” on anahnu.club",
     "Join us!": "Join us!",
     "Joined :date": "Joined :date",
+    "Registered :date": "Registered :date",
     "Keep these placeholders in the text: :list": "Keep these placeholders in the text: :list",
     "Key": "Key",
     "Keys can be entered here or written into the .env file on the server. A key entered here is stored encrypted and takes the place of the one in .env.": "Keys can be entered here or written into the .env file on the server. A key entered here is stored encrypted and takes the place of the one in .env.",

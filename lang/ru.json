@@ -294,6 +294,7 @@
     "Join the group “:name” on anahnu.club": "Присоединяйся к группе «:name» на anahnu.club",
     "Join us!": "Присоединяйтесь!",
     "Joined :date": "С нами с :date",
+    "Registered :date": "Регистрация :date",
     "Keep these placeholders in the text: :list": "Оставьте в тексте эти метки: :list",
     "Key": "Ключ",
     "Keys can be entered here or written into the .env file on the server. A key entered here is stored encrypted and takes the place of the one in .env.": "Ключи можно ввести здесь или вписать в файл .env на сервере. Ключ, введённый здесь, хранится зашифрованным и заменяет ключ из .env.",

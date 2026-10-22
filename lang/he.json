@@ -294,6 +294,7 @@
     "Join the group “:name” on anahnu.club": "הצטרפו לקבוצה „:name” ב-anahnu.club",
     "Join us!": "הצטרפו אלינו!",
     "Joined :date": "הצטרף/ה ב-:date",
+    "Registered :date": "הרשמה :date",
     "Keep these placeholders in the text: :list": "השאירו בטקסט את הסימונים האלה: :list",
     "Key": "מפתח",
     "Keys can be entered here or written into the .env file on the server. A key entered here is stored encrypted and takes the place of the one in .env.": "אפשר להזין מפתחות כאן או לכתוב אותם בקובץ ‎.env בשרת. מפתח שהוזן כאן נשמר מוצפן ובא במקום המפתח מ-‎.env.",
