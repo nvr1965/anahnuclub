@@ -11,6 +11,7 @@ use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\Video;
 use App\Support\Background;
+use App\Support\Embed;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Support\LinkPreviewFetcher;
@@ -37,7 +38,8 @@ class PostController extends Controller
             'no_link_preview' => ['nullable', 'boolean'],
             ...self::audienceRules(),
         ]);
-        $text = (string) ($data['body'] ?? '');
+        // "Embed" code copied from Facebook, Instagram, X… becomes the post's address, shown as a player.
+        $text = Embed::unwrap((string) ($data['body'] ?? ''));
         $images = $request->file('images', []);
         $file = $request->file('video');
         abort_if($text === '' && ! $images && ! $file, 422);
@@ -90,7 +92,11 @@ class PostController extends Controller
     /** The card for a link being typed into a new post, read now if it is not known yet. */
     public function linkPreview(Request $request, LinkPreviewFetcher $fetcher): JsonResponse
     {
-        $url = LinkPreviewFetcher::firstUrl((string) $request->validate(['url' => ['required', 'string', 'max:2048']])['url']);
+        $url = LinkPreviewFetcher::firstUrl(Embed::unwrap((string) $request->validate(['url' => ['required', 'string', 'max:2048']])['url']));
+        // A post of Facebook, Instagram, YouTube… shows as its player, as it will in the post.
+        if ($embed = Embed::fromUrl($url)) {
+            return response()->json(['link' => null, 'embed' => $embed]);
+        }
         if ($url) {
             (new FetchLinkPreview($url))->handle($fetcher);
         }
@@ -175,7 +181,7 @@ class PostController extends Controller
     public function update(Request $request, Post $post): RedirectResponse
     {
         abort_unless($post->user_id === $request->user()->id && in_array($post->type, ['status', 'photo', 'video'], true) && $post->legacy_source === null, 403);
-        $body = (string) $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000']])['body'];
+        $body = Embed::unwrap((string) $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000']])['body']);
 
         $post->update(['body' => Html::fromPlainText($body), 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
         Background::run(new TranslateContent($post));

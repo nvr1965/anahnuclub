@@ -6,6 +6,7 @@ use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EmbedController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FriendController;
@@ -47,6 +48,8 @@ Route::post('translations', TranslationController::class)->middleware('throttle:
 
 // Open to anyone with the link, so posts can be shared outside the club.
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
+// A public post for other sites to show in an <iframe>.
+Route::get('embed/posts/{post}', [EmbedController::class, 'post'])->whereNumber('post')->name('embed.post');
 
 Route::get('p/{page}', [PageController::class, 'show'])->name('pages.show');
 Route::get('contact', [ContactController::class, 'create'])->name('contact');

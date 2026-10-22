@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Http\Controllers\EventController;
 use App\Models\Like;
 use App\Models\Post;
+use App\Support\Embed;
 use App\Support\Html;
 use App\Translation\ContentTranslator;
 use Illuminate\Http\Request;
@@ -19,6 +20,9 @@ class PostResource extends JsonResource
         $locale = app()->getLocale();
         $official = $this->relationLoaded('user') && $this->isOfficial();
         $mine = $request->user()?->id === $this->user_id;
+        // A post of Facebook, Instagram, YouTube… linked in the text plays right here; photos or a video of the post come first.
+        $media = $this->video_id || ($this->relationLoaded('photos') && $this->photos->isNotEmpty());
+        $embed = ! $media && $this->link_url ? Embed::fromUrl($this->link_url) : null;
 
         return [
             'id' => $this->id,
@@ -50,9 +54,14 @@ class PostResource extends JsonResource
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
             'video' => $this->whenLoaded('video', fn () => $this->video?->card()),
             // A shared link as a card; photos or a video, when the post has them, take its place.
-            'link' => $this->relationLoaded('linkPreview') && ! $this->video_id && ! ($this->relationLoaded('photos') && $this->photos->isNotEmpty())
+            'link' => $this->relationLoaded('linkPreview') && ! $media && ! $embed
                 ? $this->linkPreview?->card()
                 : null,
+            'embed' => $embed,
+            // Only what anyone may read can be put on other sites (see EmbedController).
+            'embeddable' => ($this->audience ?? 'public') === 'public'
+                && (! $this->group_id || ($this->relationLoaded('group') && $this->group && $this->group->published && ! $this->group->is_private)),
+            'embed_url' => route('embed.post', $this->id),
             'event' => $this->whenLoaded('event', fn () => $this->event ? EventController::card($this->event) : null),
             'editable_text' => $request->user()?->id === $this->user_id && in_array($this->type, ['status', 'photo', 'video'], true) && $this->legacy_source === null
                 ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)

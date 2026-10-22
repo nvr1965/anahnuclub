@@ -616,5 +616,13 @@
     "Go to the feed": "Перейти в ленту",
     "Publishing…": "Публикуется…",
     "New message": "Новое сообщение",
-    "Menu": "Меню"
+    "Menu": "Меню",
+    "Embed": "Встроить",
+    "Embed post": "Встроить публикацию",
+    "Copy and paste this code into your site.": "Скопируйте и вставьте этот код на ваш сайт.",
+    "Copy code": "Копировать код",
+    "Code copied": "Код скопирован",
+    "See more": "Ещё",
+    "View on anahnu.club": "Открыть на anahnu.club",
+    "This post is no longer available.": "Эта публикация больше недоступна."
 }
