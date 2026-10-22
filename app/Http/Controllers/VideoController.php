@@ -152,7 +152,7 @@ class VideoController extends Controller
     }
 
     /** Title and picture from the video site, when it answers quickly. */
-    private static function oembed(string $provider, string $url): array
+    public static function oembed(string $provider, string $url): array
     {
         $endpoint = $provider === 'youtube' ? 'https://www.youtube.com/oembed' : 'https://vimeo.com/api/oembed.json';
         try {

@@ -20,6 +20,7 @@ use App\Translation\LanguageGuesser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -159,6 +160,10 @@ class PostController extends Controller
         $title = $post->cachedTranslation('title', app()->getLocale()) ?? $post->title;
         $author = $post->isOfficial() ? 'anahnu.club' : ($post->user?->name ?? 'anahnu.club');
         preg_match('~<img[^>]+src=["\']([^"\']+)~i', $body, $image);
+        // Links are not words: a post that is only a YouTube link is named by the clip, not its address.
+        $words = trim(preg_replace(['~https?://[^\s<>"\']+~i', '/\s+/u'], ['', ' '], SiteMeta::plain($body, 20000)) ?? '');
+        $clip = $post->link_url ? Video::parseUrl($post->link_url) : null;
+        $linkTitle = $post->video?->title ?: ($clip ? self::clipTitle($clip) : null) ?: $post->linkPreview?->title;
 
         return Inertia::render('posts/show', [
             'post' => PostResource::make($post),
@@ -166,22 +171,34 @@ class PostController extends Controller
         ])->withViewData(['meta' => [
             'url' => SiteMeta::canonical(),
             // Facebook's card shows only the title, so a post without one is named by its own words:
-            // "Author: the beginning of the text" (the club's own posts by the text alone).
-            'title' => $title ?: self::cardTitle($author, SiteMeta::plain($body, $post->isOfficial() ? 110 : 80), $post->isOfficial()),
-            'description' => SiteMeta::plain($body),
+            // "Author: the beginning of the text" (the club's own posts by the text alone); a post with
+            // no words of its own by the title of its link or video.
+            'title' => $title ?: self::cardTitle($author, mb_strimwidth($words, 0, $post->isOfficial() ? 110 : 80, '…') ?: (string) $linkTitle, $post->isOfficial()),
+            'description' => mb_strimwidth($words, 0, 200, '…') ?: ($post->linkPreview?->description ?: SiteMeta::slogan()),
             // The post's own picture, large enough for Facebook's big card; else that of its video or link;
             // else the club's invitation.
             'image' => $post->photos->first()?->card()['url']
                 ?? (isset($image[1]) ? url($image[1]) : null)
                 ?? $post->video?->thumbUrl()
                 ?? ($post->linkPreview?->image ?: null)
+                ?? ($clip ? (new Video(['provider' => $clip[0], 'provider_id' => $clip[1]]))->thumbUrl() : null)
                 ?? SiteMeta::image(),
             'content' => [
-                'heading' => $title ?: $author.': '.SiteMeta::plain($body, 70),
+                'heading' => $title ?: $author.': '.(mb_strimwidth($words, 0, 70, '…') ?: $linkTitle),
                 'html' => $body,
                 'links' => [],
             ],
         ]]);
+    }
+
+    /** The name of a YouTube or Vimeo clip, asked of the video site once and remembered. */
+    private static function clipTitle(array $clip): ?string
+    {
+        // The clip's own page: the video sites don't answer for the player's address (/embed/…).
+        $url = $clip[0] === 'youtube' ? 'https://www.youtube.com/watch?v='.$clip[1] : 'https://vimeo.com/'.$clip[1];
+        $title = Cache::remember('clip-title:'.implode(':', $clip), now()->addWeek(), fn () => (string) (VideoController::oembed($clip[0], $url)['title'] ?? ''));
+
+        return $title !== '' ? $title : null;
     }
 
     private static function cardTitle(string $author, string $text, bool $official): string
