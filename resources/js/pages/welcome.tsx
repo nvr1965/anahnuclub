@@ -12,7 +12,7 @@ import { FormEventHandler } from 'react';
 /** Front page for guests, laid out like the old anahnu.club: banner, quick login, members and the latest posts. */
 export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; sidebar: Sidebar }) {
     const t = useT();
-    const form = useForm({ email: '', password: '', remember: false });
+    const form = useForm({ email: '', password: '', remember: true as boolean });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -75,8 +75,13 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
                         {t('Log in')}
                     </button>
                     <div className="text-muted-foreground flex flex-wrap items-center gap-x-5 gap-y-1 text-sm sm:col-span-3">
-                        <label className="inline-flex items-center gap-2">
-                            <input type="checkbox" checked={form.data.remember} onChange={(e) => form.setData('remember', e.target.checked)} />
+                        <label className="-my-2 inline-flex cursor-pointer items-center gap-2 py-2 select-none">
+                            <input
+                                type="checkbox"
+                                className="size-5"
+                                checked={form.data.remember}
+                                onChange={(e) => form.setData('remember', e.target.checked)}
+                            />
                             {t('Remember me')}
                         </label>
                         <Link href={route('password.request')} className="text-brand hover:underline">

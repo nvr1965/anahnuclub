@@ -42,6 +42,20 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_remember_me_sets_the_long_lived_cookie()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'remember' => true,
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertCookie(auth()->guard()->getRecallerName());
+    }
+
     public function test_users_can_logout()
     {
         $user = User::factory()->create();
