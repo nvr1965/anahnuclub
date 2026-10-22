@@ -1,11 +1,12 @@
 import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
 import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
+import { ExternalEmbed } from '@/components/external-embed';
 import { LinkPreview } from '@/components/link-preview';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame } from '@/lib/shrink-image';
-import { type Audience, type LinkCard, type SharedData } from '@/types';
+import { type Audience, type EmbedCard, type LinkCard, type SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
 import { Camera, ChevronDown, ImagePlus, X } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
@@ -56,10 +57,12 @@ export function PostComposer({
     });
     // The first link typed shows as a card, as on Facebook; closing it keeps the link as text only.
     const [link, setLink] = useState<LinkCard | null>(null);
+    // A post of Facebook, Instagram, YouTube… (its link or its "embed" code) shows as its player.
+    const [embed, setEmbed] = useState<EmbedCard | null>(null);
     const [dismissed, setDismissed] = useState<string | null>(null);
     const typedUrl = form.data.body.match(/https?:\/\/[^\s<>"']+/i)?.[0].replace(/[.,;:!?)\]}»]+$/, '') ?? null;
     useEffect(() => {
-        if (!typedUrl || typedUrl === dismissed) return setLink(null);
+        if (!typedUrl || typedUrl === dismissed) return setLink(null), setEmbed(null);
         if (link?.url === typedUrl) return;
         const ask = new AbortController();
         const wait = setTimeout(async () => {
@@ -68,7 +71,9 @@ export function PostComposer({
                     headers: { Accept: 'application/json' },
                     signal: ask.signal,
                 });
-                setLink(response.ok ? ((await response.json()).link ?? null) : null);
+                const found = response.ok ? await response.json() : {};
+                setLink(found.link ?? null);
+                setEmbed(found.embed ?? null);
             } catch {
                 // A page that cannot be read leaves just the link.
             }
@@ -123,6 +128,7 @@ export function PostComposer({
                 // The audience stays as chosen for the next post, as on Facebook.
                 form.reset('body', 'images', 'video', 'video_thumb', 'audience_default');
                 setLink(null);
+                setEmbed(null);
                 setDismissed(null);
                 setOpen(false);
                 onPosted?.();
@@ -255,6 +261,11 @@ export function PostComposer({
             {link && previews.length === 0 && !videoPreview && (
                 <div className="mt-3">
                     <LinkPreview link={link} onRemove={() => (setDismissed(link.url), setLink(null))} />
+                </div>
+            )}
+            {embed && previews.length === 0 && !videoPreview && (
+                <div className="mt-3 overflow-hidden rounded-lg">
+                    <ExternalEmbed embed={embed} onRemove={() => (setDismissed(typedUrl), setEmbed(null))} />
                 </div>
             )}
             {form.errors.video && <p className="mt-2 text-sm text-red-600">{form.errors.video}</p>}

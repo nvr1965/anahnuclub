@@ -98,6 +98,9 @@ export interface Post extends Translatable {
     video: VideoItem | null;
     event: EventItem | null;
     link: LinkCard | null;
+    embed: EmbedCard | null;
+    embeddable: boolean;
+    embed_url: string;
 }
 
 export type Reaction = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';
@@ -108,6 +111,15 @@ export interface LinkCard {
     title: string | null;
     description: string | null;
     image: string | null;
+}
+
+/** A post or video of Facebook, Instagram, Telegram, X, YouTube, Vimeo or TikTok, played inside a post. */
+export interface EmbedCard {
+    provider: string;
+    src: string;
+    url: string;
+    /** null: a 16:9 player. */
+    height: number | null;
 }
 
 export interface PhotoItem {

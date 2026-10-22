@@ -1,4 +1,6 @@
 import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/audience-picker';
+import { EmbedPostDialog } from '@/components/embed-post-dialog';
+import { ExternalEmbed } from '@/components/external-embed';
 import { LinkPreview } from '@/components/link-preview';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { ReactionButton, ReactionFaces } from '@/components/reactions';
@@ -11,7 +13,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, Trash2 } from 'lucide-react';
+import { Code, Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -36,6 +38,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const [editing, setEditing] = useState(false);
     const edit = useForm({ body: post.editable_text ?? '' });
     const [choosingAudience, setChoosingAudience] = useState(false);
+    const [embedding, setEmbedding] = useState(false);
     const audienceLabels = useAudienceLabels();
     const mine = auth.user?.id === post.author?.id;
     const canChangeAudience = mine && !post.group;
@@ -233,7 +236,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         }
                     />
                 )}
-                {(post.can_delete || post.editable_text !== null || canChangeAudience) && (
+                {post.embeddable && <EmbedPostDialog open={embedding} onClose={() => setEmbedding(false)} postId={post.id} src={post.embed_url} />}
+                {(post.can_delete || post.editable_text !== null || canChangeAudience || post.embeddable) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             className="text-muted-foreground -me-2 self-start rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
@@ -250,6 +254,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             {canChangeAudience && (
                                 <DropdownMenuItem onSelect={() => setChoosingAudience(true)}>
                                     <Eye className="size-4" /> {t('Edit audience')}
+                                </DropdownMenuItem>
+                            )}
+                            {/* Only posts anyone may read can be shown on other sites. */}
+                            {post.embeddable && (
+                                <DropdownMenuItem onSelect={() => setEmbedding(true)}>
+                                    <Code className="size-4" /> {t('Embed')}
                                 </DropdownMenuItem>
                             )}
                             {post.can_delete && (
@@ -319,6 +329,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             {post.link && (
                 <div className="mt-2">
                     <LinkPreview link={post.link} />
+                </div>
+            )}
+            {post.embed && (
+                <div className="mt-2">
+                    <ExternalEmbed embed={post.embed} />
                 </div>
             )}
             <div className="pb-2" />

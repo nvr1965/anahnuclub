@@ -616,5 +616,13 @@
     "Go to the feed": "الانتقال إلى الأخبار",
     "Publishing…": "جارٍ النشر…",
     "New message": "رسالة جديدة",
-    "Menu": "القائمة"
+    "Menu": "القائمة",
+    "Embed": "تضمين",
+    "Embed post": "تضمين المنشور",
+    "Copy and paste this code into your site.": "انسخ هذا الرمز والصقه في موقعك.",
+    "Copy code": "نسخ الرمز",
+    "Code copied": "تم نسخ الرمز",
+    "See more": "عرض المزيد",
+    "View on anahnu.club": "عرض على anahnu.club",
+    "This post is no longer available.": "هذا المنشور لم يعد متاحًا."
 }
