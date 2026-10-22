@@ -68,6 +68,13 @@ class PostPageTest extends TestCase
         $this->get("/posts/{$post->id}?lang=en")->assertSee('<meta property="og:title" content="Post from Facebook">', false);
     }
 
+    public function test_a_link_shared_in_hebrew_gets_the_hebrew_card()
+    {
+        $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => '']);
+
+        $this->get("/posts/{$post->id}?lang=he")->assertSee('images/invite/he.jpg', false);
+    }
+
     public function test_posts_for_friends_only_give_strangers_no_preview_of_their_text()
     {
         $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Только для друзей', 'audience' => 'friends']);
