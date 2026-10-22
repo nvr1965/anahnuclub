@@ -176,10 +176,14 @@ class MessageController extends Controller
         return to_route('messages.index');
     }
 
-    /** @return array{conversations: array, requests: array} */
+    /** @return array{conversations: array, requests: array, friends: array, contacts: array} */
     private function lists(User $user): array
     {
         $rows = collect($this->conversations($user));
+        // The row of friends over the chats, as in Messenger: those on the site now come first.
+        $contacts = $user->friends()->where('blocked', false)
+            ->whereNotIn('id', $user->hiddenUserIds())
+            ->onlineFirst()->orderBy('name')->limit(30)->get();
         // Friends there is no chat with yet, so one can be started from here.
         $friends = $user->friends()->where('blocked', false)
             ->whereNotIn('id', $rows->pluck('with.id')->merge($user->hiddenUserIds()))
@@ -189,6 +193,7 @@ class MessageController extends Controller
             'conversations' => $rows->where('request', false)->values()->all(),
             'requests' => $rows->where('request', true)->values()->all(),
             'friends' => $friends->map(fn (User $u) => PeopleController::card($u))->all(),
+            'contacts' => $contacts->map(fn (User $u) => PeopleController::card($u))->all(),
         ];
     }
 
