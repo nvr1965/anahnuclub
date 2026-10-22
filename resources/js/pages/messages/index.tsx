@@ -86,7 +86,7 @@ export default function Messages({ conversations, requests, friends, conversatio
     return (
         <ClubLayout>
             <Head title={conversation ? conversation.with.name : t('Messages')} />
-            <div className="mx-auto grid h-[calc(100dvh-96px)] w-full max-w-[1100px] overflow-hidden rounded-lg bg-white shadow-sm md:grid-cols-[340px_minmax(0,1fr)] dark:bg-neutral-900">
+            <div className="mx-auto grid h-[calc(100dvh-148px)] w-full max-w-[1100px] overflow-hidden rounded-lg bg-white shadow-sm sm:h-[calc(100dvh-108px)] md:grid-cols-[340px_minmax(0,1fr)] dark:bg-neutral-900">
                 <aside
                     className={`flex min-h-0 flex-col border-slate-200 md:border-e dark:border-neutral-800 ${conversation ? 'hidden md:flex' : 'flex'}`}
                 >

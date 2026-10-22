@@ -242,7 +242,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
 
                 {tab === 'posts' && !profile.blocked_by_me && (
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                        <div className="space-y-4 lg:sticky lg:top-[76px] lg:self-start">
+                        <div className="space-y-4 lg:sticky lg:top-[88px] lg:self-start">
                             <section className={card}>
                                 <h2 className="mb-3 text-xl font-bold">{t('Intro')}</h2>
                                 <Details profile={profile} locale={locale} short />

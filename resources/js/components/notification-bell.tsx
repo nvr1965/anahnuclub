@@ -2,11 +2,10 @@ import { type ClubNotification, NotificationList } from '@/components/notificati
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useT } from '@/lib/i18n';
 import { Link, router } from '@inertiajs/react';
-import { Bell } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
-/** The bell in the top bar: opening it loads the latest notices. */
-export function NotificationBell({ badge, className }: { badge: ReactNode; className: string }) {
+/** The bell in the top bar (its look comes from the children): opening it loads the latest notices. */
+export function NotificationBell({ className, children }: { className: string; children: ReactNode }) {
     const t = useT();
     const [items, setItems] = useState<ClubNotification[] | null>(null);
 
@@ -23,8 +22,7 @@ export function NotificationBell({ badge, className }: { badge: ReactNode; class
     return (
         <DropdownMenu onOpenChange={load}>
             <DropdownMenuTrigger className={className} aria-label={t('Notifications')}>
-                <Bell className="size-5" />
-                {badge}
+                {children}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="max-h-[80vh] w-[min(380px,calc(100vw-16px))] overflow-y-auto p-2">
                 <div className="flex items-center justify-between px-2 pb-1">
