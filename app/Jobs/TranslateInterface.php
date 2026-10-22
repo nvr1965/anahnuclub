@@ -33,6 +33,12 @@ class TranslateInterface implements ShouldQueue
         return 'translate-interface.'.$code;
     }
 
+    /** Why the last run stopped, shown on the admin page until a run gets further. */
+    public static function errorKey(string $code): string
+    {
+        return 'translate-interface.error.'.$code;
+    }
+
     /** Starts again every language whose interface is not fully translated and has no run going. */
     public static function resumeAll(): void
     {
@@ -59,10 +65,12 @@ class TranslateInterface implements ShouldQueue
             $left = InterfaceStrings::fill($this->code, $translator, 35);
         } catch (Throwable $e) {
             Log::warning('Interface translation paused', ['language' => $this->code, 'error' => $e->getMessage()]);
+            Cache::put(self::errorKey($this->code), mb_substr($e->getMessage(), 0, 300), now()->addDay());
             Cache::forget(self::busyKey($this->code));
 
             return;
         }
+        Cache::forget(self::errorKey($this->code));
         if ($left > 0) {
             self::dispatch($this->code, $this->enableWhenDone);
 

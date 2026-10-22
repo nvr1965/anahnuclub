@@ -3,6 +3,7 @@
 namespace App\Translation;
 
 use Illuminate\Support\Facades\File;
+use Throwable;
 
 /**
  * The interface text of each language, in three layers, the later winning:
@@ -100,10 +101,7 @@ class InterfaceStrings
         $deadline = $seconds ? microtime(true) + $seconds : null;
         $added = self::file(self::addedPath($code));
         foreach (array_chunk($missing, 40, true) as $chunk) {
-            $texts = array_map(self::protect(...), array_values($chunk));
-            $done = method_exists($translator, 'translateMany')
-                ? $translator->translateMany($texts, $code, 'en')
-                : array_map(fn ($t) => $translator->translate($t, $code, 'en'), $texts);
+            $done = self::translateChunk($translator, array_map(self::protect(...), array_values($chunk)), $code);
             foreach (array_keys($chunk) as $i => $key) {
                 $text = trim(self::unprotect($done[$i] ?? ''));
                 // A translation that lost or invented a placeholder would show ":name" to people; keep the
@@ -122,6 +120,33 @@ class InterfaceStrings
     public static function forget(string $code): void
     {
         File::delete([self::addedPath($code), self::editsPath($code)]);
+    }
+
+    /**
+     * A batch the services all refuse is split in halves and tried again: an AI service that answers 40
+     * strings with 39 fails the whole batch, and the same batch would fail on every run, so the language
+     * stuck there for good. Only a single string that still fails stops the run (a daily limit, a service down).
+     *
+     * @param  list<string>  $texts
+     * @return list<string>
+     */
+    private static function translateChunk(Translator $translator, array $texts, string $code): array
+    {
+        try {
+            return method_exists($translator, 'translateMany')
+                ? $translator->translateMany($texts, $code, 'en')
+                : array_map(fn ($t) => $translator->translate($t, $code, 'en'), $texts);
+        } catch (Throwable $e) {
+            if (count($texts) === 1) {
+                throw $e;
+            }
+            $half = intdiv(count($texts) + 1, 2);
+
+            return [
+                ...self::translateChunk($translator, array_slice($texts, 0, $half), $code),
+                ...self::translateChunk($translator, array_slice($texts, $half), $code),
+            ];
+        }
     }
 
     private static function protect(string $text): string

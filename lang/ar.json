@@ -519,6 +519,7 @@
     "Translate the interface again (texts corrected by hand stay)": "ترجمة الواجهة من جديد (يبقى ما صُحح يدويًا)",
     "Translate the missing interface strings": "ترجمة نصوص الواجهة الناقصة",
     "Translated automatically · Show original": "تُرجم تلقائياً · عرض الأصل",
+    "Paused, tried again every hour: :error": "متوقف مؤقتًا، نعيد المحاولة كل ساعة: :error",
     "Translating…": "جارٍ الترجمة…",
     "Translation is off": "الترجمة متوقفة",
     "Translators": "المترجمون",
