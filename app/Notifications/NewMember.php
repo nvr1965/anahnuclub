@@ -9,7 +9,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Notification as Notify;
 
-/** The letter to the club team (MAIL_TEAM_ADDRESS) about every new member, sent from the "mail" queue. */
+/** The letter to the club team (MAIL_TEAM_ADDRESS, one or more addresses split by commas) about every new member, sent from the "mail" queue. */
 class NewMember extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -22,8 +22,9 @@ class NewMember extends Notification implements ShouldQueue
     /** Tells the team about a member who has just signed up; $via is "email" or the social network's name. */
     public static function send(User $user, string $via): void
     {
-        if ($address = config('mail.team_address')) {
-            Notify::route('mail', $address)->notify((new self($user, $via))->locale(config('app.locale')));
+        $addresses = array_values(array_filter(array_map('trim', explode(',', (string) config('mail.team_address')))));
+        if ($addresses) {
+            Notify::route('mail', $addresses)->notify((new self($user, $via))->locale(config('app.locale')));
         }
     }
 

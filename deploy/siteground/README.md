@@ -92,6 +92,10 @@ cd ~/www/anahnu.club/app && php artisan mail:check ваш@адрес
 
 `deploy.sh` в конце сам запускает эту проверку без отправки письма.
 
+Письма о каждом новом участнике идут на `MAIL_TEAM_ADDRESS` в `.env` (по умолчанию
+`team@anahnu.club`). Несколько адресов пишутся через запятую:
+`MAIL_TEAM_ADDRESS=team@anahnu.club,nvr1965@gmail.com`.
+
 ## Обновление
 
 ```bash
