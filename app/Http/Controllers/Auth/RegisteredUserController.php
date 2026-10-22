@@ -49,7 +49,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
         NewMember::send($user, 'email');
 
-        Auth::login($user);
+        Auth::login($user, true);
 
         return to_route('verification.notice');
     }

@@ -11,6 +11,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -37,5 +38,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ? redirect()->route('dashboard')
                     : redirect()->route('verification.notice')->with('status', 'verification-link-expired');
             }
+        });
+        // A page left open past its session (CSRF token 419): reload it with a fresh token instead of an error box.
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            if ($response->getStatusCode() === 419) {
+                return back()->withInput($request->except('password', 'password_confirmation'));
+            }
+
+            return $response;
         });
     })->create();

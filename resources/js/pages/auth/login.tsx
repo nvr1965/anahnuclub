@@ -28,7 +28,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
         password: '',
-        remember: false,
+        // On by default: members mostly open the club from their own phone, and before this the box
+        // was never sent at all, so people were logged out after two idle hours.
+        remember: true,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -82,10 +84,16 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <InputError message={errors.password} />
                     </div>
 
-                    <div className="flex items-center space-x-3">
-                        <Checkbox id="remember" name="remember" tabIndex={3} />
-                        <Label htmlFor="remember">{t('Remember me')}</Label>
-                    </div>
+                    <label htmlFor="remember" className="-my-2 flex cursor-pointer items-center gap-3 py-2 text-sm font-medium select-none">
+                        <Checkbox
+                            id="remember"
+                            name="remember"
+                            tabIndex={3}
+                            checked={data.remember}
+                            onCheckedChange={(checked) => setData('remember', checked === true)}
+                        />
+                        {t('Remember me')}
+                    </label>
 
                     <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
