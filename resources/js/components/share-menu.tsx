@@ -1,5 +1,7 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useT } from '@/lib/i18n';
+import { type SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
 import { Check, Link2, Mail, MessageCircle, MessageSquare, Phone, Send, Share2 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
@@ -31,9 +33,21 @@ const sms: Network = {
     href: (u, t) => `sms:?&body=${t}%20${u}`,
 };
 
+/** The link in the sharer's language (?lang=he): the card Facebook or WhatsApp shows, and the page it opens, are in it. */
+function inLanguage(url: string, locale: string): string {
+    try {
+        const link = new URL(url, window.location.origin);
+        if (link.origin !== window.location.origin || link.searchParams.has('lang')) return url;
+        link.searchParams.set('lang', locale);
+        return link.toString();
+    } catch {
+        return url;
+    }
+}
+
 /** "Share" button: a link to social networks and messengers, the phone's share sheet, or the clipboard. */
 export function ShareMenu({
-    url,
+    url: address,
     title,
     className,
     label,
@@ -47,6 +61,8 @@ export function ShareMenu({
     icon?: ReactNode;
 }) {
     const t = useT();
+    const { locale } = usePage<SharedData>().props;
+    const url = inLanguage(address, locale);
     const [copied, setCopied] = useState(false);
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title.slice(0, 200));
