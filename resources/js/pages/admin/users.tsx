@@ -175,17 +175,12 @@ export default function AdminUsers({
                                     <div className="text-muted-foreground truncate text-xs">
                                         {user.username && <>@{user.username} · </>}
                                         {user.email} · {t(':count posts', { count: user.posts_count })}
-                                        {user.created_at && (
-                                            <>
-                                                {' · '}
-                                                {t('Registered :date', {
-                                                    date: new Date(user.created_at).toLocaleString(locale, {
-                                                        dateStyle: 'short',
-                                                        timeStyle: 'short',
-                                                    }),
-                                                })}
-                                            </>
-                                        )}
+                                    </div>
+                                    <div className="text-muted-foreground text-xs">
+                                        {user.created_at &&
+                                            t('Registered :date', {
+                                                date: new Date(user.created_at).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' }),
+                                            })}
                                         {user.last_seen_at && <> · {relativeTime(user.last_seen_at, locale)}</>}
                                         {' · '}
                                         {user.rules_accepted_at
