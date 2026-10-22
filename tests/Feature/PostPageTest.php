@@ -58,6 +58,16 @@ class PostPageTest extends TestCase
         Http::assertSent(fn ($request) => str_contains($request->url(), urlencode('https://www.youtube.com/watch?v=gj2LCn7lam8')));
     }
 
+    public function test_a_post_that_is_only_a_facebook_link_says_where_it_is_from()
+    {
+        Http::fake(['*' => Http::response('<html><title></title></html>')]);
+        config(['app.super_admin_email' => 'boss@example.com']);
+        $boss = User::factory()->create(['email' => 'boss@example.com', 'is_admin' => true]);
+        $post = Post::create(['user_id' => $boss->id, 'body' => 'https://www.facebook.com/somepage/posts/pfbid0abc']);
+
+        $this->get("/posts/{$post->id}?lang=en")->assertSee('<meta property="og:title" content="Post from Facebook">', false);
+    }
+
     public function test_posts_for_friends_only_give_strangers_no_preview_of_their_text()
     {
         $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Только для друзей', 'audience' => 'friends']);

@@ -163,7 +163,7 @@ class PostController extends Controller
         // Links are not words: a post that is only a YouTube link is named by the clip, not its address.
         $words = trim(preg_replace(['~https?://[^\s<>"\']+~i', '/\s+/u'], ['', ' '], SiteMeta::plain($body, 20000)) ?? '');
         $clip = $post->link_url ? Video::parseUrl($post->link_url) : null;
-        $linkTitle = $post->video?->title ?: ($clip ? self::clipTitle($clip) : null) ?: $post->linkPreview?->title;
+        $linkTitle = $post->video?->title ?: ($clip ? self::clipTitle($clip) : null) ?: $post->linkPreview?->title ?: self::linkSite($post->link_url);
 
         return Inertia::render('posts/show', [
             'post' => PostResource::make($post),
@@ -189,6 +189,26 @@ class PostController extends Controller
                 'links' => [],
             ],
         ]]);
+    }
+
+    /** "Post from Facebook" for a link whose page told us nothing (Facebook shows robots only a sign-in page). */
+    private static function linkSite(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+        $site = match (Embed::fromUrl($url)['provider'] ?? null) {
+            'facebook' => 'Facebook',
+            'instagram' => 'Instagram',
+            'telegram' => 'Telegram',
+            'x' => 'X',
+            'tiktok' => 'TikTok',
+            'youtube' => 'YouTube',
+            'vimeo' => 'Vimeo',
+            default => preg_replace('/^www\./', '', (string) parse_url($url, PHP_URL_HOST)),
+        };
+
+        return $site !== '' ? __('Post from :site', ['site' => $site]) : null;
     }
 
     /** The name of a YouTube or Vimeo clip, asked of the video site once and remembered. */
