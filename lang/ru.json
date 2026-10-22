@@ -519,6 +519,7 @@
     "Translate the interface again (texts corrected by hand stay)": "Перевести интерфейс заново (поправленное вручную останется)",
     "Translate the missing interface strings": "Перевести недостающие строки интерфейса",
     "Translated automatically · Show original": "Переведено автоматически · Показать оригинал",
+    "Paused, tried again every hour: :error": "Пауза, повторяем каждый час: :error",
     "Translating…": "Переводим…",
     "Translation is off": "Перевод выключен",
     "Translators": "Переводчики",

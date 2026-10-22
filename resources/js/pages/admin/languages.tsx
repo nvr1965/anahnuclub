@@ -14,6 +14,7 @@ interface Row {
     missing: number;
     built_in: boolean;
     base: boolean;
+    paused: string | null;
 }
 
 /** Common choices; anything else can be typed in by hand. Languages DeepL lacks need the Claude key. */
@@ -37,6 +38,8 @@ const PRESETS: [code: string, name: string, native: string, rtl?: boolean][] = [
     ['nl', 'Dutch', 'Nederlands'],
     ['ro', 'Romanian', 'Română'],
     ['cs', 'Czech', 'Čeština'],
+    ['sr', 'Serbian (Cyrillic)', 'Српски'],
+    ['hr', 'Croatian', 'Hrvatski'],
     ['bg', 'Bulgarian', 'Български'],
     ['el', 'Greek', 'Ελληνικά'],
     ['hu', 'Hungarian', 'Magyar'],
@@ -106,6 +109,11 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
                                 {language.missing > 0 && (
                                     <div className="text-muted-foreground text-xs">
                                         {t('Interface translated: :done of :total', { done: total - language.missing, total })}
+                                    </div>
+                                )}
+                                {language.missing > 0 && language.paused && (
+                                    <div className="text-xs break-words text-amber-700 dark:text-amber-400">
+                                        {t('Paused, tried again every hour: :error', { error: language.paused })}
                                     </div>
                                 )}
                             </div>

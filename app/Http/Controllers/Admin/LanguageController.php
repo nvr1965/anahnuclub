@@ -8,6 +8,7 @@ use App\Translation\InterfaceStrings;
 use App\Translation\Translator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,6 +29,8 @@ class LanguageController extends AdminController
                     'built_in' => in_array($l->code, self::BUILT_IN, true),
                     // The language every text is written in first; it stays on.
                     'base' => $l->code === config('app.fallback_locale'),
+                    // Why the machine translation of this language stopped last time; it is tried again every hour.
+                    'paused' => Cache::get(TranslateInterface::errorKey($l->code)),
                 ]),
             'total' => $total,
             'can_translate' => $translator->name() !== 'null',

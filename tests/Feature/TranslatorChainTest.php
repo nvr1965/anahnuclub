@@ -197,6 +197,57 @@ class TranslatorChainTest extends TestCase
         $this->assertSame('tarjima', InterfaceStrings::read('uz')['Cancel']);
     }
 
+    public function test_a_batch_the_service_garbles_is_split_and_the_language_does_not_stick()
+    {
+        Language::create(['code' => 'fa', 'name' => 'Persian', 'native_name' => 'فارسی', 'rtl' => true, 'enabled' => false, 'sort' => 9]);
+        // Like an AI service that answers a long batch with a shorter array: only small batches get through.
+        $this->app->instance(Translator::class, $this->chain([['id' => 'ai']])->with('ai', new class extends Provider
+        {
+            public function translateMany(array $texts, string $targetLocale, ?string $sourceLocale = null): array
+            {
+                if (count($texts) > 8) {
+                    throw new \RuntimeException('unexpected answer');
+                }
+
+                return array_map(fn ($t) => "[fa] $t", $texts);
+            }
+
+            public function name(): string
+            {
+                return 'ai';
+            }
+        }));
+
+        (new TranslateInterface('fa', true))->handle($this->app->make(Translator::class));
+        TranslateInterface::resumeAll();
+
+        $this->assertSame([], InterfaceStrings::missing('fa'));
+        $this->assertTrue(Language::find('fa')->enabled);
+        InterfaceStrings::forget('fa');
+    }
+
+    public function test_the_reason_a_translation_paused_shows_on_the_admin_page()
+    {
+        $this->app->instance(Translator::class, $this->chain([['id' => 'used-up']])->with('used-up', new class extends Provider
+        {
+            public function translateMany(array $texts, string $targetLocale, ?string $sourceLocale = null): array
+            {
+                throw new \RuntimeException('daily limit reached');
+            }
+
+            public function name(): string
+            {
+                return 'used-up';
+            }
+        }));
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin)->post('/admin/languages', ['code' => 'tg', 'name' => 'Tajik', 'native_name' => 'Тоҷикӣ'])->assertRedirect();
+
+        $this->actingAs($admin)->get('/admin/languages')->assertInertia(fn ($page) => $page
+            ->where('languages', fn ($rows) => str_contains((string) collect($rows)->firstWhere('code', 'tg')['paused'], 'daily limit reached')));
+        InterfaceStrings::forget('tg');
+    }
+
     public function test_microsoft_translates_a_batch()
     {
         Http::fake(['api.cognitive.microsofttranslator.com/*' => Http::response([['translations' => [['text' => 'Hallo', 'to' => 'de']]], ['translations' => [['text' => 'Welt', 'to' => 'de']]]])]);
