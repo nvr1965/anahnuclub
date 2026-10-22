@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Notifications\NewMember;
+use App\Support\BannedEmails;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,6 +67,9 @@ class SocialLoginController extends Controller
             $email = Str::lower(trim((string) $remote->getEmail()));
             if ($email === '') {
                 return $this->fail(__(':provider did not share your email address. Please sign up with your email instead.', ['provider' => $name]));
+            }
+            if (BannedEmails::has($email)) {
+                return $this->fail(__('auth.failed'));
             }
 
             $user = DB::transaction(function () use ($email, $remote, $provider) {

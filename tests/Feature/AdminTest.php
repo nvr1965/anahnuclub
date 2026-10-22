@@ -8,6 +8,7 @@ use App\Models\Language;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AdminTest extends TestCase
@@ -67,6 +68,26 @@ class AdminTest extends TestCase
         $this->assertNotNull(User::find($late->id));
 
         $this->actingAs($member)->post('/admin/users/verify', ['ids' => [$unverifiedAdmin->id]])->assertForbidden();
+    }
+
+    public function test_deleted_blocked_members_go_to_the_black_list_and_cannot_sign_up_again()
+    {
+        $spammer = User::factory()->create(['email' => 'spam@example.com', 'blocked' => true]);
+
+        $this->actingAs($this->admin)->delete('/admin/users', ['ids' => [$spammer->id]])->assertRedirect();
+        $this->assertNull(User::find($spammer->id));
+        $this->get('/admin/users?filter=banned')->assertInertia(fn ($page) => $page->where('banned_count', 1)->where('banned.0.email', 'spam@example.com'));
+
+        auth()->logout();
+        $this->post('/register', ['name' => 'Again', 'email' => 'Spam@example.com', 'password' => 'password', 'password_confirmation' => 'password'])
+            ->assertSessionHasErrors('email');
+        $this->assertGuest();
+
+        $id = DB::table('banned_emails')->value('id');
+        $this->actingAs($this->admin)->delete("/admin/banned-emails/{$id}")->assertRedirect();
+        auth()->logout();
+        $this->post('/register', ['name' => 'Again', 'email' => 'spam@example.com', 'password' => 'password', 'password_confirmation' => 'password']);
+        $this->assertAuthenticated();
     }
 
     public function test_delete_as_spam_blocks_the_user_and_removes_their_posts_and_comments()
