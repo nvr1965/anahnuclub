@@ -42,7 +42,16 @@ class RegistrationTest extends TestCase
         $this->get('/settings/profile')->assertOk();
 
         // The club team hears about every new member.
-        Notification::assertSentOnDemand(NewMember::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === 'team@anahnu.club' && $n->user->is($user) && $n->queue === 'mail');
+        Notification::assertSentOnDemand(NewMember::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === ['team@anahnu.club'] && $n->user->is($user) && $n->queue === 'mail');
+    }
+
+    public function test_the_team_letter_goes_to_every_address_listed()
+    {
+        Notification::fake();
+        config(['mail.team_address' => 'team@anahnu.club, owner@example.com']);
+        $this->post('/register', ['name' => 'Test User', 'email' => 'test@example.com', 'password' => 'password', 'password_confirmation' => 'password']);
+
+        Notification::assertSentOnDemand(NewMember::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === ['team@anahnu.club', 'owner@example.com']);
     }
 
     public function test_the_team_letter_can_be_turned_off()
