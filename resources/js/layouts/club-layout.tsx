@@ -18,9 +18,9 @@ export default function ClubLayout({ children, left, right }: { children: ReactN
         <div className="min-h-screen bg-[#f0f2f5] text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
             <ClubHeader />
             <main className={`mx-auto grid max-w-[1320px] justify-center gap-6 px-3 py-4 sm:px-4 ${columns}`}>
-                {left && <aside className="sticky top-[76px] hidden max-h-[calc(100vh-90px)] self-start overflow-y-auto lg:block">{left}</aside>}
+                {left && <aside className="sticky top-[88px] hidden max-h-[calc(100vh-102px)] self-start overflow-y-auto lg:block">{left}</aside>}
                 <div className="min-w-0">{children}</div>
-                {right && <aside className="sticky top-[76px] hidden max-h-[calc(100vh-90px)] self-start overflow-y-auto xl:block">{right}</aside>}
+                {right && <aside className="sticky top-[88px] hidden max-h-[calc(100vh-102px)] self-start overflow-y-auto xl:block">{right}</aside>}
             </main>
             <SiteFooter />
         </div>
