@@ -55,6 +55,13 @@ Route::get('p/{page}', [PageController::class, 'show'])->name('pages.show');
 Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:10,1')->name('contact.store');
 
+// For members; a guest opening a shared link gets the sign-in page with the link's card (PreviewForGuests).
+Route::middleware(['preview.guest', 'verified', 'rules'])->group(function () {
+    Route::get('groups/{group}', [GroupController::class, 'show'])->name('groups.show');
+    Route::get('videos/{video}', [VideoController::class, 'show'])->name('videos.show');
+    Route::get('events/{event}', [EventController::class, 'show'])->name('events.show');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('welcome', [WelcomeController::class, 'show'])->name('welcome');
     Route::post('welcome', [WelcomeController::class, 'accept'])->name('welcome.accept');
@@ -65,7 +72,6 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('search', SearchController::class)->name('search');
     Route::get('groups', [GroupController::class, 'index'])->name('groups.index');
     Route::post('groups', [GroupController::class, 'store'])->middleware('throttle:5,60')->name('groups.store');
-    Route::get('groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
     Route::put('groups/{group}', [GroupController::class, 'update'])->name('groups.update');
     Route::delete('groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
@@ -131,14 +137,12 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
 
     Route::get('videos', [VideoController::class, 'index'])->name('videos.index');
     Route::post('videos', [VideoController::class, 'store'])->name('videos.store');
-    Route::get('videos/{video}', [VideoController::class, 'show'])->name('videos.show');
     Route::patch('videos/{video}', [VideoController::class, 'update'])->name('videos.update');
     Route::delete('videos/{video}', [VideoController::class, 'destroy'])->name('videos.destroy');
     Route::post('videos/{video}/like', [LikeController::class, 'video'])->name('videos.like');
 
     Route::get('events', [EventController::class, 'index'])->name('events.index');
     Route::post('events', [EventController::class, 'store'])->name('events.store');
-    Route::get('events/{event}', [EventController::class, 'show'])->name('events.show');
     Route::post('events/{event}', [EventController::class, 'update'])->name('events.update');
     Route::delete('events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::post('events/{event}/respond', [EventController::class, 'respond'])->name('events.respond');

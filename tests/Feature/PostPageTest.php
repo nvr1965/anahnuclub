@@ -32,6 +32,26 @@ class PostPageTest extends TestCase
         $this->get("/posts/{$post->id}")->assertSee('<meta property="og:image" content="'.asset('storage/photos/invite.jpg').'">', false);
     }
 
+    public function test_a_post_without_a_title_is_named_by_its_text_on_facebook()
+    {
+        $author = User::factory()->create(['name' => 'Дана']);
+        $post = Post::create(['user_id' => $author->id, 'body' => '<p>Сегодня отличная погода</p>']);
+        $this->get("/posts/{$post->id}")->assertSee('<meta property="og:title" content="Дана: Сегодня отличная погода">', false);
+
+        // The club's own posts have no author shown: the text alone, never just "anahnu.club".
+        config(['app.super_admin_email' => 'boss@example.com']);
+        $boss = User::factory()->create(['email' => 'boss@example.com', 'is_admin' => true]);
+        $official = Post::create(['user_id' => $boss->id, 'body' => '<p>Новости клуба</p>']);
+        $this->get("/posts/{$official->id}")->assertSee('<meta property="og:title" content="Новости клуба">', false);
+    }
+
+    public function test_posts_for_friends_only_give_strangers_no_preview_of_their_text()
+    {
+        $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Только для друзей', 'audience' => 'friends']);
+
+        $this->get("/posts/{$post->id}")->assertNotFound()->assertDontSee('Только для друзей');
+    }
+
     public function test_posts_of_private_groups_stay_private()
     {
         $group = Group::create(['name' => 'Secret', 'slug' => 'secret', 'is_private' => true]);
