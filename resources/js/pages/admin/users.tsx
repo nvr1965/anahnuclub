@@ -24,7 +24,28 @@ interface Row {
     last_seen_at: string | null;
 }
 
-export default function AdminUsers({ users, q, filter, unverified }: { users: Page<Row>; q: string; filter: string | null; unverified: number }) {
+interface Banned {
+    id: number;
+    email: string;
+    name: string | null;
+    created_at: string | null;
+}
+
+export default function AdminUsers({
+    users,
+    q,
+    filter,
+    unverified,
+    banned,
+    banned_count,
+}: {
+    users: Page<Row>;
+    q: string;
+    filter: string | null;
+    unverified: number;
+    banned: Banned[] | null;
+    banned_count: number;
+}) {
     const t = useT();
     const { auth, locale } = usePage<SharedData>().props;
     const filters = [
@@ -32,9 +53,11 @@ export default function AdminUsers({ users, q, filter, unverified }: { users: Pa
         { key: 'unverified', label: `${t('Email not confirmed')} (${unverified})` },
         { key: 'blocked', label: t('Blocked users') },
         { key: 'admins', label: t('Administrators') },
+        { key: 'banned', label: `${t('Black list')} (${banned_count})` },
     ];
-    // Only sign-ups that never confirmed their email can be picked: they are confirmed or deleted together.
-    const selectable = users.data.filter((u) => !u.verified && !u.is_admin && !u.is_super).map((u) => u.id);
+    // Only sign-ups that never confirmed their email and blocked members can be picked, to confirm or delete them together.
+    const selectable = users.data.filter((u) => (!u.verified || u.blocked) && !u.is_admin && !u.is_super).map((u) => u.id);
+    const unconfirmedPicked = (ids: number[]) => ids.filter((id) => users.data.some((u) => u.id === id && !u.verified));
     const [selected, setSelected] = useState<number[]>([]);
     const picked = selected.filter((id) => selectable.includes(id));
     const toggle = (id: number) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -43,7 +66,12 @@ export default function AdminUsers({ users, q, filter, unverified }: { users: Pa
         setSelected([]);
     };
     const remove = (ids: number[]) => {
-        if (!confirm(t('Delete :count members who did not confirm their email? This cannot be undone.', { count: ids.length }))) return;
+        if (
+            !confirm(
+                t('Delete :count members? Blocked ones go to the black list and cannot sign up again. This cannot be undone.', { count: ids.length }),
+            )
+        )
+            return;
         send('delete', route('admin.users.destroy'), { ids });
         setSelected([]);
     };
@@ -74,13 +102,15 @@ export default function AdminUsers({ users, q, filter, unverified }: { users: Pa
                     </label>
                     {picked.length > 0 && (
                         <>
-                            <button
-                                type="button"
-                                onClick={() => confirmEmail(picked)}
-                                className="bg-brand rounded-full px-3 py-1 font-medium text-white"
-                            >
-                                {t('Confirm email (:count)', { count: picked.length })}
-                            </button>
+                            {unconfirmedPicked(picked).length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => confirmEmail(unconfirmedPicked(picked))}
+                                    className="bg-brand rounded-full px-3 py-1 font-medium text-white"
+                                >
+                                    {t('Confirm email (:count)', { count: unconfirmedPicked(picked).length })}
+                                </button>
+                            )}
                             <button type="button" onClick={() => remove(picked)} className="rounded-full bg-red-600 px-3 py-1 font-medium text-white">
                                 {t('Delete selected (:count)', { count: picked.length })}
                             </button>
@@ -88,93 +118,119 @@ export default function AdminUsers({ users, q, filter, unverified }: { users: Pa
                     )}
                 </div>
             )}
-            <div className={`${card} divide-y dark:divide-neutral-800`}>
-                {users.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
-                {users.data.map((user) => {
-                    const self = user.id === auth.user.id;
-                    return (
-                        <div key={user.id} className="flex flex-wrap items-center gap-3 p-3">
-                            {selectable.length > 0 && (
-                                <input
-                                    type="checkbox"
-                                    className="accent-brand size-4 disabled:invisible"
-                                    disabled={!selectable.includes(user.id)}
-                                    checked={selected.includes(user.id)}
-                                    onChange={() => toggle(user.id)}
-                                />
-                            )}
-                            <Link href={route('people.show', user.id)}>
-                                <Avatar className="size-10">
-                                    <AvatarImage src={user.avatar ?? undefined} alt="" className="object-cover" />
-                                    <DefaultAvatarFallback />
-                                </Avatar>
-                            </Link>
+            {banned && (
+                <div className={`${card} divide-y dark:divide-neutral-800`}>
+                    {banned.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
+                    {banned.map((b) => (
+                        <div key={b.id} className="flex flex-wrap items-center gap-3 p-3">
                             <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Link href={route('people.show', user.id)} dir="auto" className="font-medium hover:underline">
-                                        {user.name}
-                                    </Link>
-                                    {user.is_super ? (
-                                        <Badge tone="brand">{t('Main administrator')}</Badge>
-                                    ) : (
-                                        user.is_admin && <Badge tone="brand">{t('Administrator')}</Badge>
-                                    )}
-                                    {user.blocked && <Badge tone="red">{t('Blocked')}</Badge>}
-                                    {!user.verified && <Badge>{t('Email not confirmed')}</Badge>}
-                                </div>
-                                <div className="text-muted-foreground truncate text-xs">
-                                    {user.username && <>@{user.username} · </>}
-                                    {user.email} · {t(':count posts', { count: user.posts_count })}
-                                    {user.created_at && (
-                                        <>
-                                            {' · '}
-                                            {t('Registered :date', {
-                                                date: new Date(user.created_at).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' }),
-                                            })}
-                                        </>
-                                    )}
-                                    {user.last_seen_at && <> · {relativeTime(user.last_seen_at, locale)}</>}
-                                    {' · '}
-                                    {user.rules_accepted_at
-                                        ? t('Rules accepted :date', { date: new Date(user.rules_accepted_at).toLocaleDateString(locale) })
-                                        : t('Rules not accepted yet')}
+                                <div className="font-medium">{b.email}</div>
+                                <div className="text-muted-foreground text-xs" dir="auto">
+                                    {b.name}
+                                    {b.created_at && <> · {new Date(b.created_at).toLocaleDateString(locale)}</>}
                                 </div>
                             </div>
-                            {!self && !user.is_super && (
-                                <div className="flex flex-wrap gap-1">
-                                    {!user.verified && <ActionButton onClick={() => confirmEmail([user.id])}>{t('Confirm email')}</ActionButton>}
-                                    {user.posts_count > 0 && (
-                                        <Link
-                                            href={route('admin.posts.index', { user: user.id })}
-                                            className="text-brand hover:bg-brand-soft rounded-md px-2.5 py-1 text-xs font-medium"
-                                        >
-                                            {t('Posts')}
-                                        </Link>
-                                    )}
-                                    <ActionButton onClick={() => send('patch', route('admin.users.update', user.id), { blocked: !user.blocked })}>
-                                        {user.blocked ? t('Unblock') : t('Block')}
-                                    </ActionButton>
-                                    <ActionButton onClick={() => send('patch', route('admin.users.update', user.id), { is_admin: !user.is_admin })}>
-                                        {user.is_admin ? t('Remove admin') : t('Make admin')}
-                                    </ActionButton>
-                                    {!user.is_admin && (
-                                        <ActionButton
-                                            danger
-                                            onClick={() =>
-                                                confirm(t('Block :name and delete all their posts and comments?', { name: user.name })) &&
-                                                send('post', route('admin.users.purge', user.id))
-                                            }
-                                        >
-                                            {t('Delete as spam')}
-                                        </ActionButton>
-                                    )}
-                                </div>
-                            )}
+                            <ActionButton onClick={() => send('delete', route('admin.users.unban', b.id))}>
+                                {t('Remove from the black list')}
+                            </ActionButton>
                         </div>
-                    );
-                })}
-            </div>
-            <Pager page={users} />
+                    ))}
+                </div>
+            )}
+            {!banned && (
+                <div className={`${card} divide-y dark:divide-neutral-800`}>
+                    {users.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
+                    {users.data.map((user) => {
+                        const self = user.id === auth.user.id;
+                        return (
+                            <div key={user.id} className="flex flex-wrap items-center gap-3 p-3">
+                                {selectable.length > 0 && (
+                                    <input
+                                        type="checkbox"
+                                        className="accent-brand size-4 disabled:invisible"
+                                        disabled={!selectable.includes(user.id)}
+                                        checked={selected.includes(user.id)}
+                                        onChange={() => toggle(user.id)}
+                                    />
+                                )}
+                                <Link href={route('people.show', user.id)}>
+                                    <Avatar className="size-10">
+                                        <AvatarImage src={user.avatar ?? undefined} alt="" className="object-cover" />
+                                        <DefaultAvatarFallback />
+                                    </Avatar>
+                                </Link>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Link href={route('people.show', user.id)} dir="auto" className="font-medium hover:underline">
+                                            {user.name}
+                                        </Link>
+                                        {user.is_super ? (
+                                            <Badge tone="brand">{t('Main administrator')}</Badge>
+                                        ) : (
+                                            user.is_admin && <Badge tone="brand">{t('Administrator')}</Badge>
+                                        )}
+                                        {user.blocked && <Badge tone="red">{t('Blocked')}</Badge>}
+                                        {!user.verified && <Badge>{t('Email not confirmed')}</Badge>}
+                                    </div>
+                                    <div className="text-muted-foreground truncate text-xs">
+                                        {user.username && <>@{user.username} · </>}
+                                        {user.email} · {t(':count posts', { count: user.posts_count })}
+                                        {user.created_at && (
+                                            <>
+                                                {' · '}
+                                                {t('Registered :date', {
+                                                    date: new Date(user.created_at).toLocaleString(locale, {
+                                                        dateStyle: 'short',
+                                                        timeStyle: 'short',
+                                                    }),
+                                                })}
+                                            </>
+                                        )}
+                                        {user.last_seen_at && <> · {relativeTime(user.last_seen_at, locale)}</>}
+                                        {' · '}
+                                        {user.rules_accepted_at
+                                            ? t('Rules accepted :date', { date: new Date(user.rules_accepted_at).toLocaleDateString(locale) })
+                                            : t('Rules not accepted yet')}
+                                    </div>
+                                </div>
+                                {!self && !user.is_super && (
+                                    <div className="flex flex-wrap gap-1">
+                                        {!user.verified && <ActionButton onClick={() => confirmEmail([user.id])}>{t('Confirm email')}</ActionButton>}
+                                        {user.posts_count > 0 && (
+                                            <Link
+                                                href={route('admin.posts.index', { user: user.id })}
+                                                className="text-brand hover:bg-brand-soft rounded-md px-2.5 py-1 text-xs font-medium"
+                                            >
+                                                {t('Posts')}
+                                            </Link>
+                                        )}
+                                        <ActionButton onClick={() => send('patch', route('admin.users.update', user.id), { blocked: !user.blocked })}>
+                                            {user.blocked ? t('Unblock') : t('Block')}
+                                        </ActionButton>
+                                        <ActionButton
+                                            onClick={() => send('patch', route('admin.users.update', user.id), { is_admin: !user.is_admin })}
+                                        >
+                                            {user.is_admin ? t('Remove admin') : t('Make admin')}
+                                        </ActionButton>
+                                        {!user.is_admin && (
+                                            <ActionButton
+                                                danger
+                                                onClick={() =>
+                                                    confirm(t('Block :name and delete all their posts and comments?', { name: user.name })) &&
+                                                    send('post', route('admin.users.purge', user.id))
+                                                }
+                                            >
+                                                {t('Delete as spam')}
+                                            </ActionButton>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+            {!banned && <Pager page={users} />}
         </AdminLayout>
     );
 }

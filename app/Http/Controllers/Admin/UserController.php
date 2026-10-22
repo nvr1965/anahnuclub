@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Comment;
 use App\Models\User;
+use App\Support\BannedEmails;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,6 +27,7 @@ class UserController extends AdminController
             ->when($filter === 'blocked', fn (Builder $b) => $b->where('blocked', true))
             ->when($filter === 'admins', fn (Builder $b) => $b->where('is_admin', true))
             ->when($filter === 'unverified', fn (Builder $b) => $b->whereNull('email_verified_at'))
+            ->when($filter === 'banned', fn (Builder $b) => $b->whereRaw('1 = 0'))
             ->withCount(['posts'])
             ->latest('id')
             ->paginate(30)->withQueryString()
@@ -49,6 +52,10 @@ class UserController extends AdminController
             'q' => $q,
             'filter' => $filter,
             'unverified' => User::whereNull('email_verified_at')->count(),
+            'banned' => $filter === 'banned'
+                ? DB::table('banned_emails')->when($q !== '', fn ($b) => $b->where('email', $this->like(), $this->pattern($q)))->latest('id')->limit(500)->get(['id', 'email', 'name', 'created_at'])
+                : null,
+            'banned_count' => DB::table('banned_emails')->count(),
         ]);
     }
 
@@ -60,11 +67,29 @@ class UserController extends AdminController
         return back();
     }
 
-    /** Deletes sign-ups that never confirmed their email (mostly spam bots); confirmed members and admins are kept. */
+    /**
+     * Deletes sign-ups that never confirmed their email and blocked members; other members and admins are kept.
+     * The address of a blocked one goes to the black list, so they cannot sign up again.
+     */
     public function destroy(Request $request): RedirectResponse
     {
-        User::whereIn('id', $this->ids($request))->whereNull('email_verified_at')->where('is_admin', false)
-            ->get()->reject->isSuperAdmin()->each->delete();
+        User::whereIn('id', $this->ids($request))->where('is_admin', false)
+            ->where(fn (Builder $b) => $b->whereNull('email_verified_at')->orWhere('blocked', true))
+            ->get()->reject->isSuperAdmin()
+            ->each(function (User $user) {
+                if ($user->blocked) {
+                    BannedEmails::add($user);
+                }
+                $user->delete();
+            });
+
+        return back();
+    }
+
+    /** Takes an address off the black list. */
+    public function unban(int $id): RedirectResponse
+    {
+        DB::table('banned_emails')->where('id', $id)->delete();
 
         return back();
     }

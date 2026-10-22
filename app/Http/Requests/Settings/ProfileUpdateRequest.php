@@ -4,6 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use App\Models\Language;
 use App\Models\User;
+use App\Support\BannedEmails;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,7 @@ class ProfileUpdateRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
+                BannedEmails::rule(),
             ],
 
             // The member's own language: the interface opens in it and texts are translated into it.
