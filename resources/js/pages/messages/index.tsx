@@ -10,11 +10,9 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Ban,
-    Bell,
     Check,
     Ellipsis,
     FileText,
-    House,
     Languages,
     MessageCircle,
     MessageCircleOff,
@@ -24,7 +22,6 @@ import {
     SendHorizontal,
     SquarePen,
     Trash2,
-    Users,
     Video,
     X,
 } from 'lucide-react';
@@ -71,7 +68,7 @@ const POLL_MS = 4000;
 
 export default function Messages({ conversations, requests, friends, contacts, conversation, messages }: Props) {
     const t = useT();
-    const { locale, counts } = usePage<SharedData>().props;
+    const { locale } = usePage<SharedData>().props;
     const [showRequests, setShowRequests] = useState(Boolean(conversation?.request));
     const [query, setQuery] = useState('');
     const search = useRef<HTMLInputElement>(null);
@@ -249,40 +246,6 @@ export default function Messages({ conversations, requests, friends, contacts, c
                             )}
                         </div>
                     </div>
-
-                    {/* Messenger's bottom tabs on phones, each with its name under the icon. */}
-                    <nav className="grid grid-cols-4 border-t border-slate-200 md:hidden dark:border-neutral-800">
-                        {[
-                            { label: t('Chats'), href: route('messages.index'), icon: MessageCircle, badge: 0, active: true },
-                            { label: t('Friends'), href: route('friends.index'), icon: Users, badge: counts?.friend_requests ?? 0, active: false },
-                            {
-                                label: t('Notifications'),
-                                href: route('notifications.index'),
-                                icon: Bell,
-                                badge: counts?.notifications ?? 0,
-                                active: false,
-                            },
-                            { label: t('Feed'), href: route('dashboard'), icon: House, badge: 0, active: false },
-                        ].map((tab) => (
-                            <Link
-                                key={tab.label}
-                                href={tab.href}
-                                className={`flex flex-col items-center gap-0.5 py-1.5 text-[11px] font-medium ${tab.active ? 'text-brand' : 'text-slate-500 dark:text-neutral-400'}`}
-                            >
-                                <span
-                                    className={`relative flex h-8 w-14 items-center justify-center rounded-full ${tab.active ? 'bg-brand-soft' : ''}`}
-                                >
-                                    <tab.icon className="size-6" />
-                                    {tab.badge > 0 && (
-                                        <span className="absolute end-2 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                                            {tab.badge > 99 ? '99+' : tab.badge}
-                                        </span>
-                                    )}
-                                </span>
-                                <span className="max-w-full truncate">{tab.label}</span>
-                            </Link>
-                        ))}
-                    </nav>
                 </aside>
 
                 {conversation ? (
@@ -325,6 +288,15 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
         scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
     }, [lastId]);
 
+    // The page under a full-screen chat on a phone stays still.
+    useEffect(() => {
+        if (!window.matchMedia('(max-width: 767px)').matches) return;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
+
     const send: FormEventHandler = (e) => {
         e.preventDefault();
         if ((!form.data.body.trim() && !form.data.files.length) || form.processing) return;
@@ -347,7 +319,8 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
     };
 
     return (
-        <section className="flex min-h-0 flex-col">
+        // On phones an open chat takes the whole screen, as in Messenger: its top stays put and the box to write sits at the bottom.
+        <section className="fixed inset-0 z-50 flex flex-col bg-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:min-h-0 md:bg-transparent md:p-0 dark:bg-neutral-900">
             <header className="flex items-center gap-3 border-b border-slate-200 px-3 py-2 dark:border-neutral-800">
                 <Link
                     href={route('messages.index')}
