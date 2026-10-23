@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Group;
+use App\Models\Language;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -73,6 +75,19 @@ class PostPageTest extends TestCase
         $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => '']);
 
         $this->get("/posts/{$post->id}?lang=he")->assertSee('images/invite/he.jpg', false);
+    }
+
+    public function test_a_language_added_in_the_admin_gets_its_card_texts_translated()
+    {
+        Language::create(['code' => 'tg', 'name' => 'Tajik', 'native_name' => 'Тоҷикӣ', 'rtl' => false, 'enabled' => true, 'sort' => 9]);
+        File::ensureDirectoryExists(storage_path('app/lang'));
+        File::put(storage_path('app/lang/tg.json'), json_encode(['The best social network without censorship' => 'Беҳтарин шабакаи иҷтимоӣ бе сензура']));
+
+        try {
+            $this->get('/?lang=tg')->assertSee('Беҳтарин шабакаи иҷтимоӣ бе сензура', false)->assertSee('images/invite/tg.jpg', false);
+        } finally {
+            File::delete(storage_path('app/lang/tg.json'));
+        }
     }
 
     public function test_posts_for_friends_only_give_strangers_no_preview_of_their_text()

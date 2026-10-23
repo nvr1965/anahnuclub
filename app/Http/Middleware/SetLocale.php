@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Language;
+use App\Translation\InterfaceStrings;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,6 +28,9 @@ class SetLocale
         ])->first(fn ($code) => in_array($code, $codes, true)) ?? config('app.locale');
 
         app()->setLocale($locale);
+        // __() reads only lang/{code}.json; a language added in the admin keeps its texts in storage,
+        // and hand-made corrections too, so pages rendered here (titles, link cards, mail) get them as well.
+        app('translator')->addLines(collect(InterfaceStrings::read($locale))->mapWithKeys(fn ($text, $key) => ['*.'.$key => $text])->all(), $locale);
 
         return $next($request);
     }
