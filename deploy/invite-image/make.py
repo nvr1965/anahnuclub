@@ -11,6 +11,8 @@ L = {
    inc='Привет! Как дела?', tr='שלום! מה שלומך?', trl='תורגם מרוסית', out='מצוין! שמח לראות אותך 🙂', chat='הודעות', online='מחובר', post='פיקניק על הטיילת בשבת, מי מצטרף?', like='אהבתי', com='תגובה'),
  'ar': dict(rtl=True, slogan='أفضل شبكة اجتماعية بلا رقابة', b=['اكتب بلغتك، وكل شيء يُترجم تلقائيًا','رسائل وملفات ومكالمات فيديو','مجموعات وصور وفيديوهات وفعاليات'], cta='انضم مجانًا',
    inc='Привет! Как дела?', tr='مرحبًا! كيف حالك؟', trl='مترجم من الروسية', out='ممتاز! سعيد برؤيتك 🙂', chat='الرسائل', online='متصل', post='نزهة على الكورنيش يوم السبت، من سيأتي؟', like='أعجبني', com='تعليق'),
+ 'tg': dict(rtl=False, slogan='Беҳтарин шабакаи иҷтимоӣ бе сензура', b=['Бо забони худ нависед, ҳама тарҷума мешавад','Паёмҳо, файлҳо ва зангҳои видеоӣ','Гурӯҳҳо, аксҳо, видеоҳо ва чорабиниҳо'], cta='Ройгон ҳамроҳ шавед',
+   inc='Привет! Как дела?', tr='Салом! Корҳо чӣ хел?', trl='Аз забони русӣ тарҷума шуд', out='Олӣ! Аз дидани ту шодам 🙂', chat='Паёмҳо', online='дар шабака', post='Пикник дар соҳил рӯзи шанбе, кӣ бо мо?', like='Писанд', com='Шарҳ'),
 }
 for code, s in L.items():
     d = 'rtl' if s['rtl'] else 'ltr'
@@ -24,7 +26,7 @@ background:linear-gradient(135deg,#0e6f88 0%,#2b5fb8 55%,#6d4ad8 100%);color:#ff
 .left{{position:absolute;top:0;bottom:0;{'right' if s['rtl'] else 'left'}:0;width:600px;padding:64px 56px;display:flex;flex-direction:column}}
 .brand{{display:flex;align-items:center;gap:16px;font-size:34px;font-weight:700;letter-spacing:.3px}}
 .brand img{{width:64px;height:64px;border-radius:16px;background:#fff;padding:6px}}
-h1{{font-size:{'46' if s['rtl'] else '54'}px;line-height:1.08;font-weight:700;margin-top:40px}}
+h1{{font-size:{'46' if s['rtl'] or len(s['slogan']) > 30 else '54'}px;line-height:1.08;font-weight:700;margin-top:40px}}
 ul{{list-style:none;padding:0;margin-top:30px;font-size:23px;line-height:1.5}} li{{display:flex;gap:12px;align-items:baseline;margin:6px 0;opacity:.95}}
 .tick{{display:inline-flex;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);align-items:center;justify-content:center;font-size:16px;flex:none}}
 .cta{{margin-top:auto;align-self:flex-start;background:#fff;color:#0e6f88;font-weight:700;font-size:24px;padding:16px 30px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.2)}}
