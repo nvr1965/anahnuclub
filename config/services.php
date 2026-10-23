@@ -98,6 +98,11 @@ return [
     ],
 
     // Video calls. STUN is free and enough for most networks; a TURN relay (Cloudflare, or any other such as metered.ca) helps the rest.
+    // Reads a link's page when the site will not answer this server; empty turns it off.
+    'link_preview' => [
+        'fallback' => env('LINK_PREVIEW_FALLBACK', 'https://api.microlink.io/'),
+    ],
+
     'webrtc' => [
         'stun' => env('WEBRTC_STUN', 'stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302'),
         'turn_urls' => env('TURN_URLS'),

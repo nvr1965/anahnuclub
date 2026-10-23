@@ -13,3 +13,5 @@ Schedule::command('queue:work --queue=mail --stop-when-empty --max-time=50 --tri
 Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping(10);
 // Interface translation of an added language stops when the services hit their daily limits; pick it up again.
 Schedule::call([TranslateInterface::class, 'resumeAll'])->hourly()->name('translate-interface')->withoutOverlapping();
+// A link whose page could not be read (site down, or it turned this server away) is tried again.
+Schedule::command('posts:link-previews --days=2')->hourly()->withoutOverlapping(10);
