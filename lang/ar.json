@@ -625,5 +625,19 @@
     "Code copied": "تم نسخ الرمز",
     "See more": "عرض المزيد",
     "View on anahnu.club": "عرض على anahnu.club",
-    "This post is no longer available.": "هذا المنشور لم يعد متاحًا."
+    "This post is no longer available.": "هذا المنشور لم يعد متاحًا.",
+    "Login journal": "سجل الدخول",
+    "Login history": "سجل تسجيلات الدخول",
+    "Logins": "تسجيلات الدخول",
+    "Failed attempts": "المحاولات الفاشلة",
+    "Failed": "فشل",
+    "Today: :count logins, :failed failed": "اليوم: :count تسجيل دخول، :failed فاشلة",
+    "No logins yet.": "لا توجد تسجيلات دخول بعد.",
+    "Date and time": "التاريخ والوقت",
+    "IP address": "عنوان IP",
+    "Device": "الجهاز",
+    "How": "الطريقة",
+    "Sign-up": "التسجيل",
+    "Wrong password": "كلمة مرور خاطئة",
+    "Your recent sign-ins. If you see one that was not you, change your password.": "آخر تسجيلات دخولك. إذا رأيت دخولًا لم تقم به، فغيّر كلمة المرور."
 }

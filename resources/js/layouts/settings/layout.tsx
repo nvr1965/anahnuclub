@@ -18,6 +18,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Login history',
+        url: '/settings/logins',
+        icon: null,
+    },
+    {
         title: 'Blocking',
         url: '/settings/blocked',
         icon: null,

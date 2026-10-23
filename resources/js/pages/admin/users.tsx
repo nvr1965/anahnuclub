@@ -199,6 +199,12 @@ export default function AdminUsers({
                                                 {t('Posts')}
                                             </Link>
                                         )}
+                                        <Link
+                                            href={route('admin.logins.index', { user: user.id })}
+                                            className="text-brand hover:bg-brand-soft rounded-md px-2.5 py-1 text-xs font-medium"
+                                        >
+                                            {t('Logins')}
+                                        </Link>
                                         <ActionButton onClick={() => send('patch', route('admin.users.update', user.id), { blocked: !user.blocked })}>
                                             {user.blocked ? t('Unblock') : t('Block')}
                                         </ActionButton>

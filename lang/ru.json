@@ -625,5 +625,19 @@
     "Code copied": "Код скопирован",
     "See more": "Ещё",
     "View on anahnu.club": "Открыть на anahnu.club",
-    "This post is no longer available.": "Эта публикация больше недоступна."
+    "This post is no longer available.": "Эта публикация больше недоступна.",
+    "Login journal": "Журнал входов",
+    "Login history": "История входов",
+    "Logins": "Входы",
+    "Failed attempts": "Неудачные попытки",
+    "Failed": "Неудачно",
+    "Today: :count logins, :failed failed": "Сегодня: входов :count, неудачных :failed",
+    "No logins yet.": "Входов пока нет.",
+    "Date and time": "Дата и время",
+    "IP address": "IP-адрес",
+    "Device": "Устройство",
+    "How": "Способ",
+    "Sign-up": "Регистрация",
+    "Wrong password": "Неверный пароль",
+    "Your recent sign-ins. If you see one that was not you, change your password.": "Ваши последние входы на сайт. Если какой-то вход сделали не вы, смените пароль."
 }

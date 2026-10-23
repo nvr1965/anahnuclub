@@ -625,5 +625,19 @@
     "Code copied": "Code copied",
     "See more": "See more",
     "View on anahnu.club": "View on anahnu.club",
-    "This post is no longer available.": "This post is no longer available."
+    "This post is no longer available.": "This post is no longer available.",
+    "Login journal": "Login journal",
+    "Login history": "Login history",
+    "Logins": "Logins",
+    "Failed attempts": "Failed attempts",
+    "Failed": "Failed",
+    "Today: :count logins, :failed failed": "Today: :count logins, :failed failed",
+    "No logins yet.": "No logins yet.",
+    "Date and time": "Date and time",
+    "IP address": "IP address",
+    "Device": "Device",
+    "How": "How",
+    "Sign-up": "Sign-up",
+    "Wrong password": "Wrong password",
+    "Your recent sign-ins. If you see one that was not you, change your password.": "Your recent sign-ins. If you see one that was not you, change your password."
 }
