@@ -85,7 +85,7 @@ class LinkPreviewTest extends TestCase
         Http::assertSentCount(1);
     }
 
-    public function test_an_unreadable_page_is_remembered_and_shows_no_card()
+    public function test_an_unreadable_page_is_remembered_and_shows_a_small_card_of_its_site()
     {
         Http::fake(['http://93.184.216.34/*' => Http::response('nope', 404)]);
         $user = User::factory()->create();
@@ -93,7 +93,10 @@ class LinkPreviewTest extends TestCase
 
         $this->assertDatabaseHas('link_previews', ['url' => 'http://93.184.216.34/missing', 'title' => null]);
         $post = Post::latest('id')->first();
-        $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page->where('post.data.link', null));
+        $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page
+            ->where('post.data.link.domain', '93.184.216.34')
+            ->where('post.data.link.title', null)
+            ->where('post.data.link.image', null));
     }
 
     public function test_older_posts_get_their_links_found()

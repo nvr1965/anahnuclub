@@ -1,6 +1,6 @@
 import { useT } from '@/lib/i18n';
 import { type LinkCard } from '@/types';
-import { X } from 'lucide-react';
+import { ExternalLink, Globe, X } from 'lucide-react';
 import { useState } from 'react';
 
 /**
@@ -9,9 +9,40 @@ import { useState } from 'react';
  */
 export function LinkPreview({ link, onRemove }: { link: LinkCard; onRemove?: () => void }) {
     const [image, setImage] = useState<'loading' | 'big' | 'small' | 'none'>(link.image ? 'loading' : 'none');
+    const [icon, setIcon] = useState(true);
     const t = useT();
     const small = image === 'small' || image === 'none';
-    const card = (
+    // A site that turns servers away tells us nothing: its icon, name and the address, read by the visitor's own browser.
+    const bare = !link.title && !link.image;
+    const address = link.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/#.*$/, '');
+    const card = bare ? (
+        <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow ugc"
+            className="group flex items-center gap-3 border-y border-slate-200 bg-slate-100 px-4 py-3 transition hover:bg-slate-200/70 dark:border-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700/70"
+        >
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-neutral-900">
+                {icon ? (
+                    <img
+                        src={`https://${new URL(link.url).host}/favicon.ico`}
+                        alt=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        className="size-7 object-contain"
+                        onError={() => setIcon(false)}
+                    />
+                ) : (
+                    <Globe className="text-muted-foreground size-6" />
+                )}
+            </span>
+            <span dir="ltr" className="min-w-0 flex-1 text-start">
+                <span className="block truncate text-[15px] font-semibold">{link.domain}</span>
+                <span className="text-muted-foreground block truncate text-[13px]">{address}</span>
+            </span>
+            <ExternalLink className="text-muted-foreground size-5 shrink-0 transition group-hover:text-current rtl:-scale-x-100" />
+        </a>
+    ) : (
         <a
             href={link.url}
             target="_blank"
