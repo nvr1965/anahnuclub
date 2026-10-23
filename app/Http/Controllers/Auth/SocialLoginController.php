@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\LoginLog;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Notifications\NewMember;
@@ -57,7 +58,7 @@ class SocialLoginController extends Controller
             // Cancelled on the service's page, an expired attempt or a wrong key.
             report($e);
 
-            return $this->fail(__('Could not sign in with :provider. Please try again.', ['provider' => $name]));
+            return $this->fail($request, $provider, __('Could not sign in with :provider. Please try again.', ['provider' => $name]));
         }
 
         $account = SocialAccount::where('provider', $provider)->where('provider_id', (string) $remote->getId())->first();
@@ -66,10 +67,10 @@ class SocialLoginController extends Controller
         if (! $user) {
             $email = Str::lower(trim((string) $remote->getEmail()));
             if ($email === '') {
-                return $this->fail(__(':provider did not share your email address. Please sign up with your email instead.', ['provider' => $name]));
+                return $this->fail($request, $provider, __(':provider did not share your email address. Please sign up with your email instead.', ['provider' => $name]));
             }
             if (BannedEmails::has($email)) {
-                return $this->fail(__('auth.failed'));
+                return $this->fail($request, $provider, __('auth.failed'), login: $email);
             }
 
             $user = DB::transaction(function () use ($email, $remote, $provider) {
@@ -93,7 +94,7 @@ class SocialLoginController extends Controller
         }
 
         if ($user->blocked) {
-            return $this->fail(__('auth.failed'));
+            return $this->fail($request, $provider, __('auth.failed'), $user);
         }
 
         Auth::login($user, true);
@@ -102,8 +103,11 @@ class SocialLoginController extends Controller
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    private function fail(string $message): RedirectResponse
+    /** Back to the login page with the reason; the attempt goes to the login journal. */
+    private function fail(Request $request, string $provider, string $message, ?User $user = null, ?string $login = null): RedirectResponse
     {
+        LoginLog::record($request, $user, $provider, false, $login ?? $user?->email);
+
         return to_route('login')->withErrors(['email' => $message]);
     }
 }

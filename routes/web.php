@@ -165,6 +165,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('banned-emails/{id}', [Admin\UserController::class, 'unban'])->whereNumber('id')->name('users.unban');
     Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
     Route::post('users/{user}/purge', [Admin\UserController::class, 'purge'])->name('users.purge');
+    Route::get('logins', [Admin\LoginController::class, 'index'])->name('logins.index');
     Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
     Route::delete('posts', [Admin\PostController::class, 'destroy'])->name('posts.destroy');
     Route::get('moderation', [Admin\ModerationController::class, 'index'])->name('moderation.index');

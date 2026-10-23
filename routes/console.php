@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\TranslateInterface;
+use App\Models\LoginLog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
@@ -15,3 +16,5 @@ Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->
 Schedule::call([TranslateInterface::class, 'resumeAll'])->hourly()->name('translate-interface')->withoutOverlapping();
 // A link whose page could not be read (site down, or it turned this server away) is tried again.
 Schedule::command('posts:link-previews --days=2')->hourly()->withoutOverlapping(10);
+// The login journal keeps a year.
+Schedule::command('model:prune', ['--model' => [LoginLog::class]])->daily();

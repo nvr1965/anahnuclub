@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogLogins;
 use App\Models\Comment;
 use App\Models\Event;
 use App\Models\Group;
@@ -14,6 +15,7 @@ use App\Translation\NullTranslator;
 use App\Translation\Translator;
 use App\Translation\TranslatorChain;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Event as Events;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -37,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Events::subscribe(LogLogins::class);
+
         Relation::enforceMorphMap([
             'post' => Post::class,
             'comment' => Comment::class,
