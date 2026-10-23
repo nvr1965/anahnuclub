@@ -131,4 +131,51 @@ class LinkPreviewTest extends TestCase
         $this->assertSame('', $post->link_url);
         $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page->where('post.data.link', null));
     }
+
+    public function test_a_site_that_turns_browsers_away_is_read_as_facebooks_crawler()
+    {
+        Http::fake(fn ($request) => str_contains($request->header('User-Agent')[0] ?? '', 'facebookexternalhit')
+            ? Http::response(self::PAGE, 200, ['Content-Type' => 'text/html'])
+            : Http::response('Forbidden', 403, ['Content-Type' => 'text/html']));
+
+        $found = (new LinkPreviewFetcher)->fetch('http://93.184.216.34/item/270818#0_8_11718');
+
+        $this->assertSame('Марокко: министр уволена через два дня', $found['title']);
+        // The part after # is not sent.
+        Http::assertSent(fn ($request) => $request->url() === 'http://93.184.216.34/item/270818');
+    }
+
+    public function test_a_site_that_turns_this_server_away_is_read_through_the_outside_reader()
+    {
+        config(['services.link_preview.fallback' => 'https://reader.example/']);
+        Http::fake([
+            'http://93.184.216.34/*' => Http::response('Forbidden', 403, ['Content-Type' => 'text/html']),
+            'https://reader.example/*' => Http::response(['status' => 'success', 'data' => [
+                'title' => 'Новости Израиля', 'description' => 'Статья', 'image' => ['url' => 'https://cdn.example/a.jpg'], 'publisher' => 'IsraNews',
+            ]]),
+        ]);
+
+        $fetcher = new LinkPreviewFetcher;
+        $this->assertSame(['title' => 'Новости Израиля', 'description' => 'Статья', 'image' => 'https://cdn.example/a.jpg', 'site_name' => 'IsraNews'], $fetcher->fetch('http://93.184.216.34/item/1'));
+
+        config(['services.link_preview.fallback' => '']);
+        $this->assertNull($fetcher->fetch('http://93.184.216.34/item/1'));
+        $this->assertStringContainsString('HTTP 403', $fetcher->lastError);
+    }
+
+    public function test_a_page_that_could_not_be_read_is_tried_again_by_the_hourly_retry()
+    {
+        $user = User::factory()->create();
+        $up = false;
+        Http::fake(function () use (&$up) {
+            return $up ? Http::response(self::PAGE, 200, ['Content-Type' => 'text/html']) : Http::response('down', 503, ['Content-Type' => 'text/html']);
+        });
+        $this->actingAs($user)->post('/posts', ['body' => 'http://93.184.216.34/item/5'])->assertRedirect();
+        $this->assertNull(LinkPreview::firstOrFail()->title);
+
+        $this->travel(31)->minutes();
+        $up = true;
+        $this->artisan('posts:link-previews --days=2')->assertSuccessful();
+        $this->assertSame('Марокко: министр уволена через два дня', LinkPreview::firstOrFail()->title);
+    }
 }

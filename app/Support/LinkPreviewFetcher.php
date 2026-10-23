@@ -23,6 +23,15 @@ class LinkPreviewFetcher
         'Accept-Language' => 'ru,en;q=0.8,he;q=0.6',
     ];
 
+    /**
+     * Some sites shut out unknown servers but still show their preview to the crawlers of
+     * Facebook and Telegram, as they want their links to look good there.
+     */
+    private const CRAWLERS = [
+        'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+        'TelegramBot (like TwitterBot)',
+    ];
+
     /** Why the last fetch() came back empty, for `posts:link-previews --url`. */
     public ?string $lastError = null;
 
@@ -37,8 +46,43 @@ class LinkPreviewFetcher
         return strlen($url) <= 2048 ? $url : null;
     }
 
-    /** @return array{title: ?string, description: ?string, image: ?string, site_name: ?string}|null */
+    /**
+     * The page read as a browser; if the site turns that away or says nothing, as a social
+     * network's crawler; and last through an outside reader (services.link_preview.fallback).
+     *
+     * @return array{title: ?string, description: ?string, image: ?string, site_name: ?string}|null
+     */
     public function fetch(string $url): ?array
+    {
+        // The part after # never reaches the server.
+        $url = preg_replace('~#.*$~s', '', $url);
+        $errors = [];
+        foreach ([null, ...self::CRAWLERS] as $agent) {
+            $found = $this->read($url, $agent ? ['User-Agent' => $agent] + self::HEADERS : self::HEADERS);
+            if ($found && ($found['title'] || $found['image'])) {
+                $this->lastError = null;
+
+                return $found;
+            }
+            // A private address stays private whoever asks.
+            if (str_starts_with((string) $this->lastError, 'not a public address')) {
+                return null;
+            }
+            $errors[] = ($agent ? strtok($agent, '/ ') : 'browser').': '.($this->lastError ?? 'no title or picture');
+        }
+        if ($found = $this->outside($url)) {
+            $this->lastError = null;
+
+            return $found;
+        }
+        $errors[] = 'reader: '.($this->lastError ?? 'off');
+        $this->lastError = implode('; ', $errors);
+
+        return null;
+    }
+
+    /** @return array{title: ?string, description: ?string, image: ?string, site_name: ?string}|null */
+    private function read(string $url, array $headers): ?array
     {
         $this->lastError = null;
         for ($hop = 0; $hop <= self::MAX_REDIRECTS; $hop++) {
@@ -49,7 +93,7 @@ class LinkPreviewFetcher
             }
             try {
                 $response = Http::timeout(6)->connectTimeout(4)
-                    ->withHeaders(self::HEADERS)
+                    ->withHeaders($headers)
                     ->withOptions(['allow_redirects' => false, 'stream' => true])
                     ->get($url);
             } catch (\Throwable $e) {
@@ -88,6 +132,42 @@ class LinkPreviewFetcher
         $this->lastError = 'too many redirects';
 
         return null;
+    }
+
+    /**
+     * A reader such as microlink.io fetches the page from its own servers, which sites that
+     * block hosting companies (SiteGround among them) still let in.
+     *
+     * @return array{title: ?string, description: ?string, image: ?string, site_name: ?string}|null
+     */
+    private function outside(string $url): ?array
+    {
+        $this->lastError = null;
+        $reader = (string) config('services.link_preview.fallback');
+        if ($reader === '' || ! self::isPublic($url)) {
+            return null;
+        }
+        try {
+            $data = Http::timeout(10)->acceptJson()->get($reader, ['url' => $url])->json('data');
+        } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
+
+            return null;
+        }
+        if (! is_array($data) || (empty($data['title']) && empty($data['image']['url']))) {
+            $this->lastError = 'nothing found';
+
+            return null;
+        }
+        $text = fn ($s, int $max) => is_string($s) && trim($s) !== '' ? Str::limit(trim(preg_replace('/\s+/u', ' ', $s)), $max, '…') : null;
+        $image = $data['image']['url'] ?? null;
+
+        return [
+            'title' => $text($data['title'] ?? null, 290),
+            'description' => $text($data['description'] ?? null, 490),
+            'image' => is_string($image) && preg_match('~^https?://\S+$~i', $image) && strlen($image) <= 2048 ? $image : null,
+            'site_name' => $text($data['publisher'] ?? null, 110),
+        ];
     }
 
     /** @return array{title: ?string, description: ?string, image: ?string, site_name: ?string} */

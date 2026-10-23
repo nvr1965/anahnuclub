@@ -17,11 +17,11 @@ class FetchLinkPreview implements ShouldQueue
     public function handle(LinkPreviewFetcher $fetcher): void
     {
         $known = LinkPreview::where('url', $this->url)->first();
-        // An unreachable page is stored empty too, and asked again only after a few hours;
+        // An unreachable page is stored empty too, and asked again after half an hour;
         // a card without a picture after an hour, as news sites often add the photo later.
         // A picture address with a space in it, stored before such addresses were mended, never shows: read again now.
         $broken = $known && preg_match('~\s~', (string) $known->image);
-        if ($known && ! $broken && ($known->image || $known->updated_at?->gt(now()->subHours($known->title ? 1 : 6)))) {
+        if ($known && ! $broken && ($known->image || $known->updated_at?->gt($known->title ? now()->subHour() : now()->subMinutes(30)))) {
             return;
         }
         $found = $fetcher->fetch($this->url) ?? ['title' => null, 'description' => null, 'image' => null, 'site_name' => null];
