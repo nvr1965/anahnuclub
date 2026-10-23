@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
 use App\Models\User;
 use App\Notifications\ClubActivity;
 use Illuminate\Http\JsonResponse;
@@ -60,6 +61,14 @@ class FriendController extends Controller
                 DB::table('friendships')->where('user_id', $user->id)->where('friend_id', $me->id)->update(['accepted' => true, 'updated_at' => now()]);
                 ClubActivity::retract($me, 'friend_request', $user, 'user:'.$me->id);
                 ClubActivity::send($user, 'friend_accepted', $me, $url, 'user:'.$user->id);
+                // Friends talk freely: a chat request still waiting between them is let in, so calls open at once.
+                $chat = Conversation::query()
+                    ->whereHas('users', fn ($q) => $q->whereKey($me->id))
+                    ->whereHas('users', fn ($q) => $q->whereKey($user->id))
+                    ->has('users', '=', 2)
+                    ->first();
+                $chat?->users()->wherePivotNull('accepted_at')->get()
+                    ->each(fn (User $u) => $chat->users()->updateExistingPivot($u->id, ['accepted_at' => now(), 'declined_at' => null]));
                 break;
         }
 

@@ -66,6 +66,22 @@ class CallTest extends TestCase
         $this->actingAs($anna)->postJson("/messages/{$chat->id}/call")->assertForbidden();
     }
 
+    public function test_becoming_friends_opens_calls_in_a_waiting_chat_request()
+    {
+        $eve = User::factory()->create();
+        $anna = User::factory()->create();
+        // Eve wrote before they were friends, so the chat waits for Anna.
+        $chat = Conversation::between($eve, $anna);
+        $this->actingAs($eve)->get("/messages/{$chat->id}")->assertInertia(fn ($page) => $page->where('conversation.can_call', false));
+
+        $this->actingAs($eve)->post("/people/{$anna->id}/friend");
+        $this->actingAs($anna)->post("/people/{$eve->id}/friend");
+
+        $this->actingAs($eve)->get("/messages/{$chat->id}")->assertInertia(fn ($page) => $page->where('conversation.can_call', true));
+        $this->actingAs($anna)->get("/messages/{$chat->id}")->assertInertia(fn ($page) => $page->where('conversation.can_call', true)->where('conversation.request', false));
+        $this->actingAs($eve)->postJson("/messages/{$chat->id}/call")->assertOk();
+    }
+
     public function test_unanswered_calls_turn_missed_and_busy_members_are_not_rung()
     {
         [$anna, $dana, $chat] = $this->friends();

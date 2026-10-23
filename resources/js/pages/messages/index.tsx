@@ -87,7 +87,8 @@ export default function Messages({ conversations, requests, friends, contacts, c
         const timer = setInterval(
             () => {
                 if (document.visibilityState === 'visible')
-                    router.reload({ only: ['conversations', 'requests', 'friends', 'contacts', 'messages', 'counts'] });
+                    // The open chat too: a friendship accepted meanwhile brings up the call buttons.
+                    router.reload({ only: ['conversations', 'requests', 'friends', 'contacts', 'conversation', 'messages', 'counts'] });
             },
             conversation ? POLL_MS : POLL_MS * 3,
         );
