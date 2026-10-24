@@ -6,6 +6,8 @@ export function useLoginMethod() {
     const names: Record<string, string> = {
         password: t('Password'),
         register: t('Sign-up'),
+        remember: t('Remember me'),
+        session: t('Return visit'),
         google: 'Google',
         facebook: 'Facebook',
     };
