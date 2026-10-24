@@ -67,6 +67,49 @@ class LoginJournalTest extends TestCase
         $this->assertDatabaseHas('login_logs', ['method' => 'google', 'success' => true, 'user_id' => User::where('email', 'anna@example.com')->value('id')]);
     }
 
+    public function test_coming_back_while_still_signed_in_is_written_as_a_return_visit()
+    {
+        $user = User::factory()->create();
+
+        $user->forceFill(['last_seen_at' => now()->subMinutes(10)])->save();
+        $this->actingAs($user)->get('/settings/logins');
+        $this->assertSame(0, LoginLog::count());
+
+        $user->forceFill(['last_seen_at' => now()->subHours(3)])->save();
+        $this->actingAs($user)->get('/settings/logins');
+        $this->actingAs($user)->get('/settings/logins');
+
+        $log = LoginLog::sole();
+        $this->assertSame($user->id, $log->user_id);
+        $this->assertSame('session', $log->method);
+        $this->assertTrue($log->success);
+    }
+
+    public function test_the_page_after_signing_in_is_not_also_a_return_visit()
+    {
+        $user = User::factory()->create(['last_seen_at' => now()->subDays(5)]);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->get('/settings/logins');
+
+        $this->assertSame('password', LoginLog::sole()->method);
+    }
+
+    public function test_signing_back_in_by_the_remember_me_cookie_is_written()
+    {
+        $user = User::factory()->create(['last_seen_at' => now()->subDays(5)]);
+        $this->post('/login', ['email' => $user->email, 'password' => 'password', 'remember' => 'on']);
+        $user->refresh();
+        $recaller = $user->id.'|'.$user->getRememberToken().'|'.$user->getAuthPassword();
+
+        // The session is over; only the cookie is left.
+        auth()->forgetGuards();
+        $this->flushSession();
+        $this->withCookie(auth()->guard('web')->getRecallerName(), $recaller)->get('/settings/logins');
+
+        $this->assertSame(['password', 'remember'], LoginLog::orderBy('id')->pluck('method')->all());
+    }
+
     public function test_only_admins_see_the_journal_and_members_see_their_own_history()
     {
         $user = User::factory()->create();

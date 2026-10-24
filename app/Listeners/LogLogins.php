@@ -11,8 +11,9 @@ use Illuminate\Events\Dispatcher;
 use Throwable;
 
 /**
- * Writes the login journal: every sign-in (password, Google, Facebook, right after signing up)
- * and every wrong password. Signing back in by the "remember me" cookie is not a new login.
+ * Writes the login journal: every sign-in (password, Google, Facebook, right after signing up,
+ * by the "remember me" cookie once the session is over) and every wrong password.
+ * Coming back while still signed in is written by TouchLastSeen.
  * A failure to write never stops the member from signing in.
  */
 class LogLogins
@@ -21,6 +22,8 @@ class LogLogins
     {
         if ($event->user instanceof User) {
             $this->write($event->user, $this->method(), true);
+            // So that the next page is not also written as a return visit.
+            $event->user->forceFill(['last_seen_at' => now()])->saveQuietly();
         }
     }
 
@@ -50,7 +53,9 @@ class LogLogins
         return match (true) {
             $request->routeIs('social.callback') && isset(SocialLoginController::PROVIDERS[$provider]) => $provider,
             $request->is('register') => 'register',
-            default => 'password',
+            $request->is('login') => 'password',
+            // Any other page: the session was over and the "remember me" cookie signed the member back in.
+            default => 'remember',
         };
     }
 
