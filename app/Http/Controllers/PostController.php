@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
 use App\Jobs\FetchLinkPreview;
+use App\Jobs\SubmitToIndexNow;
 use App\Jobs\TranslateContent;
 use App\Models\Album;
 use App\Models\Group;
@@ -86,6 +87,8 @@ class PostController extends Controller
 
         // Translated right after the response is sent, so readers get it within seconds.
         Background::run(new TranslateContent($post));
+        // Then Yandex and Bing hear of it, in the languages it was translated into.
+        Background::run(new SubmitToIndexNow($post));
 
         return back();
     }
@@ -164,12 +167,11 @@ class PostController extends Controller
         $words = trim(preg_replace(['~https?://[^\s<>"\']+~i', '/\s+/u'], ['', ' '], SiteMeta::plain($body, 20000)) ?? '');
         $clip = $post->link_url ? Video::parseUrl($post->link_url) : null;
         $linkTitle = $post->video?->title ?: ($clip ? self::clipTitle($clip) : null) ?: $post->linkPreview?->title ?: self::linkSite($post->link_url);
-
-        return Inertia::render('posts/show', [
-            'post' => PostResource::make($post),
-            'sidebar' => CommunitySidebar::for($request->user()),
-        ])->withViewData(['meta' => [
-            'url' => SiteMeta::canonical(),
+        // Search engines are pointed only to the languages the post is written or translated in.
+        $languages = $post->languages();
+        $meta = [
+            'url' => SiteMeta::canonical($languages),
+            'alternates' => SiteMeta::alternates(route('posts.show', $post), $languages),
             // Facebook's card shows only the title, so a post without one is named by its own words:
             // "Author: the beginning of the text" (the club's own posts by the text alone); a post with
             // no words of its own by the title of its link or video.
@@ -188,7 +190,57 @@ class PostController extends Controller
                 'html' => $body,
                 'links' => [],
             ],
-        ]]);
+        ];
+
+        return Inertia::render('posts/show', [
+            'post' => PostResource::make($post),
+            'sidebar' => CommunitySidebar::for($request->user()),
+        ])->withViewData(['meta' => $meta + ['jsonld' => self::schema($post, $meta, $author, $languages)]]);
+    }
+
+    /**
+     * The post in schema.org terms, and the event it announces, if any: search engines can show
+     * the date, author and picture, and an event with its date and place.
+     *
+     * @param  list<string>  $languages
+     * @return list<array<string, mixed>>
+     */
+    private static function schema(Post $post, array $meta, string $author, array $languages): array
+    {
+        $url = route('posts.show', $post);
+        $nodes = [array_filter([
+            '@type' => 'SocialMediaPosting',
+            '@id' => $url,
+            'url' => $meta['url'],
+            'headline' => mb_strimwidth($meta['content']['heading'], 0, 110, '…'),
+            'description' => $meta['description'],
+            'image' => $meta['image'],
+            'datePublished' => $post->created_at?->toAtomString(),
+            'dateModified' => ($post->updated_at ?? $post->created_at)?->toAtomString(),
+            'inLanguage' => in_array(app()->getLocale(), $languages, true) ? app()->getLocale() : ($post->locale ?: null),
+            'author' => ['@type' => $post->isOfficial() || ! $post->user ? 'Organization' : 'Person', 'name' => $author],
+            'isPartOf' => ['@type' => 'WebSite', 'name' => 'anahnu.club', 'url' => route('home').'/'],
+        ])];
+
+        // Google shows an event only with its start and its place.
+        $event = $post->event;
+        if ($event?->starts_at && trim((string) $event->location) !== '') {
+            $nodes[] = array_filter([
+                '@type' => 'Event',
+                'name' => $event->cachedTranslation('title', app()->getLocale()) ?? $event->title,
+                'description' => SiteMeta::plain($event->cachedTranslation('description', app()->getLocale()) ?? $event->description) ?: null,
+                'startDate' => $event->starts_at->toAtomString(),
+                'endDate' => $event->ends_at?->toAtomString(),
+                'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+                'eventStatus' => 'https://schema.org/EventScheduled',
+                'location' => ['@type' => 'Place', 'name' => $event->location, 'address' => $event->location],
+                'image' => $event->coverUrl(),
+                'url' => $url,
+                'organizer' => ['@type' => 'Organization', 'name' => 'anahnu.club', 'url' => route('home').'/'],
+            ]);
+        }
+
+        return $nodes;
     }
 
     /** "Post from Facebook" for a link whose page told us nothing (Facebook shows robots only a sign-in page). */
@@ -238,6 +290,8 @@ class PostController extends Controller
 
         $post->update(['body' => Html::fromPlainText($body), 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
         Background::run(new TranslateContent($post));
+        // Then Yandex and Bing hear of it, in the languages it was translated into.
+        Background::run(new SubmitToIndexNow($post));
 
         return back();
     }

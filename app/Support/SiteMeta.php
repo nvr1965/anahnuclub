@@ -47,23 +47,34 @@ class SiteMeta
     /**
      * The page in each language is its address with ?lang=he etc.; without it the visitor's
      * browser decides (x-default). Search engines get one address per language this way.
+     * A post names only the languages its text is in ($languages); its other versions would be
+     * the same text under another menu, which search engines count as duplicates.
      *
+     * @param  list<string>|null  $languages  all the site's languages when null
      * @return array<string, string>
      */
-    public static function alternates(?string $url = null): array
+    public static function alternates(?string $url = null, ?array $languages = null): array
     {
         $url ??= self::here();
 
-        return Language::enabled()->mapWithKeys(fn (Language $language) => [$language->code => self::in($url, $language->code)])
+        return Language::enabled()
+            ->filter(fn (Language $language) => $languages === null || in_array($language->code, $languages, true))
+            ->mapWithKeys(fn (Language $language) => [$language->code => self::in($url, $language->code)])
             ->put('x-default', $url)->all();
     }
 
-    /** This page's address in the language asked for in the address, if any; other parameters are left out. */
-    public static function canonical(): string
+    /**
+     * This page's address in the language asked for in the address, if any; other parameters are left out.
+     * A language the page is not in ($languages) points to the address without one.
+     *
+     * @param  list<string>|null  $languages
+     */
+    public static function canonical(?array $languages = null): string
     {
         $asked = request()->query('lang');
+        $known = is_string($asked) && Language::isEnabled($asked) && ($languages === null || in_array($asked, $languages, true));
 
-        return is_string($asked) && Language::isEnabled($asked) ? self::in(self::here(), $asked) : self::here();
+        return $known ? self::in(self::here(), $asked) : self::here();
     }
 
     public static function in(string $url, string $locale): string
@@ -75,6 +86,48 @@ class SiteMeta
     public static function indexable(): bool
     {
         return (bool) config('seo.indexable');
+    }
+
+    /**
+     * The club itself in schema.org terms, for the home page: the organisation behind the site and
+     * the site in its languages. Search engines show its name and logo from this.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function site(): array
+    {
+        $home = route('home').'/';
+
+        return [
+            ['@type' => 'Organization', '@id' => $home.'#club', 'name' => 'anahnu.club', 'url' => $home,
+                'logo' => asset('images/logo-mark.png'), 'description' => self::slogan()],
+            ['@type' => 'WebSite', '@id' => $home.'#site', 'name' => 'anahnu.club', 'url' => $home,
+                'publisher' => ['@id' => $home.'#club'], 'inLanguage' => Language::enabled()->pluck('code')->all()],
+        ];
+    }
+
+    /**
+     * schema.org data as the page carries it (<script type="application/ld+json">); "<" is escaped
+     * so that text written by members cannot end the script.
+     *
+     * @param  list<array<string, mixed>>  $nodes
+     */
+    public static function jsonLd(array $nodes): string
+    {
+        return json_encode(['@context' => 'https://schema.org', '@graph' => $nodes],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
+    }
+
+    /**
+     * The key that shows IndexNow (Yandex, Bing…) that the club itself announces its new pages.
+     * It is served at /{key}.txt. Without INDEXNOW_KEY it is made from the app key, so it needs no setup
+     * and stays the same from one deploy to the next.
+     */
+    public static function indexNowKey(): ?string
+    {
+        $key = config('seo.indexnow_key') ?: (config('app.key') ? substr(hash('sha256', 'indexnow|'.config('app.key')), 0, 32) : null);
+
+        return $key ?: null;
     }
 
     /** Plain text of some HTML, for descriptions: no tags, entities or runs of spaces. */

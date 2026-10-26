@@ -7,6 +7,7 @@ use App\Models\Concerns\HasContentTranslations;
 use App\Support\Background;
 use App\Support\LinkPreviewFetcher;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -107,6 +108,28 @@ class Post extends Model
     public function isOfficial(): bool
     {
         return (bool) $this->user?->isSuperAdmin();
+    }
+
+    /**
+     * The languages the post reads in: the one it was written in, and those its text is translated
+     * into (a translation of an older version of the text does not count). A post with no words has none.
+     * Search engines are shown the post only in these, not in every language of the site.
+     *
+     * @param  Collection<int, ContentTranslation>|null  $translations  the post's translations; loaded when not given
+     * @return list<string>
+     */
+    public function languages(?Collection $translations = null): array
+    {
+        $field = trim(strip_tags((string) $this->body)) !== '' ? 'body' : (trim((string) $this->title) !== '' ? 'title' : null);
+        if (! $field) {
+            return [];
+        }
+        $hash = hash('sha256', (string) $this->getAttribute($field));
+        $translated = ($translations ?? $this->contentTranslations()->get(['field', 'locale', 'source_hash']))
+            ->filter(fn (ContentTranslation $t) => $t->field === $field && $t->source_hash === $hash)->pluck('locale');
+        $languages = $translated->push($this->locale)->filter()->unique();
+
+        return Language::enabled()->pluck('code')->intersect($languages)->values()->all();
     }
 
     public function isVisibleTo(?User $viewer): bool

@@ -42,11 +42,14 @@ Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('sitemap.xml', [SeoController::class, 'index'])->name('sitemap');
 Route::get('sitemap-pages.xml', [SeoController::class, 'pages'])->name('sitemap.pages');
 Route::get('sitemap-posts-{part}.xml', [SeoController::class, 'posts'])->whereNumber('part')->name('sitemap.posts');
+Route::get('{key}.txt', [SeoController::class, 'indexNowKey'])->where('key', '[A-Za-z0-9-]{8,128}')->name('indexnow.key');
 
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 
-// Open to anyone with the link, so posts can be shared outside the club.
+// Open to anyone with the link, so posts can be shared outside the club; guests can page through them all.
+Route::get('posts', [FeedController::class, 'archive'])->name('posts.archive');
+Route::get('posts/page/{page}', [FeedController::class, 'archive'])->whereNumber('page')->name('posts.archive.page');
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
 // A public post for other sites to show in an <iframe>.
 Route::get('embed/posts/{post}', [EmbedController::class, 'post'])->whereNumber('post')->name('embed.post');
