@@ -9,4 +9,8 @@ return [
     // Google allows 50,000, but a file that big (some 25 MB) is more than shared hosting builds in
     // one request, so the posts are split into many small files instead.
     'sitemap_urls' => 5000,
+
+    // IndexNow (Yandex, Bing…) learns of each new public post at once. The key is made from APP_KEY
+    // when this is empty; set it only to keep one key across sites or after changing APP_KEY.
+    'indexnow_key' => env('INDEXNOW_KEY'),
 ];

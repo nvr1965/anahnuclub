@@ -15,7 +15,7 @@
                 <meta name="robots" content="noindex, nofollow">
             @else
                 <link rel="canonical" href="{{ $meta['url'] }}">
-                @foreach (\App\Support\SiteMeta::alternates() as $hreflang => $href)
+                @foreach ($meta['alternates'] ?? \App\Support\SiteMeta::alternates() as $hreflang => $href)
                     <link rel="alternate" hreflang="{{ $hreflang }}" href="{{ $href }}">
                 @endforeach
             @endif
@@ -35,6 +35,10 @@
                 <meta name="twitter:card" content="summary_large_image">
             @else
                 <meta name="twitter:card" content="summary">
+            @endif
+            @if (! empty($meta['jsonld']))
+                {{-- What the page is, in schema.org terms, for search results (the club, a post, an event). --}}
+                <script type="application/ld+json">{!! \App\Support\SiteMeta::jsonLd($meta['jsonld']) !!}</script>
             @endif
         @endisset
 

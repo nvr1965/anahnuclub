@@ -2,12 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Models\Event;
 use App\Models\Group;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Video;
+use App\Support\SiteMeta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SeoTest extends TestCase
@@ -22,17 +26,110 @@ class SeoTest extends TestCase
 
     public function test_each_page_names_its_address_in_every_language()
     {
-        $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Привет']);
+        $this->get('/register?lang=he&utm_source=fb')
+            ->assertSee('<link rel="canonical" href="'.route('register').'?lang=he">', false)
+            ->assertSee('<link rel="alternate" hreflang="ar" href="'.route('register').'?lang=ar">', false)
+            ->assertSee('<link rel="alternate" hreflang="x-default" href="'.route('register').'">', false)
+            ->assertSee('<html translate="no" lang="he" dir="rtl">', false);
+
+        $this->get('/')->assertSee('<link rel="canonical" href="'.url('/').'/">', false);
+    }
+
+    public function test_a_post_names_only_the_languages_its_text_is_in()
+    {
+        $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Привет', 'locale' => 'ru']);
+        $this->translate($post, 'he');
+        $this->translate($post, 'ar', 'an older text');
         $url = route('posts.show', $post);
 
         $this->get("/posts/{$post->id}?lang=he&utm_source=fb")
             ->assertSee('<link rel="canonical" href="'.$url.'?lang=he">', false)
             ->assertSee('<link rel="alternate" hreflang="ru" href="'.$url.'?lang=ru">', false)
-            ->assertSee('<link rel="alternate" hreflang="ar" href="'.$url.'?lang=ar">', false)
+            ->assertSee('<link rel="alternate" hreflang="he" href="'.$url.'?lang=he">', false)
             ->assertSee('<link rel="alternate" hreflang="x-default" href="'.$url.'">', false)
+            // Arabic is the translation of an older version of the text; English there is none.
+            ->assertDontSee('hreflang="ar"', false)
+            ->assertDontSee('hreflang="en"', false)
             ->assertSee('<html translate="no" lang="he" dir="rtl">', false);
 
-        $this->get('/')->assertSee('<link rel="canonical" href="'.url('/').'/">', false);
+        // The post under a menu in another language is the same text: it points to the plain address.
+        $this->get("/posts/{$post->id}?lang=en")->assertSee('<link rel="canonical" href="'.$url.'">', false);
+    }
+
+    public function test_pages_tell_search_engines_what_they_are()
+    {
+        $anna = User::factory()->create(['name' => 'Анна']);
+        $this->get('/')->assertSee('"@type":"Organization"', false)->assertSee('"@type":"WebSite"', false);
+
+        $post = Post::create(['user_id' => $anna->id, 'body' => '<p>Встречаемся</p><p>&lt;/script&gt;</p>', 'locale' => 'ru']);
+        $this->get("/posts/{$post->id}")
+            ->assertSee('<script type="application/ld+json">', false)
+            ->assertSee('"@type":"SocialMediaPosting"', false)
+            ->assertSee('"author":{"@type":"Person","name":"Анна"}', false)
+            ->assertSee('"inLanguage":"ru"', false)
+            ->assertDontSee('"@type":"Event"', false);
+        // Text written by members never ends the script early.
+        preg_match('~<script type="application/ld\+json">(.*?)</script>~s', $this->get("/posts/{$post->id}")->getContent(), $script);
+        $this->assertStringContainsString('\u003C/script\u003E', $script[1]);
+        $this->assertSame('SocialMediaPosting', json_decode($script[1], true)['@graph'][0]['@type']);
+
+        $event = Event::create(['user_id' => $anna->id, 'title' => 'Шаббат в парке', 'location' => 'Парк Хайфы', 'starts_at' => now()->addWeek()]);
+        $invite = Post::create(['user_id' => $anna->id, 'type' => 'event', 'body' => '', 'event_id' => $event->id]);
+        $this->get("/posts/{$invite->id}")
+            ->assertSee('"@type":"Event"', false)
+            ->assertSee('"name":"Шаббат в парке"', false)
+            ->assertSee('"location":{"@type":"Place","name":"Парк Хайфы","address":"Парк Хайфы"}', false)
+            ->assertSee('"startDate":"'.$event->starts_at->toAtomString().'"', false);
+    }
+
+    public function test_new_public_posts_are_announced_to_indexnow()
+    {
+        Http::fake(['api.indexnow.org/*' => Http::response('', 202)]);
+        $anna = User::factory()->create();
+        $key = SiteMeta::indexNowKey();
+
+        $this->get("/$key.txt")->assertOk()->assertContent($key);
+        $this->get('/0123456789abcdef.txt')->assertNotFound();
+
+        $this->actingAs($anna)->post('/posts', ['body' => 'Всем привет'])->assertRedirect();
+        $post = Post::latest('id')->first();
+        Http::assertSent(fn (HttpRequest $request) => $request->url() === 'https://api.indexnow.org/indexnow'
+            && $request['key'] === $key && $request['host'] === parse_url(url('/'), PHP_URL_HOST)
+            && in_array(route('posts.show', $post), $request['urlList'], true));
+
+        // Posts for friends only, and a test copy of the site, announce nothing.
+        Http::fake(['api.indexnow.org/*' => Http::response('', 202)]);
+        $this->post('/posts', ['body' => 'Друзьям', 'audience' => 'friends']);
+        config(['seo.indexable' => false]);
+        $this->post('/posts', ['body' => 'Тест']);
+        Http::assertNothingSent();
+        $this->get("/$key.txt")->assertNotFound();
+    }
+
+    public function test_guests_can_page_through_all_public_posts()
+    {
+        $author = User::factory()->create();
+        $oldest = Post::create(['user_id' => $author->id, 'body' => 'Самый первый', 'created_at' => now()->subYear()]);
+        foreach (range(1, 50) as $n) {
+            Post::create(['user_id' => $author->id, 'body' => "Пост $n", 'created_at' => now()->subDays(60 - $n)]);
+        }
+        $friends = Post::create(['user_id' => $author->id, 'body' => 'Друзьям', 'audience' => 'friends']);
+
+        $this->get('/')->assertSee('href="'.route('posts.archive').'"', false);
+        $this->get('/posts')->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('posts.archive').'">', false)
+            ->assertSee('href="'.route('posts.archive.page', 2).'"', false)
+            ->assertDontSee('href="'.route('posts.show', $oldest).'"', false)
+            ->assertDontSee('href="'.route('posts.show', $friends).'"', false);
+        $this->get('/posts/page/2')->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('posts.archive.page', 2).'">', false)
+            ->assertSee('href="'.route('posts.show', $oldest).'"', false)
+            ->assertSee('href="'.route('posts.archive').'"', false);
+        $this->get('/posts/page/1')->assertRedirect(route('posts.archive'))->assertStatus(301);
+        $this->get('/posts/page/3')->assertNotFound();
+        $this->get('/sitemap-pages.xml')->assertSee('<loc>'.route('posts.archive').'?lang=he</loc>', false);
+
+        $this->actingAs($author)->get('/posts')->assertRedirect(route('dashboard'));
     }
 
     public function test_pages_carry_their_title_and_text_without_javascript()
@@ -70,10 +167,13 @@ class SeoTest extends TestCase
             ->assertSee('Sitemap: '.route('sitemap'));
     }
 
-    public function test_the_sitemap_lists_public_posts_and_pages_in_every_language()
+    public function test_the_sitemap_lists_pages_in_every_language_and_posts_in_theirs()
     {
         $author = User::factory()->create();
-        $public = Post::create(['user_id' => $author->id, 'body' => 'Всем']);
+        $public = Post::create(['user_id' => $author->id, 'body' => 'Всем', 'locale' => 'ru']);
+        $this->translate($public, 'en');
+        $this->translate($public, 'he', 'an older text');
+        $photos = Post::create(['user_id' => $author->id, 'type' => 'photo', 'body' => '']);
         $friends = Post::create(['user_id' => $author->id, 'body' => 'Друзьям', 'audience' => 'friends']);
         $secret = Group::create(['name' => 'Secret', 'slug' => 'secret', 'is_private' => true]);
         $hidden = Post::create(['user_id' => $author->id, 'group_id' => $secret->id, 'body' => 'Своим']);
@@ -90,8 +190,14 @@ class SeoTest extends TestCase
 
         $this->get('/sitemap-posts-1.xml')->assertOk()
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
-            ->assertSee('<loc>'.route('posts.show', $public).'?lang=ar</loc>', false)
+            ->assertSee('<loc>'.route('posts.show', $public).'?lang=ru</loc>', false)
+            ->assertSee('<loc>'.route('posts.show', $public).'?lang=en</loc>', false)
+            ->assertDontSee(route('posts.show', $public).'?lang=he', false)
+            ->assertDontSee(route('posts.show', $public).'?lang=ar', false)
             ->assertSee('hreflang="x-default" href="'.route('posts.show', $public).'"', false)
+            // A post without words is listed once, at its plain address.
+            ->assertSee('<loc>'.route('posts.show', $photos).'</loc>', false)
+            ->assertDontSee(route('posts.show', $photos).'?lang=', false)
             ->assertDontSee(route('posts.show', $friends).'<', false)
             ->assertDontSee(route('posts.show', $hidden).'<', false);
     }
@@ -127,5 +233,12 @@ class SeoTest extends TestCase
 
         // Addresses that were never the old site's are simply not found.
         $this->get('/no-such-page')->assertNotFound();
+    }
+
+    /** A translation of the post's current text, or of another one (then it is out of date). */
+    private function translate(Post $post, string $locale, ?string $of = null): void
+    {
+        $post->contentTranslations()->create(['field' => 'body', 'locale' => $locale, 'text' => "[$locale]", 'provider' => 'test',
+            'source_hash' => hash('sha256', $of ?? $post->body)]);
     }
 }
