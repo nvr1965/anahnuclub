@@ -59,15 +59,18 @@ class SeoController extends Controller
         return $this->urlset($posts);
     }
 
-    /** An address that is not a page here: an old site's one goes where that content lives now (301). */
+    /**
+     * An address that is not a page here: an old site's one goes where that content lives now (301).
+     * Old pages with nothing here, and old feeds, answer "gone" (410), so search engines drop them;
+     * sending them all to the home page made Google report them as soft 404s.
+     */
     public function legacy(Request $request): RedirectResponse
     {
-        if ($url = LegacyUrl::find($request)) {
+        if (! LegacyUrl::isFeed($request) && ($url = LegacyUrl::find($request))) {
             return redirect($url, 301);
         }
-        abort_unless(LegacyUrl::isLegacy($request), 404);
-
-        return redirect()->route('home', status: 301);
+        abort_unless(LegacyUrl::isLegacy($request) || LegacyUrl::isFeed($request), 404);
+        abort(410);
     }
 
     /** Posts anyone may open from a link: public, outside private or hidden groups, by members not blocked. */

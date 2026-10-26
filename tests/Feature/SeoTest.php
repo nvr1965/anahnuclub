@@ -112,9 +112,18 @@ class SeoTest extends TestCase
         $this->get("/community/{$member->id}-ivan/profile.html")->assertRedirect(route('people.show', $member));
         $this->get("/he/community/{$member->id}-ivan.html")->assertRedirect(route('people.show', $member).'?lang=he');
 
-        // An old article that only looks like a member's address, and old pages gone for good, go home.
-        $this->get("/news/{$member->id}-about-us.html")->assertRedirect(route('home'))->assertStatus(301);
-        $this->get('/index.php?option=com_content&view=article&id=3')->assertRedirect(route('home'));
+        // The old site's menu was "jomsocial"; a member's part after it counts whatever their name.
+        $this->get("/en/jomsocial/{$member->id}-someone-else/events.html")->assertRedirect(route('people.show', $member).'?lang=en');
+
+        // An old article that only looks like a member's address, and old pages with nothing here,
+        // are gone (410): search engines drop them, where a redirect home counted as a soft 404.
+        $this->get("/news/{$member->id}-about-us.html")->assertStatus(410)->assertSee(route('home'), false);
+        $this->get('/index.php?option=com_content&view=article&id=3')->assertStatus(410);
+        $this->get('/jomsocial/999-gone/profile.html')->assertStatus(410);
+
+        // There are no feeds here: old ones are gone too, even when they name a group that exists.
+        $this->get("/jomsocial/events.feed?groupid={$group->id}")->assertStatus(410);
+        $this->get('/jomsocial/groups/viewdiscussion/7-tema.feed')->assertStatus(410);
 
         // Addresses that were never the old site's are simply not found.
         $this->get('/no-such-page')->assertNotFound();
