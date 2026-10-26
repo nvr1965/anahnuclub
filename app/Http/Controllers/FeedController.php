@@ -31,8 +31,12 @@ class FeedController extends Controller
     public function welcome(Request $request): Response|RedirectResponse
     {
         // The old site without friendly URLs: index.php?option=com_community&view=…
-        if (LegacyUrl::isLegacy($request)) {
-            return redirect(LegacyUrl::find($request) ?? route('home'), 301);
+        if (LegacyUrl::isLegacy($request) || LegacyUrl::isFeed($request)) {
+            $url = LegacyUrl::isFeed($request) ? null : LegacyUrl::find($request);
+
+            abort_unless($url, 410);
+
+            return redirect($url, 301);
         }
         if ($request->user()) {
             return to_route('dashboard');

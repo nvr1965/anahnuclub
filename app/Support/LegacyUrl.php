@@ -42,15 +42,21 @@ class LegacyUrl
     {
         $segments = self::segments($request);
 
-        return preg_match('~\.html?$~i', $request->path())
+        return preg_match('~\.(html?|feed)$~i', $request->path())
             || $request->query('option') !== null || $request->query('Itemid') !== null
             || array_intersect($segments, ['community', 'component', 'index.php', 'jomsocial']) !== [];
     }
 
-    /** @return list<string> lower-case path parts, without the .html ending */
+    /** Old RSS feeds (events.feed, ?format=feed): there are none here, so they are gone for good. */
+    public static function isFeed(Request $request): bool
+    {
+        return preg_match('~\.feed$~i', $request->path()) || $request->query('format') === 'feed';
+    }
+
+    /** @return list<string> lower-case path parts, without the .html or .feed ending */
     private static function segments(Request $request): array
     {
-        $path = mb_strtolower(preg_replace('~\.html?$~i', '', trim(rawurldecode($request->path()), '/')));
+        $path = mb_strtolower(preg_replace('~\.(html?|feed)$~i', '', trim(rawurldecode($request->path()), '/')));
 
         return $path === '' ? [] : explode('/', $path);
     }
@@ -116,7 +122,7 @@ class LegacyUrl
     /**
      * A profile address: ?userid=12, or a part "12-ivan" (JomSocial's "id-username" alias). That part
      * only counts when the rest is the member's username or name, or it follows "profile" or
-     * "community": an old article "12-about-us" must not open member 12.
+     * the old menu ("community", "jomsocial"): an old article "12-about-us" must not open member 12.
      */
     private static function member(array $segments, int $userId): ?User
     {
@@ -128,7 +134,7 @@ class LegacyUrl
                 continue;
             }
             $named = in_array($m[2], [Str::slug($user->username ?? ''), Str::slug($user->name)], true);
-            if ($named || in_array($segments[$i - 1] ?? null, ['profile', 'community'], true)) {
+            if ($named || in_array($segments[$i - 1] ?? null, ['profile', 'community', 'jomsocial'], true)) {
                 return $user;
             }
         }
