@@ -127,4 +127,16 @@ class MessengerTest extends TestCase
             ->where('contacts.0.online', true)
             ->where('contacts.1.id', $dana->id));
     }
+
+    public function test_the_data_a_page_refreshes_with_is_never_stored_by_the_browser()
+    {
+        $anna = User::factory()->create();
+
+        // A restored tab or "back" on a phone must not show this JSON in place of the page.
+        $response = $this->actingAs($anna)->get('/messages', ['X-Inertia' => 'true', 'X-Inertia-Version' => '']);
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+        $response->assertHeader('Vary', 'X-Inertia');
+
+        $this->get('/messages')->assertOk()->assertHeader('Vary');
+    }
 }

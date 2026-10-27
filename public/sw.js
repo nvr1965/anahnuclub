@@ -1,7 +1,7 @@
 // Anahnu Club as an installed app. Pages always come from the network (the club is live and
 // personal); the built scripts and styles, whose names change with every release, are kept on the
 // phone so the app opens fast; with no connection a page shows the offline notice.
-const CACHE = 'anahnu-v1';
+const CACHE = 'anahnu-v2';
 const OFFLINE = '/offline.html';
 
 self.addEventListener('install', (event) => {
@@ -24,7 +24,7 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
     if (request.mode === 'navigate') {
-        event.respondWith(fetch(request).catch(() => caches.match(OFFLINE)));
+        event.respondWith(fetch(request).then(pageNotData).catch(() => caches.match(OFFLINE)));
         return;
     }
 
@@ -44,3 +44,13 @@ self.addEventListener('fetch', (event) => {
         );
     }
 });
+
+// A page and the data the page asks for share one address. If the browser cache hands back the data
+// (after a restored tab or going back), the page is fetched afresh from the server instead.
+function pageNotData(response) {
+    const type = response.headers.get('Content-Type') || '';
+    if (response.headers.has('X-Inertia') || type.includes('application/json')) {
+        return fetch(response.url, { cache: 'reload', credentials: 'same-origin' });
+    }
+    return response;
+}

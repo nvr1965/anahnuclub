@@ -7,8 +7,10 @@ use App\Models\Language;
 use App\Models\Page;
 use App\Models\Setting;
 use App\Translation\InterfaceStrings;
+use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -68,6 +70,22 @@ class HandleInertiaRequests extends Middleware
                 'notifications' => $request->user()->unreadNotifications()->count(),
             ] : null,
         ]);
+    }
+
+    /**
+     * A page and its JSON (what the page asks for when it moves on or refreshes itself) share one
+     * address. The JSON is never stored, so a phone that restores a tab or goes back can only get
+     * the page from the browser cache, never the raw data.
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $response = parent::handle($request, $next);
+
+        if ($request->header('X-Inertia')) {
+            $response->headers->set('Cache-Control', 'no-store, private');
+        }
+
+        return $response;
     }
 
     /** @return array<string, string> */
