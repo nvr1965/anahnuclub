@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Conversation;
 use App\Models\MessageAttachment;
 use App\Models\User;
@@ -133,7 +134,9 @@ class MessengerTest extends TestCase
         $anna = User::factory()->create();
 
         // A restored tab or "back" on a phone must not show this JSON in place of the page.
-        $response = $this->actingAs($anna)->get('/messages', ['X-Inertia' => 'true', 'X-Inertia-Version' => '']);
+        $version = (string) app(HandleInertiaRequests::class)->version(request());
+        $response = $this->actingAs($anna)->get('/messages', ['X-Inertia' => 'true', 'X-Inertia-Version' => $version]);
+        $response->assertOk();
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $response->assertHeader('Vary', 'X-Inertia');
 
