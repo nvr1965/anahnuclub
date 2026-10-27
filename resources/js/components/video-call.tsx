@@ -59,6 +59,7 @@ class CallSession {
     private stopped = false;
     private remoteSet = false;
     private queued: RTCIceCandidateInit[] = [];
+    private offerAgain = false;
     connected = false;
 
     constructor(
@@ -69,8 +70,9 @@ class CallSession {
     ) {
         this.pc = new RTCPeerConnection({ iceServers: call.ice });
         local.getTracks().forEach((track) => this.pc.addTrack(track, local));
-        // Even without a camera of its own, a side still receives the other's picture.
-        if (!local.getVideoTracks().length && call.video) this.pc.addTransceiver('video', { direction: 'recvonly' });
+        // Even without a camera of its own, the caller still receives the other's picture.
+        // (The answering side gets its video line from the caller's offer.)
+        if (!local.getVideoTracks().length && call.video && call.outgoing) this.pc.addTransceiver('video', { direction: 'recvonly' });
         this.pc.ontrack = (event) => {
             if (!this.remote.getTracks().includes(event.track)) this.remote.addTrack(event.track);
             this.onChange(this.call);
@@ -98,6 +100,39 @@ class CallSession {
 
     answerIn() {
         this.poll();
+    }
+
+    /**
+     * Starts sending a camera that was not on when the call began (answered without video, or an
+     * audio call): the picture goes into the call's video line, or a new one, and the connection
+     * is offered again so the other side starts showing it.
+     */
+    async addCamera(track: MediaStreamTrack) {
+        this.local.addTrack(track);
+        const line = this.pc.getTransceivers().find((t) => t.mid !== null && t.receiver.track.kind === 'video' && !t.sender.track);
+        if (line) {
+            await line.sender.replaceTrack(track);
+            line.direction = 'sendrecv';
+        } else {
+            this.pc.addTrack(track, this.local);
+        }
+        await this.offer();
+    }
+
+    /** A new offer on a call that is already up; the other side answers it in take(). */
+    private async offer() {
+        if (this.stopped) return;
+        if (this.pc.signalingState !== 'stable') {
+            this.offerAgain = true;
+            return;
+        }
+        try {
+            const offer = await this.pc.createOffer();
+            await this.pc.setLocalDescription(offer);
+            await this.send('offer', offer);
+        } catch (error) {
+            console.warn('call renegotiate', error);
+        }
     }
 
     private send(type: string, payload: object) {
@@ -132,15 +167,33 @@ class CallSession {
                 const answer = await this.pc.createAnswer();
                 await this.pc.setLocalDescription(answer);
                 await this.send('answer', answer);
+            } else if (type === 'offer' && this.remoteSet) {
+                // The other side changed what it sends (a camera turned on mid-call).
+                if (this.pc.signalingState !== 'stable') {
+                    // Both offered at once: the caller's offer wins, the answering side takes it back and offers again after.
+                    if (this.call.outgoing) return;
+                    await this.pc.setLocalDescription({ type: 'rollback' });
+                    this.offerAgain = true;
+                }
+                await this.pc.setRemoteDescription(payload);
+                const answer = await this.pc.createAnswer();
+                await this.pc.setLocalDescription(answer);
+                await this.send('answer', answer);
             } else if (type === 'answer' && this.call.outgoing && !this.remoteSet) {
                 await this.pc.setRemoteDescription(payload);
                 await this.ready();
+            } else if (type === 'answer' && this.remoteSet && this.pc.signalingState === 'have-local-offer') {
+                await this.pc.setRemoteDescription(payload);
             } else if (type === 'candidate') {
                 if (this.remoteSet) await this.pc.addIceCandidate(payload);
                 else this.queued.push(payload);
             }
         } catch (error) {
             console.warn('call signal', type, error);
+        }
+        if (this.offerAgain && this.pc.signalingState === 'stable') {
+            this.offerAgain = false;
+            await this.offer();
         }
     }
 
@@ -232,6 +285,7 @@ export function CallRoot() {
     const localVideo = useRef<HTMLVideoElement>(null);
     const remoteVideo = useRef<HTMLVideoElement>(null);
     const remoteAudio = useRef<HTMLAudioElement>(null);
+    const remotePictures = useRef(0);
     const busy = phase !== null;
 
     const close = useCallback((text: string) => {
@@ -365,7 +419,15 @@ export function CallRoot() {
     useEffect(() => {
         const s = session.current;
         if (localVideo.current && s && localVideo.current.srcObject !== s.local) localVideo.current.srcObject = s.local;
-        if (remoteVideo.current && s && remoteVideo.current.srcObject !== s.remote) remoteVideo.current.srcObject = s.remote;
+        if (remoteVideo.current && s) {
+            // A picture that arrives mid-call (the other side turned the camera on) needs the stream set again.
+            const pictures = s.remote.getVideoTracks().length;
+            if (remoteVideo.current.srcObject !== s.remote || remotePictures.current !== pictures) {
+                remoteVideo.current.srcObject = null;
+                remoteVideo.current.srcObject = s.remote;
+            }
+            remotePictures.current = pictures;
+        }
         if (remoteAudio.current && s && remoteAudio.current.srcObject !== s.remote) remoteAudio.current.srcObject = s.remote;
     });
 
@@ -402,9 +464,38 @@ export function CallRoot() {
         setMicOn(!micOn);
     };
 
-    const toggleCam = () => {
-        session.current?.local.getVideoTracks().forEach((track) => (track.enabled = !camOn));
-        setCamOn(!camOn);
+    const toggleCam = async () => {
+        const s = session.current;
+        if (!s) return;
+        if (s.local.getVideoTracks().length) {
+            s.local.getVideoTracks().forEach((track) => (track.enabled = !camOn));
+            setCamOn(!camOn);
+            return;
+        }
+        // Answered without video, or an audio call: the camera is opened now and offered to the other side.
+        let track: MediaStreamTrack | undefined;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+            });
+            track = stream.getVideoTracks()[0];
+        } catch {
+            return;
+        }
+        if (!track) return;
+        if (session.current !== s) return track.stop();
+        setFacing('user');
+        setCamOn(true);
+        await s.addCamera(track);
+        navigator.mediaDevices
+            ?.enumerateDevices()
+            .then((devices) => setCameras(devices.filter((d) => d.kind === 'videoinput').length))
+            .catch(() => undefined);
+        if (localVideo.current) {
+            localVideo.current.srcObject = null;
+            localVideo.current.srcObject = s.local;
+        }
     };
 
     const flipCamera = async () => {
@@ -552,7 +643,7 @@ export function CallRoot() {
                     >
                         {micOn ? <Mic className="size-6" /> : <MicOff className="size-6" />}
                     </CallButton>
-                    {Boolean(s?.local.getVideoTracks().length) && (
+                    {(Boolean(s?.local.getVideoTracks().length) || phase === 'connected') && (
                         <CallButton
                             label={camOn ? t('Turn camera off') : t('Turn camera on')}
                             onClick={toggleCam}
