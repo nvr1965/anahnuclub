@@ -65,7 +65,7 @@ class SeoTest extends TestCase
         $this->get("/posts/{$post->id}")
             ->assertSee('<script type="application/ld+json">', false)
             ->assertSee('"@type":"SocialMediaPosting"', false)
-            ->assertSee('"author":{"@type":"Person","name":"Анна"}', false)
+            ->assertSee('"author":{"@type":"Person","name":"Анна","url":'.json_encode(route('people.show', $anna), JSON_UNESCAPED_SLASHES).'}', false)
             ->assertSee('"inLanguage":"ru"', false)
             ->assertDontSee('"@type":"Event"', false);
         // Text written by members never ends the script early.
