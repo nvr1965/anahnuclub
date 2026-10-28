@@ -218,7 +218,10 @@ class PostController extends Controller
             'datePublished' => $post->created_at?->toAtomString(),
             'dateModified' => ($post->updated_at ?? $post->created_at)?->toAtomString(),
             'inLanguage' => in_array(app()->getLocale(), $languages, true) ? app()->getLocale() : ($post->locale ?: null),
-            'author' => ['@type' => $post->isOfficial() || ! $post->user ? 'Organization' : 'Person', 'name' => $author],
+            // Google asks for the author's page: the member's profile, or the club's home for its own posts.
+            'author' => $post->isOfficial() || ! $post->user
+                ? ['@type' => 'Organization', 'name' => $author, 'url' => route('home').'/']
+                : ['@type' => 'Person', 'name' => $author, 'url' => route('people.show', $post->user)],
             'isPartOf' => ['@type' => 'WebSite', 'name' => 'anahnu.club', 'url' => route('home').'/'],
         ])];
 
