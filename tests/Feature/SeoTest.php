@@ -159,6 +159,18 @@ class SeoTest extends TestCase
         $this->get('/robots.txt')->assertOk()->assertSee("Disallow: /\n", false);
     }
 
+    public function test_the_site_answers_at_its_main_address_only()
+    {
+        config(['app.url' => 'https://anahnu.club']);
+
+        $this->get('http://www.anahnu.club/posts?lang=he')->assertStatus(301)->assertRedirect('https://anahnu.club/posts?lang=he');
+        $this->get('http://anahnu.club/posts')->assertOk();
+
+        // A test copy answers wherever it is opened.
+        config(['seo.indexable' => false]);
+        $this->get('http://www.anahnu.club/posts')->assertOk();
+    }
+
     public function test_robots_txt_points_to_the_sitemap_and_keeps_private_parts_out()
     {
         $this->get('/robots.txt')->assertOk()
@@ -230,6 +242,10 @@ class SeoTest extends TestCase
         // There are no feeds here: old ones are gone too, even when they name a group that exists.
         $this->get("/jomsocial/events.feed?groupid={$group->id}")->assertStatus(410);
         $this->get('/jomsocial/groups/viewdiscussion/7-tema.feed')->assertStatus(410);
+
+        // The old home page in a language is the home page in it; its other pages with nothing here are gone.
+        $this->get('/ru')->assertRedirect(route('home').'/?lang=ru')->assertStatus(301);
+        $this->get('/he/kontakty')->assertStatus(410);
 
         // Addresses that were never the old site's are simply not found.
         $this->get('/no-such-page')->assertNotFound();

@@ -32,15 +32,22 @@ class LegacyUrl
         $segments = self::segments($request);
         // A language prefix (/ru/..., /he/...) becomes the page's language.
         $lang = isset($segments[0]) && Language::isEnabled($segments[0]) ? array_shift($segments) : null;
-        $url = self::target($segments, $request->query());
+        // The old site's home page in a language (/ru, /he/) is the home page here in that language.
+        $url = $lang && $segments === [] && $request->query('option') === null
+            ? route('home').'/'
+            : self::target($segments, $request->query());
 
         return $url && $lang ? SiteMeta::in($url, $lang) : $url;
     }
 
-    /** Whether the address is one of the old site's at all (then it goes to the home page if nothing matches). */
+    /** Whether the address is one of the old site's at all (then it is gone, 410, if nothing matches). */
     public static function isLegacy(Request $request): bool
     {
         $segments = self::segments($request);
+        // Every page of the old site in a language began with it (/ru/..., /he/...); none here do.
+        if (isset($segments[0]) && Language::isEnabled($segments[0])) {
+            return true;
+        }
 
         return preg_match('~\.(html?|feed)$~i', $request->path())
             || $request->query('option') !== null || $request->query('Itemid') !== null

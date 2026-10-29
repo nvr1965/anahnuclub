@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureRulesAccepted;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\MainAddress;
 use App\Http\Middleware\PreviewForGuests;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TouchLastSeen;
@@ -24,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Shared hosting (SiteGround) serves through a proxy; without this every URL comes out as http://.
         $middleware->trustProxies(at: '*');
         $middleware->alias(['admin' => EnsureAdmin::class, 'rules' => EnsureRulesAccepted::class, 'preview.guest' => PreviewForGuests::class]);
-        $middleware->web(append: [
+        $middleware->web(prepend: [MainAddress::class], append: [
             SetLocale::class,
             TouchLastSeen::class,
             HandleInertiaRequests::class,
