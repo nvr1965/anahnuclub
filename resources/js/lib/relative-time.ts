@@ -17,3 +17,19 @@ export function relativeTime(iso: string | null, locale: string): string {
     }
     return format.format(0, 'minute');
 }
+
+/** Facebook's short age beside a notice or a chat: "7 h", "2 wk", in the interface language. */
+export function shortAgo(iso: string | null, locale: string): string {
+    if (!iso) return '';
+    const seconds = Math.max(60, (Date.now() - new Date(iso).getTime()) / 1000);
+    for (const [unit, size] of units) {
+        if (seconds >= size) {
+            try {
+                return new Intl.NumberFormat(locale, { style: 'unit', unit, unitDisplay: 'narrow' }).format(Math.floor(seconds / size));
+            } catch {
+                return relativeTime(iso, locale);
+            }
+        }
+    }
+    return '';
+}

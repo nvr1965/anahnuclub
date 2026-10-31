@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\Background;
 use App\Translation\ContentTranslator;
 use App\Translation\LanguageGuesser;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -33,6 +34,17 @@ class MessageController extends Controller
             ...$this->lists($request->user()),
             'conversation' => null,
             'messages' => [],
+        ]);
+    }
+
+    /** The chats for the panel under the Messages tile in the top bar, as Messenger's dropdown on Facebook. */
+    public function latest(Request $request): JsonResponse
+    {
+        $rows = collect($this->conversations($request->user()));
+
+        return response()->json([
+            'conversations' => $rows->where('request', false)->take(30)->values()->all(),
+            'requests' => $rows->where('request', true)->take(20)->values()->all(),
         ]);
     }
 

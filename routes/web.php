@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::delete('groups/{group}/block', [BlockController::class, 'unblockGroup'])->name('blocks.group.destroy');
 
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('messages/latest', [MessageController::class, 'latest'])->name('messages.latest');
     Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
     Route::get('messages/files/{attachment}', [MessageController::class, 'file'])->name('messages.files');

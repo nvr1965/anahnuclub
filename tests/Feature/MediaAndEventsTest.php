@@ -142,11 +142,37 @@ class MediaAndEventsTest extends TestCase
         $this->post('/notifications/read');
         $this->assertSame(0, $author->unreadNotifications()->count());
 
-        // Read notices leave the bell after a few hours but stay on the full page.
+        // Read notices leave the bell after a week but stay on the full page.
         $this->getJson('/notifications/latest')->assertJsonCount(2, 'notifications');
-        $this->travel(4)->hours();
+        $this->travel(8)->days();
         $this->getJson('/notifications/latest')->assertJsonCount(0, 'notifications');
         $this->get('/notifications')->assertInertia(fn ($page) => $page->has('notifications', 2));
+    }
+
+    public function test_reactions_by_several_people_come_in_as_one_notice_with_the_face_left()
+    {
+        $author = User::factory()->create();
+        [$anna, $boris, $dana] = User::factory()->count(3)->create();
+        $post = Post::create(['user_id' => $author->id, 'body' => 'Шалом']);
+
+        $this->actingAs($anna)->post("/posts/{$post->id}/like", ['type' => 'haha']);
+        $this->travel(1)->minutes();
+        $this->actingAs($boris)->post("/posts/{$post->id}/like");
+        $this->travel(1)->minutes();
+        $this->actingAs($dana)->post("/posts/{$post->id}/like");
+        $this->actingAs($dana)->post("/posts/{$post->id}/like", ['type' => 'love']);
+
+        $this->actingAs($author)->getJson('/notifications/latest')
+            ->assertJsonCount(1, 'notifications')
+            ->assertJsonPath('notifications.0.actor.id', $dana->id)
+            ->assertJsonPath('notifications.0.reaction', 'love')
+            ->assertJsonPath('notifications.0.others', 1)
+            ->assertJsonPath('notifications.0.read', false);
+
+        // Opening the row reads all three.
+        $this->get('/notifications/'.$this->getJson('/notifications/latest')->json('notifications.0.id'));
+        $this->assertSame(0, $author->unreadNotifications()->count());
+        $this->getJson('/notifications/latest')->assertJsonPath('notifications.0.read', true);
     }
 
     public function test_friend_requests_notify_both_ways()
