@@ -1,10 +1,12 @@
+import { openChat } from '@/components/chat-dock';
+import { PanelMenu, panelMenuItem } from '@/components/notification-bell';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { shortAgo } from '@/lib/relative-time';
 import { type Person, type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { Maximize2, Search, SquarePen, X } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Check, Maximize2, MessageCircleQuestion, Search, SquarePen, X } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
 interface ChatRow {
@@ -60,6 +62,45 @@ export function MessengerMenu({ className, children }: { className: string; chil
                 <div className="flex items-center justify-between px-4 pt-3 pb-2">
                     <span className="text-2xl font-bold">{t('Chats')}</span>
                     <div className="flex gap-1">
+                        <PanelMenu>
+                            {(hide) => (
+                                <>
+                                    <button
+                                        type="button"
+                                        className={panelMenuItem}
+                                        onClick={async () => {
+                                            hide();
+                                            await fetch(route('messages.read'), {
+                                                method: 'POST',
+                                                headers: {
+                                                    Accept: 'application/json',
+                                                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                                                },
+                                            });
+                                            setChats(
+                                                (list) =>
+                                                    list && { ...list, conversations: list.conversations.map((c) => ({ ...c, unread: false })) },
+                                            );
+                                            router.reload({ only: ['counts'] });
+                                        }}
+                                    >
+                                        <Check />
+                                        {t('Mark all chats as read')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={panelMenuItem}
+                                        onClick={() => {
+                                            hide();
+                                            setTab('requests');
+                                        }}
+                                    >
+                                        <MessageCircleQuestion />
+                                        {t('Message requests')}
+                                    </button>
+                                </>
+                            )}
+                        </PanelMenu>
                         <Link
                             href={route('messages.index')}
                             onClick={close}
@@ -137,7 +178,13 @@ export function MessengerMenu({ className, children }: { className: string; chil
                             <Link
                                 key={row.id}
                                 href={route('messages.show', row.id)}
-                                onClick={close}
+                                onClick={(e) => {
+                                    close();
+                                    // A plain click opens the chat in a window at the bottom, as on Facebook; a new tab still works.
+                                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                                    e.preventDefault();
+                                    openChat(row.id, row.with);
+                                }}
                                 className="flex items-center gap-3 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
                             >
                                 <UserAvatar person={row.with} className="size-14" />

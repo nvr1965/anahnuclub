@@ -14,6 +14,7 @@ use App\Translation\LanguageGuesser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,7 +49,30 @@ class MessageController extends Controller
         ]);
     }
 
+    /** "Mark all as read" in the chats panel. */
+    public function readAll(Request $request): JsonResponse
+    {
+        $request->user()->conversations()->newPivotQuery()->update(['last_read_at' => now()]);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function show(Request $request, Conversation $conversation, ContentTranslator $translator): Response
+    {
+        return Inertia::render('messages/index', [
+            ...$this->lists($request->user()),
+            ...$this->chat($request, $conversation, $translator),
+        ]);
+    }
+
+    /** One chat for the small window docked at the bottom of any page, as on Facebook. */
+    public function popup(Request $request, Conversation $conversation, ContentTranslator $translator): JsonResponse
+    {
+        return response()->json($this->chat($request, $conversation, $translator, 60));
+    }
+
+    /** @return array{conversation: array, messages: Collection} */
+    private function chat(Request $request, Conversation $conversation, ContentTranslator $translator, int $limit = 200): array
     {
         $user = $request->user();
         abort_unless($conversation->users()->whereKey($user->id)->exists(), 404);
@@ -62,7 +86,7 @@ class MessageController extends Controller
         $messages = $conversation->messages()
             ->with(['attachments', 'contentTranslations' => fn ($q) => $q->where('locale', $locale)])
             ->latest('id')
-            ->limit(200)
+            ->limit($limit)
             ->get()
             ->reverse()
             ->values();
@@ -78,8 +102,7 @@ class MessageController extends Controller
                 'translation' => $m->user_id === $user->id ? null : TranslationPayload::for($m, $locale, $translator, in_array($m->id, $recent, true)),
             ]);
 
-        return Inertia::render('messages/index', [
-            ...$this->lists($user),
+        return [
             'conversation' => [
                 'id' => $conversation->id,
                 'with' => PeopleController::card($other) + ['last_seen_at' => $other->last_seen_at?->toIso8601String()],
@@ -98,10 +121,10 @@ class MessageController extends Controller
                     && $conversation->users()->whereKey($other->id)->first()?->pivot->accepted_at !== null,
             ],
             'messages' => $messages,
-        ]);
+        ];
     }
 
-    public function store(Request $request, Conversation $conversation): RedirectResponse
+    public function store(Request $request, Conversation $conversation): RedirectResponse|JsonResponse
     {
         $user = $request->user();
         abort_unless($conversation->users()->whereKey($user->id)->exists(), 404);
@@ -142,7 +165,7 @@ class MessageController extends Controller
             Background::run(new TranslateContent($message, $locales));
         }
 
-        return back();
+        return $request->wantsJson() ? response()->json(['id' => $message->id], 201) : back();
     }
 
     /** A file from a chat, only for the people in it. Pictures open in place, other files download. */

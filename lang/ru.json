@@ -696,5 +696,11 @@
     ":names are going to your event": ":names идут на ваше событие",
     ":names are interested in your event": ":names интересуются вашим событием",
     ":names invite you to join a group": ":names приглашают вас в группу",
-    "View all": "Смотреть все"
+    "View all": "Смотреть все",
+    "Minimize": "Свернуть",
+    "Emoji": "Эмодзи",
+    "Send a like": "Отправить лайк",
+    "Something went wrong.": "Что-то пошло не так.",
+    "Mark all chats as read": "Отметить все чаты прочитанными",
+    "Message requests": "Запросы на переписку"
 }

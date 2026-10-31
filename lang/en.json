@@ -696,5 +696,11 @@
     ":names are going to your event": ":names are going to your event",
     ":names are interested in your event": ":names are interested in your event",
     ":names invite you to join a group": ":names invite you to join a group",
-    "View all": "View all"
+    "View all": "View all",
+    "Minimize": "Minimize",
+    "Emoji": "Emoji",
+    "Send a like": "Send a like",
+    "Something went wrong.": "Something went wrong.",
+    "Mark all chats as read": "Mark all chats as read",
+    "Message requests": "Message requests"
 }
