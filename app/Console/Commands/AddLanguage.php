@@ -44,6 +44,7 @@ class AddLanguage extends Command
         $left = InterfaceStrings::fill($code, $translator);
         Page::all()->each(fn (Page $page) => $page->translateMissing($translator, [$code]));
         $this->info("Language $code added".($left ? ", $left strings still in English" : '').'.');
+        $this->line('Its invitation picture is drawn the next time an administrator opens Admin → Languages.');
 
         return self::SUCCESS;
     }

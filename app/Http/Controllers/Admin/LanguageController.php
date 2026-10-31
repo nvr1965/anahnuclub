@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Jobs\TranslateInterface;
 use App\Models\Language;
+use App\Support\InviteImage;
 use App\Translation\InterfaceStrings;
 use App\Translation\Translator;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,11 @@ class LanguageController extends AdminController
                     'base' => $l->code === config('app.fallback_locale'),
                     // Why the machine translation of this language stopped last time; it is tried again every hour.
                     'paused' => Cache::get(TranslateInterface::errorKey($l->code)),
+                    // The picture shared invitation links show; the page draws a missing one by itself.
+                    'invite' => InviteImage::texts($l->code) + [
+                        'has' => InviteImage::exists($l->code),
+                        'url' => InviteImage::exists($l->code) ? InviteImage::url($l->code) : null,
+                    ],
                 ]),
             'total' => $total,
             'can_translate' => $translator->name() !== 'null',
@@ -112,11 +118,23 @@ class LanguageController extends AdminController
         return back();
     }
 
+    /** The invitation picture the page drew from the language's texts. */
+    public function inviteImage(Request $request, Language $language): RedirectResponse
+    {
+        $request->validate(['image' => ['required', 'file', 'mimes:jpg,jpeg', 'max:2048',
+            'dimensions:width='.InviteImage::WIDTH.',height='.InviteImage::HEIGHT]]);
+
+        InviteImage::store($language->code, $request->file('image'));
+
+        return back();
+    }
+
     public function destroy(Language $language): RedirectResponse
     {
         abort_if(in_array($language->code, self::BUILT_IN, true) || $language->code === config('app.fallback_locale'), 422);
 
         InterfaceStrings::forget($language->code);
+        InviteImage::forget($language->code);
         $language->delete();
 
         return back();

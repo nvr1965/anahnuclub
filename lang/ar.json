@@ -703,5 +703,18 @@
     "Something went wrong.": "حدث خطأ ما.",
     "Mark all chats as read": "تعليم كل المحادثات كمقروءة",
     "Message requests": "طلبات المراسلة",
-    "No chat selected": "لم يتم اختيار محادثة"
+    "No chat selected": "لم يتم اختيار محادثة",
+    "Write in your language, everything is translated": "اكتب بلغتك، وكل شيء يُترجم تلقائيًا",
+    "Messages, files and video calls": "رسائل وملفات ومكالمات فيديو",
+    "Groups, photos, videos and events": "مجموعات وصور وفيديوهات وفعاليات",
+    "Join for free": "انضم مجانًا",
+    "Hi! How are you?": "مرحبًا! كيف حالك؟",
+    "Translated from Russian": "مترجم من الروسية",
+    "Translated from Hebrew": "مترجم من العبرية",
+    "Great! Good to see you": "ممتاز! سعيد برؤيتك",
+    "online": "متصل",
+    "Picnic on the promenade on Saturday, who is in?": "نزهة على الكورنيش يوم السبت، من سيأتي؟",
+    "Invitation picture": "صورة الدعوة",
+    "Draw the invitation picture again": "إعادة رسم صورة الدعوة",
+    "The invitation picture is drawn once the interface is translated": "ستُرسم صورة الدعوة بعد ترجمة الواجهة"
 }

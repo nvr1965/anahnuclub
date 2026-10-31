@@ -1,9 +1,10 @@
 import { Badge, card, send } from '@/components/admin-ui';
 import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
+import { inviteBlob, type InviteTexts } from '@/lib/invite-image';
 import { Link, router, useForm } from '@inertiajs/react';
-import { Languages, Plus, RefreshCw, Repeat, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { Image as ImageIcon, Languages, Plus, RefreshCw, Repeat, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Row {
     code: string;
@@ -15,6 +16,22 @@ interface Row {
     built_in: boolean;
     base: boolean;
     paused: string | null;
+    /** The picture shared invitation links show in this language. */
+    invite: { texts: InviteTexts; ready: boolean; has: boolean; url: string | null };
+}
+
+/** Draws a language's invitation picture from its interface texts and saves it on the site. */
+function uploadInvite(language: Row): Promise<void> {
+    return inviteBlob(language.code, language.invite.texts, language.rtl).then(
+        (blob) =>
+            new Promise<void>((resolve) =>
+                router.post(
+                    route('admin.languages.invite-image', language.code),
+                    { image: new File([blob], `${language.code}.jpg`, { type: 'image/jpeg' }) },
+                    { preserveScroll: true, preserveState: true, only: ['languages'], onFinish: () => resolve() },
+                ),
+            ),
+    );
 }
 
 /** Common choices; anything else can be typed in by hand. Languages DeepL lacks need the Claude key. */
@@ -66,6 +83,25 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
     const form = useForm<{ code: string; name: string; native_name: string; rtl: boolean }>({ code: '', name: '', native_name: '', rtl: false });
     const busy = languages.some((l) => l.missing > 0 && !l.enabled && !l.built_in);
     const presets = PRESETS.filter(([code]) => !languages.some((l) => l.code === code));
+    const [drawing, setDrawing] = useState<string | null>(null);
+    const tried = useRef(new Set<string>());
+
+    const draw = (language: Row) => {
+        setDrawing(language.code);
+        uploadInvite(language)
+            .catch(() => null)
+            .finally(() => setDrawing(null));
+    };
+
+    // A language switched on without an invitation picture of its own gets one as soon as its
+    // texts are translated: the page draws it and saves it, once per visit.
+    useEffect(() => {
+        if (drawing) return;
+        const next = languages.find((l) => l.enabled && !l.invite.has && l.invite.ready && !tried.current.has(l.code));
+        if (!next) return;
+        tried.current.add(next.code);
+        draw(next);
+    }, [languages, drawing]);
 
     // While a new language is being translated, look again now and then to show the progress.
     useEffect(() => {
@@ -120,6 +156,25 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
                             {language.base && <Badge tone="brand">{t('Base language')}</Badge>}
                             {language.rtl && <Badge>RTL</Badge>}
                             {!language.enabled && language.missing > 0 && !language.built_in && <Badge tone="brand">{t('Translating…')}</Badge>}
+                            {language.invite.url && (
+                                <a href={language.invite.url} target="_blank" rel="noreferrer" title={t('Invitation picture')} className="shrink-0">
+                                    <img src={language.invite.url} alt={t('Invitation picture')} className="h-8 w-[61px] rounded object-cover" />
+                                </a>
+                            )}
+                            <button
+                                type="button"
+                                title={
+                                    language.invite.ready
+                                        ? t('Draw the invitation picture again')
+                                        : t('The invitation picture is drawn once the interface is translated')
+                                }
+                                aria-label={t('Draw the invitation picture again')}
+                                disabled={!language.invite.ready || drawing !== null}
+                                className="text-muted-foreground rounded-md p-2 hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-neutral-800"
+                                onClick={() => draw(language)}
+                            >
+                                <ImageIcon className={`size-4 ${drawing === language.code ? 'animate-pulse' : ''}`} />
+                            </button>
                             {language.missing > 0 && can_translate && (
                                 <button
                                     type="button"

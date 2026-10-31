@@ -36,12 +36,10 @@ class SiteMeta
         return __('The best social network without censorship').'. '.__('Write in your language, everything is translated for you.');
     }
 
-    /** The invitation picture in the page's language (public/images/invite), English if there is none. */
+    /** The invitation picture in the page's language, English if there is none (see InviteImage). */
     public static function image(): string
     {
-        $locale = app()->getLocale();
-
-        return asset('images/invite/'.(is_file(public_path("images/invite/$locale.jpg")) ? $locale : 'en').'.jpg');
+        return InviteImage::url(app()->getLocale());
     }
 
     /**

@@ -703,5 +703,18 @@
     "Something went wrong.": "Что-то пошло не так.",
     "Mark all chats as read": "Отметить все чаты прочитанными",
     "Message requests": "Запросы на переписку",
-    "No chat selected": "Чаты не выбраны"
+    "No chat selected": "Чаты не выбраны",
+    "Write in your language, everything is translated": "Пишите на своём языке, всё переводится само",
+    "Messages, files and video calls": "Сообщения, файлы и видеозвонки",
+    "Groups, photos, videos and events": "Группы, фото, видео и события",
+    "Join for free": "Присоединяйтесь бесплатно",
+    "Hi! How are you?": "Привет! Как дела?",
+    "Translated from Russian": "Переведено с русского",
+    "Translated from Hebrew": "Переведено с иврита",
+    "Great! Good to see you": "Отлично! Рад тебя видеть",
+    "online": "в сети",
+    "Picnic on the promenade on Saturday, who is in?": "Пикник на набережной в субботу, кто с нами?",
+    "Invitation picture": "Картинка приглашения",
+    "Draw the invitation picture again": "Нарисовать картинку приглашения заново",
+    "The invitation picture is drawn once the interface is translated": "Картинка приглашения нарисуется, когда интерфейс будет переведён"
 }
