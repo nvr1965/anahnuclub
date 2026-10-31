@@ -3,6 +3,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { UserAvatar } from '@/components/user-avatar';
 import { startCall } from '@/components/video-call';
 import { useAutoTranslate } from '@/hooks/use-auto-translate';
+import { useKeyboardViewport } from '@/hooks/use-keyboard-viewport';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
@@ -280,6 +281,15 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
         scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
     }, [lastId]);
 
+    // When the keyboard opens, the chat shrinks to the space above it: the header stays on top, the box to write right over the keys.
+    const panel = useRef<HTMLElement>(null);
+    useKeyboardViewport(panel);
+    useEffect(() => {
+        const keepBottom = () => scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
+        window.visualViewport?.addEventListener('resize', keepBottom);
+        return () => window.visualViewport?.removeEventListener('resize', keepBottom);
+    }, []);
+
     // The page under a full-screen chat on a phone stays still.
     useEffect(() => {
         if (!window.matchMedia('(max-width: 767px)').matches) return;
@@ -312,7 +322,10 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
 
     return (
         // On phones an open chat takes the whole screen, as in Messenger: its top stays put and the box to write sits at the bottom.
-        <section className="fixed inset-0 z-50 flex flex-col bg-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:min-h-0 md:bg-transparent md:p-0 dark:bg-neutral-900">
+        <section
+            ref={panel}
+            className="fixed inset-0 z-50 flex flex-col bg-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:min-h-0 md:bg-transparent md:p-0 dark:bg-neutral-900"
+        >
             <header className="flex items-center gap-3 border-b border-slate-200 px-3 py-2 dark:border-neutral-800">
                 <Link
                     href={route('messages.index')}
