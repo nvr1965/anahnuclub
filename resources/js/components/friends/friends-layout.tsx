@@ -1,3 +1,4 @@
+import { InviteButton } from '@/components/invite-button';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
@@ -49,6 +50,9 @@ export function FriendsMenu({ active, menu }: { active: FriendsSection; menu: Fr
                     </Link>
                 );
             })}
+            <div className="px-2 pt-3">
+                <InviteButton />
+            </div>
         </nav>
     );
 }
