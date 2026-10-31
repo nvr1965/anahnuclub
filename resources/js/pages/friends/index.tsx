@@ -6,7 +6,10 @@ import { PersonCard, primary, secondary } from '@/components/person-card';
 import { useT } from '@/lib/i18n';
 import { Head, Link } from '@inertiajs/react';
 import { UsersRound } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
+
+/** Two rows of the grid on a wide screen; "See more" adds as many. */
+const STEP = 10;
 
 interface Props {
     menu: FriendsMenuCounts;
@@ -18,12 +21,18 @@ interface Props {
 export default function Friends({ menu, requests, suggestions }: Props) {
     const t = useT();
     const { status, add, accept, cancel, decline, dismiss } = useFriendActions(['menu']);
-    const shownSuggestions = suggestions.filter((p) => status[p.id] !== 'dismissed');
+    const [visible, setVisible] = useState(STEP);
+    const remaining = suggestions.filter((p) => status[p.id] !== 'dismissed');
+    const shownSuggestions = remaining.slice(0, visible);
 
     return (
         <FriendsLayout active="home" menu={menu}>
             <Head title={t('Friends')} />
             <div className="space-y-8">
+                <div className="flex flex-wrap items-center justify-between gap-3 lg:hidden">
+                    <h1 className="text-2xl font-bold">{t('Friends')}</h1>
+                    <InviteButton />
+                </div>
                 {requests.length > 0 && (
                     <Section title={t('Friend requests')} count={menu.requests} href={route('friends.requests')}>
                         {requests.map((person) => (
@@ -81,6 +90,19 @@ export default function Friends({ menu, requests, suggestions }: Props) {
                         </PersonCard>
                     ))}
                 </Section>
+                {remaining.length > 0 && (
+                    <div className="-mt-4">
+                        {remaining.length > visible ? (
+                            <button className={secondary} onClick={() => setVisible((n) => n + STEP)}>
+                                {t('See more')}
+                            </button>
+                        ) : (
+                            <Link href={route('friends.suggestions')} className={`${secondary} block text-center`}>
+                                {t('See more')}
+                            </Link>
+                        )}
+                    </div>
+                )}
             </div>
         </FriendsLayout>
     );

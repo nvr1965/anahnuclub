@@ -25,7 +25,7 @@ class FriendController extends Controller
         return Inertia::render('friends/index', [
             'menu' => self::menu($me),
             'requests' => self::withMutuals($me, $me->friendRequesters()->where('blocked', false)->latest('id')->get()),
-            'suggestions' => self::withMutuals($me, self::suggestionsFor($me, 24)),
+            'suggestions' => self::withMutuals($me, self::suggestionsFor($me, 60)),
         ]);
     }
 
