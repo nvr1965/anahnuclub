@@ -202,6 +202,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('languages/{language}/texts', [Admin\LanguageController::class, 'texts'])->name('languages.texts');
     Route::put('languages/{language}/texts', [Admin\LanguageController::class, 'correct'])->name('languages.correct');
     Route::post('languages/{language}/retranslate', [Admin\LanguageController::class, 'retranslate'])->name('languages.retranslate');
+    Route::post('languages/{language}/invite-image', [Admin\LanguageController::class, 'inviteImage'])->name('languages.invite-image');
     Route::post('languages/{language}/refill', [Admin\LanguageController::class, 'refill'])->name('languages.refill');
     Route::delete('languages/{language}', [Admin\LanguageController::class, 'destroy'])->name('languages.destroy');
     Route::get('pages', [Admin\PageController::class, 'index'])->name('pages.index');

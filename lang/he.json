@@ -703,5 +703,18 @@
     "Something went wrong.": "משהו השתבש.",
     "Mark all chats as read": "סימון כל הצ׳אטים כנקראו",
     "Message requests": "בקשות להודעות",
-    "No chat selected": "לא נבחר צ׳אט"
+    "No chat selected": "לא נבחר צ׳אט",
+    "Write in your language, everything is translated": "כתבו בשפה שלכם, הכול מתורגם אוטומטית",
+    "Messages, files and video calls": "הודעות, קבצים ושיחות וידאו",
+    "Groups, photos, videos and events": "קבוצות, תמונות, סרטונים ואירועים",
+    "Join for free": "הצטרפו בחינם",
+    "Hi! How are you?": "שלום! מה שלומך?",
+    "Translated from Russian": "תורגם מרוסית",
+    "Translated from Hebrew": "תורגם מעברית",
+    "Great! Good to see you": "מצוין! שמח לראות אותך",
+    "online": "מחובר",
+    "Picnic on the promenade on Saturday, who is in?": "פיקניק על הטיילת בשבת, מי מצטרף?",
+    "Invitation picture": "תמונת ההזמנה",
+    "Draw the invitation picture again": "לצייר מחדש את תמונת ההזמנה",
+    "The invitation picture is drawn once the interface is translated": "תמונת ההזמנה תצויר כשהממשק יתורגם"
 }
