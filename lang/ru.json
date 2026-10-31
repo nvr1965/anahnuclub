@@ -702,5 +702,6 @@
     "Send a like": "Отправить лайк",
     "Something went wrong.": "Что-то пошло не так.",
     "Mark all chats as read": "Отметить все чаты прочитанными",
-    "Message requests": "Запросы на переписку"
+    "Message requests": "Запросы на переписку",
+    "No chat selected": "Чаты не выбраны"
 }

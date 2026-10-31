@@ -702,5 +702,6 @@
     "Send a like": "إرسال إعجاب",
     "Something went wrong.": "حدث خطأ ما.",
     "Mark all chats as read": "تعليم كل المحادثات كمقروءة",
-    "Message requests": "طلبات المراسلة"
+    "Message requests": "طلبات المراسلة",
+    "No chat selected": "لم يتم اختيار محادثة"
 }
