@@ -123,7 +123,7 @@ class ProfileAndFriendsTest extends TestCase
             DB::table('friendships')->insert(['user_id' => $me->id, 'friend_id' => $friend->id, 'accepted' => true]);
         }
 
-        $this->actingAs($me)->get('/friends')->assertInertia(fn ($page) => $page->where('friends.0.id', $zoe->id)->where('friends.1.id', $anna->id));
+        $this->actingAs($me)->get('/friends/all')->assertInertia(fn ($page) => $page->where('people.0.id', $zoe->id)->where('people.1.id', $anna->id));
         $this->get('/people/'.$me->id)->assertInertia(fn ($page) => $page->where('friends.0.id', $zoe->id)->where('friends.2.id', $never->id));
     }
 

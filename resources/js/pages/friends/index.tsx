@@ -1,100 +1,105 @@
+import FriendsLayout, { type FriendsMenuCounts } from '@/components/friends/friends-layout';
+import { type FriendCard, MutualLine } from '@/components/friends/mutual-line';
+import { softButton, useFriendActions } from '@/components/friends/use-friend-actions';
 import { InviteButton } from '@/components/invite-button';
 import { PersonCard, primary, secondary } from '@/components/person-card';
-import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { type Person } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { UsersRound } from 'lucide-react';
 import { type ReactNode } from 'react';
 
 interface Props {
-    requests: Person[];
-    sent: Person[];
-    friends: Person[];
-    suggestions: Person[];
+    menu: FriendsMenuCounts;
+    requests: FriendCard[];
+    suggestions: FriendCard[];
 }
 
-export default function Friends({ requests, sent, friends, suggestions }: Props) {
+/** Friends home, like Facebook's: requests waiting for an answer, then a grid of people you may know. */
+export default function Friends({ menu, requests, suggestions }: Props) {
     const t = useT();
-    const add = (person: Person) => router.post(route('friends.store', person.id), {}, { preserveScroll: true });
-    const remove = (person: Person) => router.delete(route('friends.destroy', person.id), { preserveScroll: true });
+    const { status, add, accept, cancel, decline, dismiss } = useFriendActions(['menu']);
+    const shownSuggestions = suggestions.filter((p) => status[p.id] !== 'dismissed');
 
     return (
-        <AppLayout>
+        <FriendsLayout active="home" menu={menu}>
             <Head title={t('Friends')} />
-            <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h1 className="text-2xl font-bold">{t('Friends')}</h1>
-                    <InviteButton />
-                </div>
+            <div className="space-y-8">
                 {requests.length > 0 && (
-                    <Section title={t('Friend requests')} count={requests.length}>
+                    <Section title={t('Friend requests')} count={menu.requests} href={route('friends.requests')}>
                         {requests.map((person) => (
                             <PersonCard key={person.id} person={person}>
-                                <button className={primary} onClick={() => add(person)}>
-                                    {t('Confirm')}
-                                </button>
-                                <button className={secondary} onClick={() => remove(person)}>
-                                    {t('Delete')}
-                                </button>
+                                <MutualLine person={person} />
+                                {status[person.id] === 'accepted' ? (
+                                    <p className="text-muted-foreground py-1.5 text-center text-sm">{t('Request accepted')}</p>
+                                ) : status[person.id] === 'declined' ? (
+                                    <p className="text-muted-foreground py-1.5 text-center text-sm">{t('Request removed')}</p>
+                                ) : (
+                                    <>
+                                        <button className={primary} onClick={() => accept(person)}>
+                                            {t('Confirm')}
+                                        </button>
+                                        <button className={secondary} onClick={() => decline(person)}>
+                                            {t('Delete')}
+                                        </button>
+                                    </>
+                                )}
                             </PersonCard>
                         ))}
                     </Section>
                 )}
 
-                <Section
-                    title={t('People you may know')}
-                    more={
-                        <Link href={route('people.index')} className="text-brand text-[15px] font-semibold hover:underline">
-                            {t('Show all')}
-                        </Link>
-                    }
-                >
-                    {suggestions.map((person) => (
+                <Section title={t('People you may know')} href={route('friends.suggestions')}>
+                    {shownSuggestions.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center gap-3 rounded-lg bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
+                            <UsersRound className="text-muted-foreground size-10" />
+                            <p className="text-muted-foreground text-[15px]">{t('No suggestions right now. Invite your friends to the club.')}</p>
+                            <InviteButton />
+                        </div>
+                    )}
+                    {shownSuggestions.map((person) => (
                         <PersonCard key={person.id} person={person}>
-                            <button className={primary} onClick={() => add(person)}>
-                                {t('Add friend')}
-                            </button>
-                        </PersonCard>
-                    ))}
-                </Section>
-
-                {sent.length > 0 && (
-                    <Section title={t('Sent requests')} count={sent.length}>
-                        {sent.map((person) => (
-                            <PersonCard key={person.id} person={person}>
-                                <button className={secondary} onClick={() => remove(person)}>
-                                    {t('Cancel request')}
-                                </button>
-                            </PersonCard>
-                        ))}
-                    </Section>
-                )}
-
-                <Section title={t('All friends')} count={friends.length}>
-                    {friends.length === 0 && <p className="text-muted-foreground col-span-full text-[15px]">{t('No friends yet.')}</p>}
-                    {friends.map((person) => (
-                        <PersonCard key={person.id} person={person}>
-                            <button className={secondary} onClick={() => router.post(route('messages.start', person.id))}>
-                                {t('Message')}
-                            </button>
+                            <MutualLine person={person} />
+                            {status[person.id] === 'sent' ? (
+                                <>
+                                    <button className={`${softButton} cursor-default opacity-70`} disabled>
+                                        {t('Request sent')}
+                                    </button>
+                                    <button className={secondary} onClick={() => cancel(person)}>
+                                        {t('Cancel')}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className={softButton} onClick={() => add(person)}>
+                                        {t('Add friend')}
+                                    </button>
+                                    <button className={secondary} onClick={() => dismiss(person)}>
+                                        {t('Delete')}
+                                    </button>
+                                </>
+                            )}
                         </PersonCard>
                     ))}
                 </Section>
             </div>
-        </AppLayout>
+        </FriendsLayout>
     );
 }
 
-function Section({ title, count, more, children }: { title: string; count?: number; more?: ReactNode; children: ReactNode }) {
+function Section({ title, count, href, children }: { title: string; count?: number; href: string; children: ReactNode }) {
+    const t = useT();
+
     return (
         <section>
             <div className="mb-3 flex items-baseline justify-between gap-2">
                 <h2 className="text-xl font-bold">
-                    {title} {count !== undefined && <span className="text-muted-foreground font-normal">{count}</span>}
+                    {title} {!!count && <span className="text-red-500">{count}</span>}
                 </h2>
-                {more}
+                <Link href={href} className="text-brand text-[15px] font-semibold hover:underline">
+                    {t('See all')}
+                </Link>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{children}</div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">{children}</div>
         </section>
     );
 }

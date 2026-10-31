@@ -104,6 +104,17 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
 
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
     Route::get('friends/list', [FriendController::class, 'list'])->name('friends.list');
+    Route::get('friends/requests', [FriendController::class, 'requests'])->name('friends.requests');
+    Route::get('friends/suggestions', [FriendController::class, 'suggestions'])->name('friends.suggestions');
+    Route::get('friends/all', [FriendController::class, 'all'])->name('friends.all');
+    Route::get('friends/birthdays', [FriendController::class, 'birthdays'])->name('friends.birthdays');
+    Route::get('friends/lists', [FriendController::class, 'lists'])->name('friends.lists');
+    Route::post('friends/lists', [FriendController::class, 'storeList'])->name('friends.lists.store');
+    Route::patch('friends/lists/{friendList}', [FriendController::class, 'updateList'])->name('friends.lists.update');
+    Route::delete('friends/lists/{friendList}', [FriendController::class, 'destroyList'])->name('friends.lists.destroy');
+    Route::post('friends/lists/{friendList}/people/{user}', [FriendController::class, 'addToList'])->name('friends.lists.add');
+    Route::delete('friends/lists/{friendList}/people/{user}', [FriendController::class, 'removeFromList'])->name('friends.lists.remove');
+    Route::post('people/{user}/dismiss', [FriendController::class, 'dismiss'])->name('friends.dismiss');
     Route::post('people/{user}/friend', [FriendController::class, 'store'])->name('friends.store');
     Route::delete('people/{user}/friend', [FriendController::class, 'destroy'])->name('friends.destroy');
     Route::post('people/{user}/block', [BlockController::class, 'blockUser'])->name('blocks.user');
