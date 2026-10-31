@@ -1,4 +1,6 @@
 import { Bubble, fileSize, gap, type Message } from '@/components/chat-bubble';
+import { EMOJI } from '@/components/chat-dock';
+import { PanelMenu, panelMenuItem } from '@/components/notification-bell';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
 import { startCall } from '@/components/video-call';
@@ -6,7 +8,7 @@ import { useAutoTranslate } from '@/hooks/use-auto-translate';
 import { useKeyboardViewport } from '@/hooks/use-keyboard-viewport';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
-import { relativeTime } from '@/lib/relative-time';
+import { relativeTime, shortAgo } from '@/lib/relative-time';
 import { type Person, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
@@ -15,13 +17,17 @@ import {
     Check,
     Ellipsis,
     FileText,
+    ImagePlus,
     MessageCircle,
     MessageCircleOff,
+    MessageCircleQuestion,
     Paperclip,
     Phone,
     Search,
     SendHorizontal,
+    Smile,
     SquarePen,
+    ThumbsUp,
     Trash2,
     Video,
     X,
@@ -55,24 +61,37 @@ interface Props {
     messages: Message[];
 }
 
+const barButton =
+    'text-brand flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-neutral-800 [&>svg]:size-6';
+
 /** How often an open chat asks for new messages (there is no live connection on shared hosting). */
 const POLL_MS = 4000;
 
 export default function Messages({ conversations, requests, friends, contacts, conversation, messages }: Props) {
     const t = useT();
     const { locale } = usePage<SharedData>().props;
-    const [showRequests, setShowRequests] = useState(Boolean(conversation?.request));
+    const [tab, setTab] = useState<'all' | 'unread' | 'requests'>(conversation?.request ? 'requests' : 'all');
+    // The pen at the top: pick a friend to write to, as Messenger's "New message".
+    const [composing, setComposing] = useState(false);
     const [query, setQuery] = useState('');
     const search = useRef<HTMLInputElement>(null);
     const needle = query.trim().toLocaleLowerCase();
     const matches = (person: Person) => !needle || person.name.toLocaleLowerCase().includes(needle);
-    const rows = (showRequests ? requests : conversations).filter((row) => matches(row.with));
-    const people = friends.filter(matches);
+    const rows = (tab === 'requests' ? requests : conversations)
+        .filter((row) => tab !== 'unread' || row.unread)
+        .filter((row) => matches(row.with) || (needle && row.last?.body.toLocaleLowerCase().includes(needle)));
+    // Searching also finds friends there is no chat with yet.
+    const people = composing
+        ? [...contacts, ...friends.filter((f) => !contacts.some((c) => c.id === f.id))].filter(matches)
+        : needle
+          ? friends.filter(matches)
+          : [];
     const startChat = (person: Person) => router.post(route('messages.start', person.id));
+    const unread = conversations.filter((c) => c.unread).length;
 
     // A request just accepted moves to the chats, and the list follows it there.
     useEffect(() => {
-        if (conversation && !conversation.request) setShowRequests(false);
+        if (conversation && !conversation.request && tab === 'requests') setTab('all');
     }, [conversation?.id, conversation?.request]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
@@ -87,38 +106,82 @@ export default function Messages({ conversations, requests, friends, contacts, c
         return () => clearInterval(timer);
     }, [conversation?.id]);
 
+    const markAllRead = async () => {
+        await fetch(route('messages.read'), {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+            },
+        });
+        router.reload({ only: ['conversations', 'counts'] });
+    };
+
     return (
-        <ClubLayout>
+        <ClubLayout full>
             <Head title={conversation ? conversation.with.name : t('Messages')} />
-            <div className="mx-auto grid h-[calc(100dvh-148px)] w-[min(1100px,calc(100vw-2rem))] grid-cols-1 overflow-hidden rounded-lg bg-white shadow-sm sm:h-[calc(100dvh-108px)] md:grid-cols-[360px_minmax(0,1fr)] dark:bg-neutral-900">
+            {/* Messenger on Facebook: the chats down the start side, the open chat filling the rest of the screen. */}
+            <div className="grid h-full grid-cols-1 md:grid-cols-[360px_minmax(0,1fr)]">
                 <aside
-                    className={`flex min-h-0 min-w-0 flex-col border-slate-200 md:border-e dark:border-neutral-800 ${conversation ? 'hidden md:flex' : 'flex'}`}
+                    className={`min-h-0 min-w-0 flex-col border-slate-200 bg-white md:border-e dark:border-neutral-800 dark:bg-neutral-900 ${conversation ? 'hidden md:flex' : 'flex'}`}
                 >
-                    {/* Messenger-style top: title, a pen to write to someone, the search and the row of friends. */}
-                    <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                        <h1 className="text-brand text-[26px] font-extrabold tracking-tight">{t('Messages')}</h1>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setShowRequests(false);
-                                search.current?.focus();
-                            }}
-                            aria-label={t('New message')}
-                            title={t('New message')}
-                            className="flex size-10 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                        >
-                            <SquarePen className="size-5" />
-                        </button>
+                    <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                        <h1 className="text-2xl font-bold">{composing ? t('New message') : t('Chats')}</h1>
+                        <div className="flex gap-2">
+                            {!composing && (
+                                <PanelMenu>
+                                    {(hide) => (
+                                        <>
+                                            <button
+                                                type="button"
+                                                className={panelMenuItem}
+                                                onClick={() => {
+                                                    hide();
+                                                    markAllRead();
+                                                }}
+                                            >
+                                                <Check />
+                                                {t('Mark all chats as read')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={panelMenuItem}
+                                                onClick={() => {
+                                                    hide();
+                                                    setTab('requests');
+                                                }}
+                                            >
+                                                <MessageCircleQuestion />
+                                                {t('Message requests')}
+                                            </button>
+                                        </>
+                                    )}
+                                </PanelMenu>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setComposing(!composing);
+                                    setQuery('');
+                                    search.current?.focus();
+                                }}
+                                aria-label={composing ? t('Close') : t('New message')}
+                                title={composing ? t('Close') : t('New message')}
+                                className="flex size-9 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                            >
+                                {composing ? <X className="size-5" /> : <SquarePen className="size-5" />}
+                            </button>
+                        </div>
                     </div>
-                    <label className="mx-3 mb-2 flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2.5 dark:bg-neutral-800">
-                        <Search className="text-muted-foreground size-5 shrink-0" />
+                    <label className="mx-4 mb-3 flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800">
+                        <Search className="text-muted-foreground size-4 shrink-0" />
                         <input
                             ref={search}
                             type="search"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder={t('Search')}
-                            className="min-w-0 flex-1 bg-transparent text-[16px] outline-none"
+                            placeholder={composing ? t('Search friends') : t('Search messages')}
+                            className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
                         />
                         {query && (
                             <button type="button" onClick={() => setQuery('')} aria-label={t('Clear')} className="text-muted-foreground">
@@ -127,143 +190,122 @@ export default function Messages({ conversations, requests, friends, contacts, c
                         )}
                     </label>
 
-                    <div className="min-h-0 flex-1 overflow-y-auto pb-2">
-                        {!needle && contacts.length > 0 && (
-                            <div className="flex gap-1 overflow-x-auto px-2 pt-1 pb-2 [scrollbar-width:none]">
-                                {contacts.map((person) => (
-                                    <button
-                                        key={person.id}
-                                        type="button"
-                                        onClick={() => startChat(person)}
-                                        className="flex w-[76px] shrink-0 flex-col items-center gap-1 rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-neutral-800"
-                                    >
-                                        <UserAvatar person={person} className="size-16" />
-                                        <span dir="auto" className="w-full truncate text-center text-[13px]">
-                                            {person.name.split(' ')[0]}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex gap-1 px-3 pb-1">
-                            {[
-                                { on: false, label: t('Chats'), count: 0 },
-                                { on: true, label: t('Requests'), count: requests.length },
-                            ].map((tab) => (
+                    {!composing && (
+                        <div className="flex gap-1 px-3 pb-2">
+                            {(
+                                [
+                                    ['all', t('All'), 0],
+                                    ['unread', t('Unread'), unread],
+                                    ['requests', t('Requests'), requests.length],
+                                ] as const
+                            ).map(([key, label, count]) => (
                                 <button
-                                    key={tab.label}
+                                    key={key}
                                     type="button"
-                                    aria-pressed={showRequests === tab.on}
-                                    onClick={() => setShowRequests(tab.on)}
-                                    className="aria-pressed:bg-brand-soft aria-pressed:text-brand rounded-full px-3 py-1.5 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    aria-pressed={tab === key}
+                                    onClick={() => setTab(key)}
+                                    className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[15px] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
                                 >
-                                    {tab.label}
-                                    {tab.count > 0 && ` (${tab.count})`}
+                                    {label}
+                                    {count > 0 && <span className="ms-1 text-[13px] opacity-80">{count}</span>}
                                 </button>
                             ))}
                         </div>
+                    )}
 
-                        <div className="px-2">
-                            {showRequests && (
-                                <p className="text-muted-foreground px-2 pb-2 text-[13px]">{t('Messages from people who are not your friends.')}</p>
-                            )}
-                            {rows.length === 0 && (showRequests || people.length === 0) && (
-                                <p className="text-muted-foreground px-2 py-6 text-center text-[15px]">
-                                    {needle
-                                        ? t('Nothing found.')
-                                        : showRequests
-                                          ? t('No requests.')
-                                          : t('No conversations yet. Open a member’s profile and press “Message”.')}
-                                </p>
-                            )}
-                            {rows.map((row) => (
-                                <Link
-                                    key={row.id}
-                                    href={route('messages.show', row.id)}
-                                    className={`flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-100 dark:hover:bg-neutral-800 ${conversation?.id === row.id ? 'bg-brand-soft/60' : ''}`}
-                                >
-                                    <UserAvatar person={row.with} className="size-14" />
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-baseline gap-2">
-                                            <span
-                                                dir="auto"
-                                                className={`min-w-0 flex-1 truncate text-[16px] ${row.unread ? 'font-bold' : 'font-medium'}`}
-                                            >
+                    <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+                        {!composing && (
+                            <>
+                                {tab === 'requests' && (
+                                    <p className="text-muted-foreground px-2 pb-2 text-[13px]">
+                                        {t('Messages from people who are not your friends.')}
+                                    </p>
+                                )}
+                                {rows.length === 0 && people.length === 0 && (
+                                    <p className="text-muted-foreground px-2 py-8 text-center text-[15px]">
+                                        {needle
+                                            ? t('Nothing found.')
+                                            : tab === 'requests'
+                                              ? t('No requests.')
+                                              : tab === 'unread'
+                                                ? t('No unread chats.')
+                                                : t('No conversations yet. Open a member’s profile and press “Message”.')}
+                                    </p>
+                                )}
+                                {rows.map((row) => (
+                                    <Link
+                                        key={row.id}
+                                        href={route('messages.show', row.id)}
+                                        preserveScroll
+                                        className={`flex items-center gap-3 rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-neutral-800 ${conversation?.id === row.id ? 'bg-slate-100 dark:bg-neutral-800' : ''}`}
+                                    >
+                                        <UserAvatar person={row.with} className="size-14" />
+                                        <span className="min-w-0 flex-1">
+                                            <span dir="auto" className={`block truncate text-[15px] ${row.unread ? 'font-bold' : 'font-medium'}`}>
                                                 {row.with.name}
                                             </span>
-                                            {row.last && (
-                                                <span
-                                                    className={`shrink-0 text-[13px] ${row.unread ? 'text-brand font-semibold' : 'text-muted-foreground'}`}
-                                                >
-                                                    {chatTime(row.last.created_at, locale)}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
                                             <span
-                                                dir="auto"
-                                                className={`min-w-0 flex-1 truncate text-[14px] ${row.unread ? 'font-semibold text-slate-900 dark:text-white' : 'text-muted-foreground'}`}
+                                                className={`flex min-w-0 gap-1 text-[13px] ${row.unread ? 'font-semibold text-slate-900 dark:text-white' : 'text-muted-foreground'}`}
                                             >
-                                                {row.last && (
-                                                    <>
-                                                        {row.last.mine && `${t('You')}: `}
-                                                        {row.last.body}
-                                                    </>
-                                                )}
+                                                <span dir="auto" className="min-w-0 truncate">
+                                                    {row.last && (
+                                                        <>
+                                                            {row.last.mine && `${t('You')}: `}
+                                                            {row.last.body}
+                                                        </>
+                                                    )}
+                                                </span>
+                                                {row.last?.created_at && <span className="shrink-0">· {shortAgo(row.last.created_at, locale)}</span>}
                                             </span>
-                                            {row.unread && <span className="bg-brand size-3 shrink-0 rounded-full" />}
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                            {!showRequests && people.length > 0 && (
-                                <>
-                                    <h2 className="text-muted-foreground px-2 pt-3 pb-1 text-[13px] font-semibold">
-                                        {rows.length === 0 && !needle ? t('Choose a friend to start a conversation') : t('Friends')}
-                                    </h2>
-                                    {people.map((friend) => (
-                                        <button
-                                            key={friend.id}
-                                            type="button"
-                                            onClick={() => startChat(friend)}
-                                            className="flex w-full items-center gap-3 rounded-lg p-2 text-start hover:bg-slate-100 dark:hover:bg-neutral-800"
-                                        >
-                                            <UserAvatar person={friend} className="size-14" />
-                                            <div dir="auto" className="min-w-0 flex-1 truncate text-[16px] font-medium">
-                                                {friend.name}
-                                            </div>
-                                        </button>
-                                    ))}
-                                </>
-                            )}
-                        </div>
+                                        </span>
+                                        {row.unread && <span className="bg-brand size-3 shrink-0 rounded-full" />}
+                                    </Link>
+                                ))}
+                            </>
+                        )}
+                        {people.length > 0 && (
+                            <>
+                                {!composing && <h2 className="text-muted-foreground px-2 pt-3 pb-1 text-[13px] font-semibold">{t('Friends')}</h2>}
+                                {people.map((friend) => (
+                                    <button
+                                        key={friend.id}
+                                        type="button"
+                                        onClick={() => startChat(friend)}
+                                        className="flex w-full items-center gap-3 rounded-lg p-2 text-start hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    >
+                                        <UserAvatar person={friend} className="size-11" />
+                                        <span dir="auto" className="min-w-0 flex-1 truncate text-[15px] font-medium">
+                                            {friend.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </>
+                        )}
+                        {composing && people.length === 0 && (
+                            <p className="text-muted-foreground px-2 py-8 text-center text-[15px]">
+                                {needle ? t('Nothing found.') : t('No friends yet.')}
+                            </p>
+                        )}
                     </div>
                 </aside>
 
-                {conversation ? (
-                    <Chat key={conversation.id} conversation={conversation} messages={messages} />
-                ) : (
-                    <div className="text-muted-foreground hidden flex-col items-center justify-center gap-3 md:flex">
-                        <MessageCircle className="size-16 opacity-30" />
-                        <p className="text-[15px]">{t('Choose a conversation')}</p>
+                <div className={`min-h-0 min-w-0 bg-[#f0f2f5] p-0 md:p-3 dark:bg-neutral-950 ${conversation ? 'flex' : 'hidden md:flex'}`}>
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-lg md:shadow-sm dark:bg-neutral-900">
+                        {conversation ? (
+                            <Chat key={conversation.id} conversation={conversation} messages={messages} />
+                        ) : (
+                            <div className="flex flex-1 flex-col items-center justify-center gap-4">
+                                <span className="from-brand-soft flex size-24 items-center justify-center rounded-full bg-gradient-to-br to-white shadow-inner dark:from-neutral-800 dark:to-neutral-900">
+                                    <MessageCircle className="text-brand size-12" />
+                                </span>
+                                <p className="text-[17px] font-bold">{t('No chat selected')}</p>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </ClubLayout>
     );
-}
-
-/** Messenger's time beside a chat: the clock today, the weekday this week, the date later on, with the year once it is not this one. */
-function chatTime(iso: string | null, locale: string): string {
-    if (!iso) return '';
-    const date = new Date(iso);
-    const now = new Date();
-    const days = (new Date(now.toDateString()).getTime() - new Date(date.toDateString()).getTime()) / 86400000;
-    if (days < 1) return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-    if (days < 7) return date.toLocaleDateString(locale, { weekday: 'short' });
-    if (date.getFullYear() === now.getFullYear()) return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
-    return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function Chat({ conversation, messages }: { conversation: NonNullable<Props['conversation']>; messages: Message[] }) {
@@ -271,6 +313,8 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
     const { locale } = usePage<SharedData>().props;
     const form = useForm<{ body: string; files: File[] }>({ body: '', files: [] });
     const picker = useRef<HTMLInputElement>(null);
+    const photos = useRef<HTMLInputElement>(null);
+    const [emoji, setEmoji] = useState(false);
     // Messages not yet in the reader's language (say, after switching it) are translated on opening the chat.
     const fetched = useAutoTranslate(messages, locale);
     const scroller = useRef<HTMLDivElement>(null);
@@ -324,7 +368,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
         // On phones an open chat takes the whole screen, as in Messenger: its top stays put and the box to write sits at the bottom.
         <section
             ref={panel}
-            className="fixed inset-0 z-50 flex flex-col bg-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:min-h-0 md:bg-transparent md:p-0 dark:bg-neutral-900"
+            className="fixed inset-0 z-50 flex flex-col bg-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:static md:z-auto md:min-h-0 md:flex-1 md:bg-transparent md:p-0 dark:bg-neutral-900"
         >
             <header className="flex items-center gap-3 border-b border-slate-200 px-3 py-2 dark:border-neutral-800">
                 <Link
@@ -435,7 +479,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                         e.preventDefault();
                         addFiles(e.dataTransfer.files);
                     }}
-                    className="space-y-2 border-t border-slate-200 p-3 dark:border-neutral-800"
+                    className="relative space-y-2 border-t border-slate-200 p-3 dark:border-neutral-800"
                 >
                     {form.data.files.length > 0 && (
                         <div className="flex flex-wrap gap-2">
@@ -471,7 +515,25 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                         </div>
                     )}
                     {fileErrors.length > 0 && <p className="text-sm text-red-600">{fileErrors[0]}</p>}
-                    <div className="flex items-end gap-2">
+                    {emoji && (
+                        <div className="absolute end-14 bottom-16 z-10 grid w-[232px] grid-cols-6 gap-0.5 rounded-xl bg-white p-2 shadow-lg ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10">
+                            {EMOJI.map((e) => (
+                                <button
+                                    key={e}
+                                    type="button"
+                                    className="rounded-md p-1 text-[22px] leading-none hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    onClick={() => {
+                                        form.setData('body', form.data.body + e);
+                                        setEmoji(false);
+                                    }}
+                                >
+                                    {e}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {/* Messenger's bar: photos, a file, the "Aa" box with emoji, and a thumbs-up that turns into Send. */}
+                    <div className="flex items-end gap-1">
                         <input
                             ref={picker}
                             type="file"
@@ -482,33 +544,67 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                                 e.target.value = '';
                             }}
                         />
+                        <input
+                            ref={photos}
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            hidden
+                            onChange={(e) => {
+                                addFiles(e.target.files);
+                                e.target.value = '';
+                            }}
+                        />
                         <button
                             type="button"
-                            className="text-brand rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            className={barButton}
+                            aria-label={t('Add photos')}
+                            title={t('Add photos')}
+                            onClick={() => photos.current?.click()}
+                        >
+                            <ImagePlus />
+                        </button>
+                        <button
+                            type="button"
+                            className={barButton}
                             aria-label={t('Attach a file')}
                             title={t('Attach a file')}
                             onClick={() => picker.current?.click()}
                         >
-                            <Paperclip className="size-6" />
+                            <Paperclip />
                         </button>
-                        <textarea
-                            dir="auto"
-                            rows={1}
-                            autoFocus
-                            value={form.data.body}
-                            onChange={(e) => form.setData('body', e.target.value)}
-                            onKeyDown={onKeyDown}
-                            onPaste={(e) => e.clipboardData.files.length > 0 && addFiles(e.clipboardData.files)}
-                            placeholder={t('Aa')}
-                            className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none rounded-2xl bg-slate-100 px-4 py-2 text-[15px] outline-none dark:bg-neutral-800"
-                        />
-                        <button
-                            className="text-brand rounded-full p-2 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
-                            disabled={form.processing || (!form.data.body.trim() && !form.data.files.length)}
-                            aria-label={t('Send')}
-                        >
-                            <SendHorizontal className="size-6 rtl:rotate-180" />
-                        </button>
+                        <div className="flex min-w-0 flex-1 items-end rounded-[20px] bg-slate-100 dark:bg-neutral-800">
+                            <textarea
+                                dir="auto"
+                                rows={1}
+                                autoFocus
+                                value={form.data.body}
+                                onChange={(e) => form.setData('body', e.target.value)}
+                                onKeyDown={onKeyDown}
+                                onPaste={(e) => e.clipboardData.files.length > 0 && addFiles(e.clipboardData.files)}
+                                placeholder={t('Aa')}
+                                className="field-sizing-content max-h-40 min-h-10 min-w-0 flex-1 resize-none bg-transparent py-2 ps-4 text-[15px] leading-6 outline-none"
+                            />
+                            <button type="button" className={barButton} aria-label={t('Emoji')} title={t('Emoji')} onClick={() => setEmoji(!emoji)}>
+                                <Smile />
+                            </button>
+                        </div>
+                        {form.data.body.trim() || form.data.files.length ? (
+                            <button className={barButton} disabled={form.processing} aria-label={t('Send')} title={t('Send')}>
+                                <SendHorizontal className="rtl:rotate-180" />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                className={barButton}
+                                disabled={form.processing}
+                                aria-label={t('Send a like')}
+                                title={t('Send a like')}
+                                onClick={() => router.post(route('messages.store', conversation.id), { body: '👍' }, { preserveScroll: true })}
+                            >
+                                <ThumbsUp className="fill-current" />
+                            </button>
+                        )}
                     </div>
                     {form.progress && <div className="bg-brand h-0.5 rounded" style={{ width: `${form.progress.percentage ?? 0}%` }} />}
                 </form>

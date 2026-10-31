@@ -131,7 +131,7 @@ export function ChatDock() {
     );
 }
 
-const EMOJI = [
+export const EMOJI = [
     '😀',
     '😂',
     '😍',

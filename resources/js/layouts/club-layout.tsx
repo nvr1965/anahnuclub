@@ -6,7 +6,26 @@ import { type ReactNode } from 'react';
  * Facebook-style frame: menu on the start side, content in the middle, people on the end side.
  * Side columns stick while the feed scrolls and fold away on small screens.
  */
-export default function ClubLayout({ children, left, right }: { children: ReactNode; left?: ReactNode; right?: ReactNode }) {
+export default function ClubLayout({
+    children,
+    left,
+    right,
+    full = false,
+}: {
+    children: ReactNode;
+    left?: ReactNode;
+    right?: ReactNode;
+    /** The page fills the screen under the top bar edge to edge, without the footer, as Messenger does. */
+    full?: boolean;
+}) {
+    if (full)
+        return (
+            <div className="flex h-dvh flex-col bg-white text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
+                <ClubHeader />
+                <main className="min-h-0 flex-1">{children}</main>
+            </div>
+        );
+
     const columns =
         left && right
             ? 'lg:grid-cols-[280px_minmax(0,680px)] xl:grid-cols-[280px_minmax(0,680px)_300px]'
