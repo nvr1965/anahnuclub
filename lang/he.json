@@ -696,5 +696,11 @@
     ":names are going to your event": ":names מגיעים לאירוע שלך",
     ":names are interested in your event": ":names מתעניינים באירוע שלך",
     ":names invite you to join a group": ":names מזמינים אותך להצטרף לקבוצה",
-    "View all": "הצגת הכול"
+    "View all": "הצגת הכול",
+    "Minimize": "מזעור",
+    "Emoji": "אימוג׳י",
+    "Send a like": "שליחת לייק",
+    "Something went wrong.": "משהו השתבש.",
+    "Mark all chats as read": "סימון כל הצ׳אטים כנקראו",
+    "Message requests": "בקשות להודעות"
 }

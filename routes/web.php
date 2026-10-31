@@ -124,7 +124,9 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
 
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('messages/latest', [MessageController::class, 'latest'])->name('messages.latest');
+    Route::post('messages/read', [MessageController::class, 'readAll'])->name('messages.read');
     Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
+    Route::get('messages/{conversation}/popup', [MessageController::class, 'popup'])->name('messages.popup');
     Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
     Route::get('messages/files/{attachment}', [MessageController::class, 'file'])->name('messages.files');
     Route::post('people/{user}/message', [MessageController::class, 'start'])->name('messages.start');

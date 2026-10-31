@@ -62,6 +62,36 @@ class MessengerTest extends TestCase
         $this->actingAs(User::factory()->create())->getJson('/messages/latest')->assertJsonCount(0, 'conversations');
     }
 
+    public function test_a_chat_opens_in_the_docked_window_and_takes_messages_there()
+    {
+        $anna = User::factory()->create();
+        $dana = User::factory()->create();
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
+        $conversation = Conversation::between($anna, $dana);
+
+        $this->actingAs($anna)->postJson("/messages/{$conversation->id}", ['body' => 'Шалом'])->assertCreated();
+        $this->actingAs($dana)->getJson("/messages/{$conversation->id}/popup")
+            ->assertJsonPath('conversation.with.id', $anna->id)
+            ->assertJsonPath('messages.0.body', 'Шалом')
+            ->assertJsonPath('messages.0.mine', false);
+        // Opening it read the chat.
+        $this->getJson('/messages/latest')->assertJsonPath('conversations.0.unread', false);
+        $this->actingAs(User::factory()->create())->getJson("/messages/{$conversation->id}/popup")->assertNotFound();
+    }
+
+    public function test_all_chats_can_be_marked_read_from_the_panel()
+    {
+        $anna = User::factory()->create();
+        $dana = User::factory()->create();
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
+        $conversation = Conversation::between($anna, $dana);
+        $this->actingAs($anna)->post("/messages/{$conversation->id}", ['body' => 'Привет']);
+
+        $this->actingAs($dana)->getJson('/messages/latest')->assertJsonPath('conversations.0.unread', true);
+        $this->postJson('/messages/read')->assertOk();
+        $this->getJson('/messages/latest')->assertJsonPath('conversations.0.unread', false);
+    }
+
     public function test_outsiders_cannot_read_or_write_a_conversation()
     {
         [$anna, $boris, $eve] = User::factory()->count(3)->create();

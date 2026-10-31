@@ -4,6 +4,7 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
+import { ChatDock } from './components/chat-dock';
 import { ErrorBoundary } from './components/error-boundary';
 import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
@@ -23,7 +24,7 @@ createInertiaApp({
 
         syncDocumentLanguage(props.initialPage.props);
 
-        // The call window sits beside the page, so a call carries on from page to page.
+        // The call window and the docked chats sit beside the page, so they carry on from page to page.
         root.render(
             <App {...props}>
                 {({ Component, key, props: pageProps }) => (
@@ -31,6 +32,7 @@ createInertiaApp({
                         <ErrorBoundary resetKey={key}>
                             <Component key={key} {...pageProps} />
                         </ErrorBoundary>
+                        <ChatDock />
                         <CallRoot />
                     </>
                 )}

@@ -696,5 +696,11 @@
     ":names are going to your event": "سيحضر :names فعاليتك",
     ":names are interested in your event": "يهتم :names بفعاليتك",
     ":names invite you to join a group": "يدعوك :names للانضمام إلى مجموعة",
-    "View all": "عرض الكل"
+    "View all": "عرض الكل",
+    "Minimize": "تصغير",
+    "Emoji": "رموز تعبيرية",
+    "Send a like": "إرسال إعجاب",
+    "Something went wrong.": "حدث خطأ ما.",
+    "Mark all chats as read": "تعليم كل المحادثات كمقروءة",
+    "Message requests": "طلبات المراسلة"
 }
