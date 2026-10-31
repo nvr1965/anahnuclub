@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { MessengerMenu } from '@/components/messenger-menu';
 import { NotificationBell } from '@/components/notification-bell';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -91,7 +92,6 @@ export function ClubHeader() {
             badge: counts?.friend_requests ?? 0,
         },
         { title: t('Groups'), href: route('groups.index'), match: '/groups', icon: Users, tone: 'violet', badge: 0 },
-        { title: t('Messages'), href: route('messages.index'), match: '/messages', icon: MessageCircle, tone: 'sky', badge: counts?.messages ?? 0 },
     ];
 
     // New messages and friend requests show up without reloading the page.
@@ -115,6 +115,10 @@ export function ClubHeader() {
                     <Tile icon={tab.icon} label={tab.title} tone={tab.tone} active={page.url.startsWith(tab.match)} badge={tab.badge} />
                 </Link>
             ))}
+            {/* Messages and notifications open a panel under the tile, as on Facebook. */}
+            <MessengerMenu className={tileLink}>
+                <Tile icon={MessageCircle} label={t('Messages')} tone="sky" active={page.url.startsWith('/messages')} badge={counts?.messages ?? 0} />
+            </MessengerMenu>
             <NotificationBell className={tileLink}>
                 <Tile icon={Bell} label={t('Notifications')} tone="amber" badge={counts?.notifications ?? 0} />
             </NotificationBell>

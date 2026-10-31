@@ -41,12 +41,13 @@ class LikeController extends Controller
 
         if ($like && $type && $like->type !== $type) {
             $like->update(['type' => $type]);
+            ClubActivity::react($model->user, $kind, $user, $subject, $type);
         } elseif ($like) {
             $like->delete();
             ClubActivity::retract($model->user, $kind, $user, $subject);
         } else {
             $model->likes()->create(['user_id' => $user->id, 'type' => $type ?? 'like']);
-            ClubActivity::send($model->user, $kind, $user, $url, $subject, $excerpt);
+            ClubActivity::send($model->user, $kind, $user, $url, $subject, $excerpt, $type ?? 'like');
         }
 
         return back();

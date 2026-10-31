@@ -44,6 +44,24 @@ class MessengerTest extends TestCase
         $this->get('/feed')->assertInertia(fn ($page) => $page->where('counts.messages', 0));
     }
 
+    public function test_the_top_bar_panel_lists_chats_with_their_last_line_and_unread_mark()
+    {
+        $anna = User::factory()->create();
+        $dana = User::factory()->create();
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
+        $conversation = Conversation::between($anna, $dana);
+        $this->actingAs($anna)->post("/messages/{$conversation->id}", ['body' => 'Привет']);
+
+        $this->actingAs($dana)->getJson('/messages/latest')
+            ->assertJsonPath('conversations.0.with.id', $anna->id)
+            ->assertJsonPath('conversations.0.last.body', 'Привет')
+            ->assertJsonPath('conversations.0.unread', true);
+        $this->actingAs($anna)->getJson('/messages/latest')
+            ->assertJsonPath('conversations.0.last.mine', true)
+            ->assertJsonPath('conversations.0.unread', false);
+        $this->actingAs(User::factory()->create())->getJson('/messages/latest')->assertJsonCount(0, 'conversations');
+    }
+
     public function test_outsiders_cannot_read_or_write_a_conversation()
     {
         [$anna, $boris, $eve] = User::factory()->count(3)->create();

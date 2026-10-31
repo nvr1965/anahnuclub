@@ -23,6 +23,7 @@ class ClubActivity extends Notification
         public string $url,
         public string $key,
         public ?string $excerpt = null,
+        public ?string $reaction = null,
     ) {}
 
     public function via(object $notifiable): array
@@ -37,6 +38,8 @@ class ClubActivity extends Notification
             'key' => $this->key,
             'url' => $this->url,
             'excerpt' => $this->excerpt,
+            // Which face was left on a like, for the badge on the picture.
+            'reaction' => $this->reaction,
             'actor' => ['id' => $this->actor->id, 'name' => $this->actor->name, 'avatar' => $this->actor->avatar],
         ];
     }
@@ -45,7 +48,7 @@ class ClubActivity extends Notification
      * Tells $to, unless they did it themselves. An earlier unread notice of the same thing by the
      * same person is replaced, so liking, unliking and liking again leaves one.
      */
-    public static function send(?User $to, string $kind, User $actor, string $url, string $subject, ?string $excerpt = null): void
+    public static function send(?User $to, string $kind, User $actor, string $url, string $subject, ?string $excerpt = null, ?string $reaction = null): void
     {
         if (! $to || $to->is($actor) || $to->blocked || $to->isBlockedWith($actor)) {
             return;
@@ -55,7 +58,14 @@ class ClubActivity extends Notification
         $parts = parse_url($url);
         $url = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
         $to->unreadNotifications()->where('data->key', $key)->delete();
-        $to->notify(new self($kind, $actor, $url, $key, $excerpt === null ? null : mb_strimwidth(trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace('<br>', ' ', $excerpt))))), 0, 90, '…')));
+        $to->notify(new self($kind, $actor, $url, $key, $excerpt === null ? null : mb_strimwidth(trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace('<br>', ' ', $excerpt))))), 0, 90, '…'), $reaction));
+    }
+
+    /** Another face picked on a like shows on the notice that is still unread. */
+    public static function react(?User $to, string $kind, User $actor, string $subject, string $reaction): void
+    {
+        $to?->unreadNotifications()->where('data->key', "$kind:$subject:{$actor->id}")->get()
+            ->each(fn ($n) => $n->update(['data' => ['reaction' => $reaction] + $n->data]));
     }
 
     /** Takes back a notice when its reason is undone, e.g. an unlike. */
