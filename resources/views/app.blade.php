@@ -2,7 +2,7 @@
 <html translate="no" lang="{{ app()->getLocale() }}" dir="{{ \App\Models\Language::enabled()->firstWhere('code', app()->getLocale())?->rtl ? 'rtl' : 'ltr' }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         {{-- The site translates itself; the browser should not offer to translate it again. --}}
         <meta name="google" content="notranslate">
