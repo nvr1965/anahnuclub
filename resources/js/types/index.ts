@@ -21,7 +21,7 @@ export interface NavItem {
     isActive?: boolean;
 }
 
-export type Skin = 'club' | 'community' | 'large' | 'stream' | 'showcase';
+export type Skin = 'club' | 'community' | 'large' | 'stream' | 'showcase' | 'forum';
 
 export interface SharedData {
     name: string;

@@ -771,8 +771,11 @@
     "Stream": "Поток",
     "Showcase": "Витрина",
     "Cards on grey, three columns, the menu on the side": "Карточки на сером фоне, три колонки, меню сбоку",
-    "Denser and squarer, more posts on a screen": "Плотнее и строже, больше постов на экране",
     "Bigger letters and buttons, stronger contrast": "Крупные буквы и кнопки, выше контраст",
-    "One column of posts split by thin lines, menu at the bottom on phones": "Одна колонка постов через тонкие линии, меню внизу на телефоне",
-    "Photos first and edge to edge, a photo grid in profiles": "Сначала фото на всю ширину, сетка фото в профиле"
+    "Forum": "Форум",
+    "A wide search on top, posts as framed cards with buttons in pills": "Широкий поиск сверху, посты карточками в рамке, кнопки-«таблетки»",
+    "A big menu on the side instead of the top bar, one column of posts split by thin lines": "Большое меню сбоку вместо верхней панели, одна колонка постов через тонкие линии",
+    "A narrow strip of icons, a narrow feed with photos first, a photo grid in profiles": "Узкая колонка иконок, узкая лента с фото на первом месте, сетка фото в профиле",
+    "A blue top bar, denser and squarer, more posts on a screen": "Синяя верхняя панель, плотнее и строже, больше постов на экране",
+    "Write a post": "Написать пост"
 }
