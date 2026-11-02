@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+/* Rubik from the site itself (Latin, Cyrillic, Hebrew, Arabic): one variable file per alphabet, only
+   the alphabets on the page are downloaded, and no request to another server holds the page up. */
+@import '@fontsource-variable/rubik';
 
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/typography';
@@ -9,7 +12,7 @@
 
 @theme {
     --font-sans:
-        'Rubik', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        'Rubik Variable', 'Rubik', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     /* anahnu.club brand: teal from the logo, its navy shadow, the indigo header and the green call to action */
     --color-brand: #117892;

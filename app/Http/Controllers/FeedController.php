@@ -23,7 +23,8 @@ class FeedController extends Controller
     {
         $posts = self::postQuery($request)
             ->whereDoesntHave('group', fn (Builder $q) => $q->where('is_private', true))
-            ->paginate(20);
+            // Only "Newer / Older" links: counting every post the reader may see took longer than the page itself.
+            ->simplePaginate(20);
 
         return Inertia::render('feed', [
             'posts' => PostResource::collection($posts),
@@ -77,7 +78,7 @@ class FeedController extends Controller
         if ($page === 1 && $request->route('page') !== null) {
             return redirect(route('posts.archive'), 301);
         }
-        $posts = self::guestPosts($request)->paginate(self::ARCHIVE_PAGE, page: $page);
+        $posts = self::guestPosts($request)->simplePaginate(self::ARCHIVE_PAGE, page: $page);
         abort_if($page > 1 && $posts->isEmpty(), 404);
 
         // Pages are addresses of their own (/posts/page/2), not ?page=2, which canonical addresses leave out.

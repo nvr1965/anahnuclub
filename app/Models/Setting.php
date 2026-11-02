@@ -23,7 +23,7 @@ class Setting extends Model
 
     public static function get(string $key): ?string
     {
-        $all = Cache::rememberForever('settings', fn () => static::query()->pluck('value', 'key')->all());
+        $all = Cache::memo()->rememberForever('settings', fn () => static::query()->pluck('value', 'key')->all());
 
         return array_key_exists($key, $all) ? $all[$key] : (self::DEFAULTS[$key] ?? null);
     }
@@ -46,6 +46,6 @@ class Setting extends Model
     public static function put(string $key, ?string $value): void
     {
         static::updateOrCreate(['key' => $key], ['value' => $value]);
-        Cache::forget('settings');
+        Cache::memo()->forget('settings');
     }
 }

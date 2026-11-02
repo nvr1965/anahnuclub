@@ -51,7 +51,12 @@ class HandleInertiaRequests extends Middleware
             'locale' => $locale,
             'dir' => $languages->firstWhere('code', $locale)?->rtl ? 'rtl' : 'ltr',
             'languages' => $languages->map->only('code', 'native_name', 'rtl')->values(),
-            'translations' => fn () => $this->uiStrings($locale),
+            // About 40 KB of interface text. The page keeps it after the first load and says which version
+            // it has (X-UI-Strings); moving on to the next page then sends it again only when it changed.
+            'translations' => fn () => $request->header('X-Inertia') && $request->header('X-UI-Strings') === $this->uiStringsVersion($locale)
+                ? null
+                : $this->uiStrings($locale),
+            'translations_version' => fn () => $this->uiStringsVersion($locale),
             // Links at the bottom of every page.
             'footer' => fn () => [
                 'pages' => Page::query()->where('published', true)->where('in_footer', true)->orderBy('sort')->orderBy('id')->get()
@@ -88,9 +93,18 @@ class HandleInertiaRequests extends Middleware
         return $response;
     }
 
+    /** @var array<string, array<string, string>> */
+    private array $uiStrings = [];
+
     /** @return array<string, string> */
     private function uiStrings(string $locale): array
     {
-        return array_merge(InterfaceStrings::read(config('app.fallback_locale')), InterfaceStrings::read($locale));
+        return $this->uiStrings[$locale] ??= array_merge(InterfaceStrings::read(config('app.fallback_locale')), InterfaceStrings::read($locale));
+    }
+
+    /** Changes whenever any interface text of this language changes (an update, an administrator's correction). */
+    private function uiStringsVersion(string $locale): string
+    {
+        return $locale.'-'.substr(md5(json_encode($this->uiStrings($locale))), 0, 12);
     }
 }

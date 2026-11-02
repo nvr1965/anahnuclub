@@ -212,7 +212,13 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
         return $email
             ? strcasecmp($this->email, $email) === 0
-            : $this->id === static::query()->where('is_admin', true)->min('id');
+            : $this->id === static::firstAdminId();
+    }
+
+    /** Asked once per request, not once per post of the club on the page. */
+    private static function firstAdminId(): mixed
+    {
+        return once(fn () => static::query()->where('is_admin', true)->min('id'));
     }
 
     public function hiddenUserIds(): Collection

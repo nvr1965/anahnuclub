@@ -26,7 +26,8 @@ export interface SharedData {
     locale: string;
     dir: 'ltr' | 'rtl';
     languages: { code: string; native_name: string; rtl: boolean }[];
-    translations: Record<string, string>;
+    translations: Record<string, string> | null;
+    translations_version: string;
     auth: Auth;
     counts: { messages: number; friend_requests: number; notifications: number } | null;
     footer: { pages: { slug: string; title: string }[]; donate: { label: string; url: string }[] };
@@ -166,7 +167,7 @@ export interface Person {
 export interface Paginated<T> {
     data: T[];
     links: { first: string | null; last: string | null; prev: string | null; next: string | null };
-    meta: { current_page: number; last_page: number; total: number };
+    meta: { current_page: number; last_page?: number; total?: number };
 }
 
 export interface Sidebar {

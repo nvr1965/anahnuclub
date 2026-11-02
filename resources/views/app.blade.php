@@ -42,8 +42,6 @@
             @endif
         @endisset
 
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=rubik:400,500,600,700|noto-sans-arabic:400,500,600,700" rel="stylesheet" />
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         {{-- Installable as an app on phones and computers (public/manifest.webmanifest, public/sw.js). --}}
@@ -54,7 +52,7 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="Anahnu">
 
-        @routes
+        @routes(auth()->user()?->is_admin ? null : 'member')
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
