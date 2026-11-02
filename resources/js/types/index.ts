@@ -21,6 +21,8 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export type Skin = 'club' | 'community' | 'large' | 'stream' | 'showcase';
+
 export interface SharedData {
     name: string;
     locale: string;
@@ -33,6 +35,9 @@ export interface SharedData {
     footer: { pages: { slug: string; title: string }[]; donate: { label: string; url: string }[] };
     /** Sign-in services set up on the server, for guests. */
     social: string[];
+    /** The interface style and the ones members may pick (App\\Support\\Skins). */
+    skin: Skin;
+    skins: Skin[];
     [key: string]: unknown;
 }
 

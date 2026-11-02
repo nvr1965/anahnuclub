@@ -111,7 +111,7 @@ export default function GroupShow({
                 {group.offer && <OfferBanner group={group} offer={group.offer} />}
                 {group.invitation && <InvitationBanner group={group} invitation={group.invitation} />}
                 {group.blocked ? (
-                    <section className="text-muted-foreground rounded-lg bg-white p-4 text-center text-[15px] shadow-sm dark:bg-neutral-900">
+                    <section className="text-muted-foreground rounded-lg bg-white p-4 text-center text-[0.9375rem] shadow-sm dark:bg-neutral-900">
                         {t('You blocked this group. Its posts are hidden from you.')}
                     </section>
                 ) : (

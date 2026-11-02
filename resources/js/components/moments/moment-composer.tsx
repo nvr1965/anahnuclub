@@ -225,7 +225,7 @@ export default function MomentComposer({ lists, onClose }: { lists: { id: number
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                             placeholder={kind === 'text' ? t('Type something…') : t('Add words on top (optional)')}
-                            className="w-full resize-none rounded-xl bg-white/10 px-3 py-2 text-[15px] outline-none placeholder:text-white/50"
+                            className="w-full resize-none rounded-xl bg-white/10 px-3 py-2 text-[0.9375rem] outline-none placeholder:text-white/50"
                         />
                         <div className="flex items-center gap-2 overflow-x-auto">
                             {kind !== 'text' && swatch(null)}
@@ -256,7 +256,7 @@ export default function MomentComposer({ lists, onClose }: { lists: { id: number
                             <select
                                 value={audience}
                                 onChange={(e) => setAudience(e.target.value)}
-                                className="w-full rounded-lg bg-white/10 px-3 py-2 text-[15px] outline-none [&>option]:text-black"
+                                className="w-full rounded-lg bg-white/10 px-3 py-2 text-[0.9375rem] outline-none [&>option]:text-black"
                             >
                                 <option value="friends">{t('Friends')}</option>
                                 <option value="members">{t('All members')}</option>

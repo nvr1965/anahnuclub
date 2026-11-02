@@ -181,7 +181,7 @@ export default function Messages({ conversations, requests, friends, contacts, c
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={composing ? t('Search friends') : t('Search messages')}
-                            className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+                            className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none"
                         />
                         {query && (
                             <button type="button" onClick={() => setQuery('')} aria-label={t('Clear')} className="text-muted-foreground">
@@ -204,10 +204,10 @@ export default function Messages({ conversations, requests, friends, contacts, c
                                     type="button"
                                     aria-pressed={tab === key}
                                     onClick={() => setTab(key)}
-                                    className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[15px] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[0.9375rem] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
                                 >
                                     {label}
-                                    {count > 0 && <span className="ms-1 text-[13px] opacity-80">{count}</span>}
+                                    {count > 0 && <span className="ms-1 text-[0.8125rem] opacity-80">{count}</span>}
                                 </button>
                             ))}
                         </div>
@@ -217,12 +217,12 @@ export default function Messages({ conversations, requests, friends, contacts, c
                         {!composing && (
                             <>
                                 {tab === 'requests' && (
-                                    <p className="text-muted-foreground px-2 pb-2 text-[13px]">
+                                    <p className="text-muted-foreground px-2 pb-2 text-[0.8125rem]">
                                         {t('Messages from people who are not your friends.')}
                                     </p>
                                 )}
                                 {rows.length === 0 && people.length === 0 && (
-                                    <p className="text-muted-foreground px-2 py-8 text-center text-[15px]">
+                                    <p className="text-muted-foreground px-2 py-8 text-center text-[0.9375rem]">
                                         {needle
                                             ? t('Nothing found.')
                                             : tab === 'requests'
@@ -241,11 +241,14 @@ export default function Messages({ conversations, requests, friends, contacts, c
                                     >
                                         <UserAvatar person={row.with} className="size-14" />
                                         <span className="min-w-0 flex-1">
-                                            <span dir="auto" className={`block truncate text-[15px] ${row.unread ? 'font-bold' : 'font-medium'}`}>
+                                            <span
+                                                dir="auto"
+                                                className={`block truncate text-[0.9375rem] ${row.unread ? 'font-bold' : 'font-medium'}`}
+                                            >
                                                 {row.with.name}
                                             </span>
                                             <span
-                                                className={`flex min-w-0 gap-1 text-[13px] ${row.unread ? 'font-semibold text-slate-900 dark:text-white' : 'text-muted-foreground'}`}
+                                                className={`flex min-w-0 gap-1 text-[0.8125rem] ${row.unread ? 'font-semibold text-slate-900 dark:text-white' : 'text-muted-foreground'}`}
                                             >
                                                 <span dir="auto" className="min-w-0 truncate">
                                                     {row.last && (
@@ -265,7 +268,9 @@ export default function Messages({ conversations, requests, friends, contacts, c
                         )}
                         {people.length > 0 && (
                             <>
-                                {!composing && <h2 className="text-muted-foreground px-2 pt-3 pb-1 text-[13px] font-semibold">{t('Friends')}</h2>}
+                                {!composing && (
+                                    <h2 className="text-muted-foreground px-2 pt-3 pb-1 text-[0.8125rem] font-semibold">{t('Friends')}</h2>
+                                )}
                                 {people.map((friend) => (
                                     <button
                                         key={friend.id}
@@ -274,7 +279,7 @@ export default function Messages({ conversations, requests, friends, contacts, c
                                         className="flex w-full items-center gap-3 rounded-lg p-2 text-start hover:bg-slate-100 dark:hover:bg-neutral-800"
                                     >
                                         <UserAvatar person={friend} className="size-11" />
-                                        <span dir="auto" className="min-w-0 flex-1 truncate text-[15px] font-medium">
+                                        <span dir="auto" className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">
                                             {friend.name}
                                         </span>
                                     </button>
@@ -282,14 +287,14 @@ export default function Messages({ conversations, requests, friends, contacts, c
                             </>
                         )}
                         {composing && people.length === 0 && (
-                            <p className="text-muted-foreground px-2 py-8 text-center text-[15px]">
+                            <p className="text-muted-foreground px-2 py-8 text-center text-[0.9375rem]">
                                 {needle ? t('Nothing found.') : t('No friends yet.')}
                             </p>
                         )}
                     </div>
                 </aside>
 
-                <div className={`min-h-0 min-w-0 bg-[#f0f2f5] p-0 md:p-3 dark:bg-neutral-950 ${conversation ? 'flex' : 'hidden md:flex'}`}>
+                <div className={`bg-page min-h-0 min-w-0 p-0 md:p-3 ${conversation ? 'flex' : 'hidden md:flex'}`}>
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white md:rounded-lg md:shadow-sm dark:bg-neutral-900">
                         {conversation ? (
                             <Chat key={conversation.id} conversation={conversation} messages={messages} />
@@ -298,7 +303,7 @@ export default function Messages({ conversations, requests, friends, contacts, c
                                 <span className="from-brand-soft flex size-24 items-center justify-center rounded-full bg-gradient-to-br to-white shadow-inner dark:from-neutral-800 dark:to-neutral-900">
                                     <MessageCircle className="text-brand size-12" />
                                 </span>
-                                <p className="text-[17px] font-bold">{t('No chat selected')}</p>
+                                <p className="text-[1.0625rem] font-bold">{t('No chat selected')}</p>
                             </div>
                         )}
                     </div>
@@ -384,7 +389,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                         <span dir="auto" className="block truncate font-semibold">
                             {conversation.with.name}
                         </span>
-                        <span className="text-muted-foreground block text-[13px]">
+                        <span className="text-muted-foreground block text-[0.8125rem]">
                             {online
                                 ? t('Active now')
                                 : conversation.with.last_seen_at
@@ -427,7 +432,9 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                         <div dir="auto" className="font-semibold">
                             {conversation.with.name}
                         </div>
-                        <p className="text-muted-foreground text-[15px]">{t('Say hello! Messages are translated into your friend’s language.')}</p>
+                        <p className="text-muted-foreground text-[0.9375rem]">
+                            {t('Say hello! Messages are translated into your friend’s language.')}
+                        </p>
                     </div>
                 )}
                 {messages.map((message, i) => (
@@ -521,7 +528,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                                 <button
                                     key={e}
                                     type="button"
-                                    className="rounded-md p-1 text-[22px] leading-none hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    className="rounded-md p-1 text-[1.375rem] leading-none hover:bg-slate-100 dark:hover:bg-neutral-800"
                                     onClick={() => {
                                         form.setData('body', form.data.body + e);
                                         setEmoji(false);
@@ -583,7 +590,7 @@ function Chat({ conversation, messages }: { conversation: NonNullable<Props['con
                                 onKeyDown={onKeyDown}
                                 onPaste={(e) => e.clipboardData.files.length > 0 && addFiles(e.clipboardData.files)}
                                 placeholder={t('Aa')}
-                                className="field-sizing-content max-h-40 min-h-10 min-w-0 flex-1 resize-none bg-transparent py-2 ps-4 text-[15px] leading-6 outline-none"
+                                className="field-sizing-content max-h-40 min-h-10 min-w-0 flex-1 resize-none bg-transparent py-2 ps-4 text-[0.9375rem] leading-6 outline-none"
                             />
                             <button type="button" className={barButton} aria-label={t('Emoji')} title={t('Emoji')} onClick={() => setEmoji(!emoji)}>
                                 <Smile />

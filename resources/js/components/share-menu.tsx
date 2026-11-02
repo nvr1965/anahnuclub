@@ -12,7 +12,7 @@ interface Network {
 }
 
 const badge = (color: string, content: ReactNode) => (
-    <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white ${color}`}>{content}</span>
+    <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[0.8125rem] font-bold text-white ${color}`}>{content}</span>
 );
 
 // WhatsApp, Telegram and Viber open the app (or its site) with the contact list to pick from.

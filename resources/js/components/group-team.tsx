@@ -106,7 +106,7 @@ export function GroupTeam({ group, team, myRole }: { group: { slug: string; name
                                 <li key={m.id} className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-slate-50 dark:hover:bg-neutral-800">
                                     <UserAvatar person={m} className="size-10" />
                                     <div className="min-w-0 flex-1">
-                                        <div dir="auto" className="truncate text-[15px] font-medium">
+                                        <div dir="auto" className="truncate text-[0.9375rem] font-medium">
                                             {m.name}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-1.5">
@@ -215,7 +215,7 @@ export function OfferBanner({ group, offer }: { group: { slug: string; name: str
     return (
         <section className="border-brand/30 bg-brand-soft/50 flex flex-wrap items-center gap-3 rounded-lg border p-4">
             <UserAvatar person={offer.from} className="size-10" />
-            <p className="min-w-0 flex-1 text-[15px]">{text}</p>
+            <p className="min-w-0 flex-1 text-[0.9375rem]">{text}</p>
             <div className="flex gap-2">
                 <button
                     type="button"

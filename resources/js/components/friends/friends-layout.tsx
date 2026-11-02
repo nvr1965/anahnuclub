@@ -37,7 +37,7 @@ export function FriendsMenu({ active, menu }: { active: FriendsSection; menu: Fr
                     <Link
                         key={key}
                         href={route(name)}
-                        className={`flex items-center gap-3 rounded-lg px-2 py-2 text-[15px] font-medium ${on ? 'bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/10'}`}
+                        className={`flex items-center gap-3 rounded-lg px-2 py-2 text-[0.9375rem] font-medium ${on ? 'bg-black/5 dark:bg-white/10' : 'hover:bg-black/5 dark:hover:bg-white/10'}`}
                     >
                         <span
                             className={`flex size-9 shrink-0 items-center justify-center rounded-full ${on ? 'bg-brand text-white' : 'bg-slate-200 text-slate-800 dark:bg-neutral-700 dark:text-neutral-100'}`}

@@ -26,7 +26,7 @@ export default function People({ people, total, q, country, lang, countries, lan
     const params = (patch: Record<string, string | null>) =>
         Object.fromEntries(Object.entries({ q: query || null, country, lang, ...patch }).filter(([, v]) => v));
     const filter = (patch: Record<string, string | null>) => router.get(route('people.index'), params(patch), { preserveState: true, replace: true });
-    const select = 'focus:ring-brand rounded-full bg-white py-2 ps-3 pe-8 text-[15px] shadow-sm outline-none focus:ring-2 dark:bg-neutral-900';
+    const select = 'focus:ring-brand rounded-full bg-white py-2 ps-3 pe-8 text-[0.9375rem] shadow-sm outline-none focus:ring-2 dark:bg-neutral-900';
     const [query, setQuery] = useState(q);
     const first = useRef(true);
 
@@ -60,7 +60,7 @@ export default function People({ people, total, q, country, lang, countries, lan
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t('Search by name')}
-                            className="focus:ring-brand w-full rounded-full bg-white py-2 ps-9 pe-3 text-[15px] shadow-sm outline-none focus:ring-2 dark:bg-neutral-900"
+                            className="focus:ring-brand w-full rounded-full bg-white py-2 ps-9 pe-3 text-[0.9375rem] shadow-sm outline-none focus:ring-2 dark:bg-neutral-900"
                         />
                     </label>
                 </div>
@@ -107,7 +107,7 @@ export default function People({ people, total, q, country, lang, countries, lan
                 </div>
 
                 {people.data.length === 0 ? (
-                    <p className="text-muted-foreground py-6 text-center text-[15px]">{t('Nobody found.')}</p>
+                    <p className="text-muted-foreground py-6 text-center text-[0.9375rem]">{t('Nobody found.')}</p>
                 ) : (
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                         {people.data.map((person) => (

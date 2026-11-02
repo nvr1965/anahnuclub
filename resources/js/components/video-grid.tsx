@@ -31,10 +31,10 @@ export function VideoGrid({ videos }: { videos: VideoItem[] }) {
                             </span>
                         </span>
                     </div>
-                    <div dir="auto" className="mt-1.5 line-clamp-2 text-[15px] leading-snug font-semibold">
+                    <div dir="auto" className="mt-1.5 line-clamp-2 text-[0.9375rem] leading-snug font-semibold">
                         {video.title}
                     </div>
-                    <div className="text-muted-foreground text-[13px]">
+                    <div className="text-muted-foreground text-[0.8125rem]">
                         {video.author && <>{video.author.name} · </>}
                         {relativeTime(video.created_at, locale)}
                         {!video.author && video.provider !== 'file' && <> · {video.provider === 'youtube' ? 'YouTube' : 'Vimeo'}</>}
