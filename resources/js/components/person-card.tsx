@@ -25,7 +25,7 @@ export function PersonCard({ person, children }: { person: Person; children: Rea
                 )}
             </Link>
             <div className="space-y-1.5 p-3">
-                <Link href={route('people.show', person.id)} dir="auto" className="block truncate text-[15px] font-semibold hover:underline">
+                <Link href={route('people.show', person.id)} dir="auto" className="block truncate text-[0.9375rem] font-semibold hover:underline">
                     {person.name}
                 </Link>
                 {children}

@@ -11,11 +11,11 @@ export interface FriendCard extends Person {
 export function MutualLine({ person, className = '' }: { person: FriendCard; className?: string }) {
     const t = useT();
     if (!person.mutual) {
-        return <p className={`text-muted-foreground h-5 text-[13px] ${className}`} />;
+        return <p className={`text-muted-foreground h-5 text-[0.8125rem] ${className}`} />;
     }
 
     return (
-        <p className={`text-muted-foreground flex h-5 items-center gap-1.5 text-[13px] ${className}`}>
+        <p className={`text-muted-foreground flex h-5 items-center gap-1.5 text-[0.8125rem] ${className}`}>
             <span className="flex -space-x-1.5 rtl:space-x-reverse">
                 {(person.mutual_people ?? []).slice(0, 2).map((p) => (
                     <UserAvatar key={p.id} person={{ ...p, online: false }} className="size-4 ring-1 ring-white dark:ring-neutral-900" />

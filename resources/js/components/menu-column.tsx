@@ -9,7 +9,7 @@ import { CalendarDays, Clapperboard, Contact, Film, House, Images, MessageCircle
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
     const t = useT();
     const { auth } = usePage<SharedData>().props;
-    const row = 'flex items-center gap-3 rounded-lg px-2 py-2 text-[15px] font-medium hover:bg-black/5 dark:hover:bg-white/10';
+    const row = 'flex items-center gap-3 rounded-lg px-2 py-2 text-[0.9375rem] font-medium hover:bg-black/5 dark:hover:bg-white/10';
 
     return (
         <nav className="space-y-1">

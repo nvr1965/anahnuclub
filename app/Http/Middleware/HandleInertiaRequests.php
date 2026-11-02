@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\SocialLoginController;
 use App\Models\Language;
 use App\Models\Page;
 use App\Models\Setting;
+use App\Support\Skins;
 use App\Translation\InterfaceStrings;
 use Closure;
 use Illuminate\Http\Request;
@@ -51,6 +52,9 @@ class HandleInertiaRequests extends Middleware
             'locale' => $locale,
             'dir' => $languages->firstWhere('code', $locale)?->rtl ? 'rtl' : 'ltr',
             'languages' => $languages->map->only('code', 'native_name', 'rtl')->values(),
+            // The interface style (App\Support\Skins) and the ones on offer.
+            'skin' => fn () => Skins::current($request),
+            'skins' => fn () => Skins::enabled(),
             // About 40 KB of interface text. The page keeps it after the first load and says which version
             // it has (X-UI-Strings); moving on to the next page then sends it again only when it changed.
             'translations' => fn () => $request->header('X-Inertia') && $request->header('X-UI-Strings') === $this->uiStringsVersion($locale)

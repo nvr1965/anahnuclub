@@ -257,10 +257,10 @@ function ChatWindow({ docked }: { docked: Docked }) {
                 >
                     <UserAvatar person={person ? { ...person, online: !!online } : null} className="size-8" />
                     <span className="min-w-0">
-                        <span dir="auto" className="block truncate text-[15px] leading-tight font-semibold">
+                        <span dir="auto" className="block truncate text-[0.9375rem] leading-tight font-semibold">
                             {person?.name ?? '…'}
                         </span>
-                        <span className="text-muted-foreground block truncate text-[12px] leading-tight">
+                        <span className="text-muted-foreground block truncate text-[0.75rem] leading-tight">
                             {online ? t('Active now') : lastSeen ? t('Last seen :time', { time: relativeTime(lastSeen, locale) }) : ''}
                         </span>
                     </span>
@@ -309,7 +309,9 @@ function ChatWindow({ docked }: { docked: Docked }) {
                         <div dir="auto" className="font-semibold">
                             {person.name}
                         </div>
-                        <p className="text-muted-foreground text-[13px]">{t('Say hello! Messages are translated into your friend’s language.')}</p>
+                        <p className="text-muted-foreground text-[0.8125rem]">
+                            {t('Say hello! Messages are translated into your friend’s language.')}
+                        </p>
                     </div>
                 )}
                 {messages.map((message, i) => (
@@ -324,7 +326,7 @@ function ChatWindow({ docked }: { docked: Docked }) {
 
             {c && (c.blocked || c.request) ? (
                 // Answering a request or lifting a block is done on the full page, where all the choices are.
-                <div className="text-muted-foreground border-t border-slate-200 p-3 text-center text-[13px] dark:border-neutral-800">
+                <div className="text-muted-foreground border-t border-slate-200 p-3 text-center text-[0.8125rem] dark:border-neutral-800">
                     {c.request && !c.blocked
                         ? t(':name is not your friend and wants to write to you. Answer to accept, or choose:', { name: c.with.name })
                         : t('You can no longer reply in this chat.')}{' '}
@@ -347,7 +349,7 @@ function ChatWindow({ docked }: { docked: Docked }) {
                             {files.map((file, i) => (
                                 <span
                                     key={i}
-                                    className="inline-flex max-w-full items-center gap-1 rounded-lg bg-slate-100 py-0.5 ps-1 pe-0.5 text-[12px] dark:bg-neutral-800"
+                                    className="inline-flex max-w-full items-center gap-1 rounded-lg bg-slate-100 py-0.5 ps-1 pe-0.5 text-[0.75rem] dark:bg-neutral-800"
                                 >
                                     {file.type.startsWith('image/') ? (
                                         <img src={URL.createObjectURL(file)} alt="" className="size-7 rounded object-cover" />
@@ -364,14 +366,14 @@ function ChatWindow({ docked }: { docked: Docked }) {
                             ))}
                         </div>
                     )}
-                    {error && <p className="px-1 pb-1 text-[12px] text-red-600">{error}</p>}
+                    {error && <p className="px-1 pb-1 text-[0.75rem] text-red-600">{error}</p>}
                     {emoji && (
                         <div className="absolute end-2 bottom-12 z-10 grid w-[232px] grid-cols-6 gap-0.5 rounded-xl bg-white p-2 shadow-lg ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10">
                             {EMOJI.map((e) => (
                                 <button
                                     key={e}
                                     type="button"
-                                    className="rounded-md p-1 text-[22px] leading-none hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                    className="rounded-md p-1 text-[1.375rem] leading-none hover:bg-slate-100 dark:hover:bg-neutral-800"
                                     onClick={() => {
                                         setBody(body + e);
                                         setEmoji(false);
@@ -423,7 +425,7 @@ function ChatWindow({ docked }: { docked: Docked }) {
                                 }}
                                 onPaste={(e) => e.clipboardData.files.length > 0 && addFiles(e.clipboardData.files)}
                                 placeholder={t('Aa')}
-                                className="field-sizing-content max-h-28 min-h-9 min-w-0 flex-1 resize-none bg-transparent py-2 ps-3 text-[15px] leading-5 outline-none"
+                                className="field-sizing-content max-h-28 min-h-9 min-w-0 flex-1 resize-none bg-transparent py-2 ps-3 text-[0.9375rem] leading-5 outline-none"
                             />
                             <button type="button" className={iconButton} aria-label={t('Emoji')} title={t('Emoji')} onClick={() => setEmoji(!emoji)}>
                                 <Smile />
