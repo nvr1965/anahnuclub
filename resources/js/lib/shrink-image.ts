@@ -47,3 +47,32 @@ export function videoFrame(file: File): Promise<File | null> {
         setTimeout(() => done(null), 8000);
     });
 }
+
+/** Size and length of a video file, read by the browser without uploading it. */
+export function videoInfo(file: File): Promise<{ width: number; height: number; duration: number } | null> {
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        const url = URL.createObjectURL(file);
+        const done = (result: { width: number; height: number; duration: number } | null) => {
+            URL.revokeObjectURL(url);
+            resolve(result);
+        };
+        video.preload = 'metadata';
+        video.muted = true;
+        video.onloadedmetadata = () => {
+            // Recordings of the browser itself (WebM) often report no length until played to the end.
+            if (video.duration === Infinity) {
+                video.currentTime = 1e7;
+                video.ontimeupdate = () => {
+                    video.ontimeupdate = null;
+                    done({ width: video.videoWidth, height: video.videoHeight, duration: video.duration });
+                };
+                return;
+            }
+            done({ width: video.videoWidth, height: video.videoHeight, duration: video.duration || 0 });
+        };
+        video.onerror = () => done(null);
+        video.src = url;
+        setTimeout(() => done(null), 8000);
+    });
+}

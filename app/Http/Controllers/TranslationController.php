@@ -20,7 +20,7 @@ class TranslationController extends Controller
     {
         $items = $request->validate([
             'items' => ['required', 'array', 'max:5'],
-            'items.*.type' => ['required', 'in:post,comment,group,event,video,message'],
+            'items.*.type' => ['required', 'in:post,comment,group,event,video,message,moment'],
             'items.*.id' => ['required', 'integer'],
         ])['items'];
 
@@ -35,12 +35,13 @@ class TranslationController extends Controller
                 // Only the people in the chat, and not their own messages.
                 'message' => ! $model || $model->user_id === $request->user()?->id
                     || ! $model->conversation->users()->whereKey($request->user()?->id)->exists(),
+                'moment' => ! $model || ! $request->user() || ! $model->isVisibleTo($request->user()),
                 default => false,
             };
             if (! $model || $hidden) {
                 continue;
             }
-            $onDemand = config('services.translation.on_demand') || $item['type'] === 'message';
+            $onDemand = config('services.translation.on_demand') || in_array($item['type'], ['message', 'moment'], true);
             if (! $onDemand && ! TranslationPayload::isFresh($model)) {
                 continue;
             }

@@ -7,6 +7,7 @@ use App\Models\Comment;
 use App\Models\Event;
 use App\Models\Group;
 use App\Models\Message;
+use App\Models\Moment;
 use App\Models\Photo;
 use App\Models\Post;
 use App\Models\User;
@@ -50,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
             'video' => Video::class,
             'event' => Event::class,
             'photo' => Photo::class,
+            'moment' => Moment::class,
         ]);
     }
 }

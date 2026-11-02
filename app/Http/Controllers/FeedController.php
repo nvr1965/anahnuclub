@@ -29,6 +29,7 @@ class FeedController extends Controller
         return Inertia::render('feed', [
             'posts' => PostResource::collection($posts),
             'sidebar' => CommunitySidebar::for($request->user()),
+            'moments' => MomentController::tray($request->user()),
         ]);
     }
 

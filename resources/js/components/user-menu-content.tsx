@@ -6,7 +6,7 @@ import { useT } from '@/lib/i18n';
 import { canPrompt, isInstalled, isIos, onInstallChange, promptInstall } from '@/lib/install-app';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
-import { CalendarDays, Clapperboard, Images, LogOut, Settings, Shield, Smartphone, UserRound } from 'lucide-react';
+import { CalendarDays, Clapperboard, Film, Images, LogOut, Settings, Shield, Smartphone, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface UserMenuContentProps {
@@ -39,6 +39,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 {/* The side menu is hidden on phones, so its sections are reachable from here. */}
                 {[
                     { href: route('people.show', { user: user.id, tab: 'photos' }), icon: Images, label: t('Photos') },
+                    { href: route('clips.index'), icon: Film, label: t('Clips') },
                     { href: route('videos.index'), icon: Clapperboard, label: t('Videos') },
                     { href: route('events.index'), icon: CalendarDays, label: t('Events') },
                 ].map((item) => (

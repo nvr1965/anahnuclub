@@ -15,7 +15,12 @@ class Video extends Model
 
     protected array $translatable = ['title', 'description'];
 
-    protected $fillable = ['user_id', 'group_id', 'title', 'description', 'locale', 'provider', 'provider_id', 'url', 'path', 'thumb_path', 'legacy_source', 'legacy_id', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'title', 'description', 'locale', 'provider', 'provider_id', 'url', 'path', 'thumb_path', 'legacy_source', 'legacy_id', 'is_clip', 'width', 'height', 'duration', 'views_count', 'created_at', 'updated_at'];
+
+    protected $casts = ['is_clip' => 'boolean'];
+
+    /** Longest clip, in seconds. */
+    public const CLIP_SECONDS = 90;
 
     public function user(): BelongsTo
     {
@@ -66,6 +71,9 @@ class Video extends Model
             'embed_url' => $this->embedUrl(),
             'file_url' => $this->fileUrl(),
             'thumb' => $this->thumbUrl(),
+            'is_clip' => (bool) $this->is_clip,
+            'width' => $this->width,
+            'height' => $this->height,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

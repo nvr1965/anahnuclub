@@ -3,7 +3,7 @@ import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, Clapperboard, Contact, House, Images, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
+import { CalendarDays, Clapperboard, Contact, Film, House, Images, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
@@ -60,6 +60,14 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                         <Images className="size-5" />
                     </span>
                     {t('Photos')}
+                </Link>
+            )}
+            {auth.user && (
+                <Link href={route('clips.index')} className={row}>
+                    <span className="flex size-9 items-center justify-center rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 text-white">
+                        <Film className="size-5" />
+                    </span>
+                    {t('Clips')}
                 </Link>
             )}
             <Link href={route('videos.index')} className={row}>

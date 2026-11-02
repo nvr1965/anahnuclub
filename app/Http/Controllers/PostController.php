@@ -23,6 +23,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,8 +39,17 @@ class PostController extends Controller
             'video' => ['nullable', 'file', 'mimetypes:'.VideoController::FILE_TYPES, 'max:204800'],
             'video_thumb' => ['nullable', 'image', 'max:5120'],
             'no_link_preview' => ['nullable', 'boolean'],
+            // A clip: a vertical video of up to a minute and a half, also shown in Clips.
+            'clip' => ['nullable', 'boolean'],
+            'video_width' => ['nullable', 'integer', 'min:1', 'max:8000'],
+            'video_height' => ['nullable', 'integer', 'min:1', 'max:8000'],
+            'video_duration' => ['nullable', 'numeric', 'min:0', 'max:'.(Video::CLIP_SECONDS + 1), 'required_if_accepted:clip'],
             ...self::audienceRules(),
         ]);
+        $clip = ($data['clip'] ?? false) && $request->hasFile('video');
+        if ($clip && $request->file('video')->getSize() > 50 * 1024 * 1024) {
+            throw ValidationException::withMessages(['video' => __('A clip can be up to 50 MB.')]);
+        }
         // "Embed" code copied from Facebook, Instagram, X… becomes the post's address, shown as a player.
         $text = Embed::unwrap((string) ($data['body'] ?? ''));
         $images = $request->file('images', []);
@@ -61,6 +71,10 @@ class PostController extends Controller
                 'thumb_path' => $request->hasFile('video_thumb') ? ImageStore::save($request->file('video_thumb'), 'videos/thumbs', 960) : null,
                 'title' => Str::limit(trim(strtok($text, "\n") ?: '') ?: __('Video').' · '.$request->user()->name, 190, '…'),
                 'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
+                'is_clip' => $clip,
+                'width' => $data['video_width'] ?? null,
+                'height' => $data['video_height'] ?? null,
+                'duration' => isset($data['video_duration']) ? (int) ceil($data['video_duration']) : null,
             ]);
         }
 

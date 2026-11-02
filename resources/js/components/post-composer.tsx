@@ -5,13 +5,20 @@ import { LinkPreview } from '@/components/link-preview';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
-import { shrinkImage, videoFrame } from '@/lib/shrink-image';
+import { shrinkImage, videoFrame, videoInfo } from '@/lib/shrink-image';
 import { type Audience, type EmbedCard, type LinkCard, type SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
-import { Camera, ChevronDown, ImagePlus, X } from 'lucide-react';
+import { Camera, ChevronDown, Film, ImagePlus, X } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 
 const MAX_PHOTOS = 20;
+
+/** A clip: a vertical video of up to a minute and a half, shown in the feed and in Clips. */
+const CLIP_SECONDS = 90;
+const CLIP_BYTES = 50 * 1024 * 1024;
+
+/** Reset after posting or cancelling. */
+const MEDIA = ['body', 'images', 'video', 'video_thumb', 'audience_default', 'clip', 'video_width', 'video_height', 'video_duration'] as const;
 
 /** "What's on your mind?" box: a pill that opens into a text area, with pictures or a video, picked or shot with the camera. */
 export function PostComposer({
@@ -30,6 +37,12 @@ export function PostComposer({
     const [open, setOpen] = useState(!!initialBody);
     const [preparing, setPreparing] = useState(false);
     const [shooting, setShooting] = useState(false);
+    // Opened from Clips with "Make a clip": straight to the camera.
+    const [clipping, setClipping] = useState(
+        () => !groupId && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('clip'),
+    );
+    const [clipError, setClipError] = useState('');
+    const clipPicker = useRef<HTMLInputElement>(null);
     const [choosingAudience, setChoosingAudience] = useState(false);
     const audienceLabels = useAudienceLabels();
     const picker = useRef<HTMLInputElement>(null);
@@ -44,6 +57,10 @@ export function PostComposer({
         audience_ids: number[];
         audience_default: boolean;
         no_link_preview: boolean;
+        clip: boolean;
+        video_width: number | null;
+        video_height: number | null;
+        video_duration: number | null;
     }>({
         body: initialBody ?? '',
         group_id: groupId ?? null,
@@ -54,6 +71,10 @@ export function PostComposer({
         audience_ids: [],
         audience_default: false,
         no_link_preview: false,
+        clip: false,
+        video_width: null,
+        video_height: null,
+        video_duration: null,
     });
     // The first link typed shows as a card, as on Facebook; closing it keeps the link as text only.
     const [link, setLink] = useState<LinkCard | null>(null);
@@ -106,11 +127,41 @@ export function PostComposer({
         form.setData((data) => ({
             ...data,
             images: [...data.images, ...shrunk].slice(0, MAX_PHOTOS),
-            ...(video ? { video, video_thumb: thumb } : {}),
+            ...(video ? { video, video_thumb: thumb, clip: false } : {}),
         }));
         setPreparing(false);
         if (picker.current) picker.current.value = '';
         if (nativeCamera.current) nativeCamera.current.value = '';
+    };
+
+    /** A clip from the camera or the gallery: checked for length here, before a long upload. */
+    const addClip = async (file: File | null | undefined) => {
+        if (clipPicker.current) clipPicker.current.value = '';
+        setClipping(false);
+        if (!file) return;
+        setOpen(true);
+        setClipError('');
+        setPreparing(true);
+        const info = await videoInfo(file);
+        if (info && info.duration > CLIP_SECONDS + 1) {
+            setPreparing(false);
+            return setClipError(t('A clip can be up to :n seconds.', { n: CLIP_SECONDS }));
+        }
+        if (file.size > CLIP_BYTES) {
+            setPreparing(false);
+            return setClipError(t('A clip can be up to 50 MB.'));
+        }
+        const thumb = await videoFrame(file);
+        form.setData((data) => ({
+            ...data,
+            video: file,
+            video_thumb: thumb,
+            clip: true,
+            video_width: info?.width || null,
+            video_height: info?.height || null,
+            video_duration: info ? Math.round(info.duration * 10) / 10 : null,
+        }));
+        setPreparing(false);
     };
 
     // In-page camera over HTTPS; elsewhere the phone's own camera app through a file field.
@@ -126,7 +177,7 @@ export function PostComposer({
             forceFormData: form.data.images.length > 0 || form.data.video !== null,
             onSuccess: () => {
                 // The audience stays as chosen for the next post, as on Facebook.
-                form.reset('body', 'images', 'video', 'video_thumb', 'audience_default');
+                form.reset(...MEDIA);
                 setLink(null);
                 setEmbed(null);
                 setDismissed(null);
@@ -147,6 +198,17 @@ export function PostComposer({
             <button type="button" onClick={openCamera} className={tool} title={t('Camera')} aria-label={t('Camera')}>
                 <Camera className="size-5 text-rose-500" /> <span className={open ? 'hidden sm:inline' : ''}>{t('Camera')}</span>
             </button>
+            {!groupId && (
+                <button
+                    type="button"
+                    onClick={() => (cameraAvailable() ? setClipping(true) : clipPicker.current?.click())}
+                    className={tool}
+                    title={t('Clip')}
+                    aria-label={t('Clip')}
+                >
+                    <Film className="size-5 text-fuchsia-600" /> <span className={open ? 'hidden sm:inline' : ''}>{t('Clip')}</span>
+                </button>
+            )}
         </div>
     );
 
@@ -161,6 +223,17 @@ export function PostComposer({
                 className="hidden"
                 onChange={(e) => addFiles(e.target.files)}
             />
+            <input ref={clipPicker} type="file" accept="video/*" className="hidden" onChange={(e) => addClip(e.target.files?.[0])} />
+            {clipping && (
+                <CameraCapture
+                    vertical
+                    photo={false}
+                    maxSeconds={CLIP_SECONDS}
+                    onClose={() => setClipping(false)}
+                    onVideo={addClip}
+                    onPick={() => clipPicker.current?.click()}
+                />
+            )}
             {shooting && (
                 <CameraCapture
                     onClose={() => setShooting(false)}
@@ -246,12 +319,22 @@ export function PostComposer({
                 </div>
             )}
             {videoPreview && (
-                <div className="relative mt-3">
-                    <video src={videoPreview} controls playsInline className="max-h-80 w-full rounded-lg bg-black" />
+                <div className={`relative mt-3 ${form.data.clip ? 'mx-auto w-fit' : ''}`}>
+                    <video
+                        src={videoPreview}
+                        controls
+                        playsInline
+                        className={form.data.clip ? 'aspect-[9/16] max-h-96 rounded-lg bg-black object-cover' : 'max-h-80 w-full rounded-lg bg-black'}
+                    />
+                    {form.data.clip && (
+                        <span className="absolute start-2 top-2 inline-flex items-center gap-1 rounded-full bg-fuchsia-600 px-2 py-0.5 text-xs font-semibold text-white">
+                            <Film className="size-3.5" /> {t('Clip')}
+                        </span>
+                    )}
                     <button
                         type="button"
                         aria-label={t('Remove')}
-                        onClick={() => form.setData((data) => ({ ...data, video: null, video_thumb: null }))}
+                        onClick={() => form.setData((data) => ({ ...data, video: null, video_thumb: null, clip: false }))}
                         className="absolute end-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
                     >
                         <X className="size-4" />
@@ -269,6 +352,7 @@ export function PostComposer({
                 </div>
             )}
             {form.errors.video && <p className="mt-2 text-sm text-red-600">{form.errors.video}</p>}
+            {(clipError || form.errors.video_duration) && <p className="mt-2 text-sm text-red-600">{clipError || form.errors.video_duration}</p>}
             {form.errors.images && <p className="mt-2 text-sm text-red-600">{form.errors.images}</p>}
             {Object.keys(form.errors).some((k) => k.startsWith('images.')) && (
                 <p className="mt-2 text-sm text-red-600">{t('One of the pictures could not be used.')}</p>
@@ -280,7 +364,7 @@ export function PostComposer({
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={() => (form.reset('body', 'images', 'video', 'video_thumb', 'audience_default'), setOpen(false), onCancel?.())}
+                            onClick={() => (form.reset(...MEDIA), setClipError(''), setOpen(false), onCancel?.())}
                             className="text-muted-foreground rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap hover:bg-slate-100 dark:hover:bg-neutral-800"
                         >
                             {t('Cancel')}
