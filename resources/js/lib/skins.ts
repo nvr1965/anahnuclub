@@ -4,10 +4,11 @@ import { router, usePage } from '@inertiajs/react';
 /** Names and one-line descriptions, as interface text keys. The styles are the site's own, only in the spirit of familiar networks. */
 export const skinInfo: Record<Skin, { name: string; about: string }> = {
     club: { name: 'Club', about: 'Cards on grey, three columns, the menu on the side' },
-    community: { name: 'Community', about: 'Denser and squarer, more posts on a screen' },
+    community: { name: 'Community', about: 'A blue top bar, denser and squarer, more posts on a screen' },
     large: { name: 'Large text', about: 'Bigger letters and buttons, stronger contrast' },
-    stream: { name: 'Stream', about: 'One column of posts split by thin lines, menu at the bottom on phones' },
-    showcase: { name: 'Showcase', about: 'Photos first and edge to edge, a photo grid in profiles' },
+    stream: { name: 'Stream', about: 'A big menu on the side instead of the top bar, one column of posts split by thin lines' },
+    showcase: { name: 'Showcase', about: 'A narrow strip of icons, a narrow feed with photos first, a photo grid in profiles' },
+    forum: { name: 'Forum', about: 'A wide search on top, posts as framed cards with buttons in pills' },
 };
 
 /** The style shown now, and a way to switch: the page changes at once, the server remembers it (for members on every device). */
