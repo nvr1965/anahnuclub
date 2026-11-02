@@ -6,6 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 /** Longest clip, so a forgotten recording does not grow past the upload limit. */
 const MAX_SECONDS = 5 * 60;
 
+/** Vertical shots (moments and clips): a phone-sized picture at a modest bitrate, so files stay small. */
+const VERTICAL_BITRATE = 1_500_000;
+
 const css = `
 .cam-ov{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:16px;box-sizing:border-box}
 .cam-x,.cam-flip{position:absolute;top:max(14px,env(safe-area-inset-top));width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -14,6 +17,9 @@ const css = `
 .cam-fr{position:relative;width:min(84vw,480px)}
 .cam-fr video{display:block;width:100%;max-height:58vh;object-fit:cover;border-radius:12px;background:#000}
 .cam-fr video.mirror{transform:scaleX(-1)}
+.cam-fr.vert{width:auto;height:min(68vh,calc(84vw*16/9));aspect-ratio:9/16}
+.cam-fr.vert video{height:100%;max-height:none}
+.cam-b.gal{width:48px;height:48px;border-width:2px;background:rgba(255,255,255,.12)}
 .cam-rec{position:absolute;top:10px;inset-inline-end:10px;background:#d63c3c;color:#fff;padding:4px 10px;border-radius:20px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
 .cam-rec b{animation:cam-blink 1s infinite}
 .cam-bar{margin-top:22px;display:flex;gap:28px;align-items:center;justify-content:center}
@@ -45,11 +51,21 @@ export function CameraCapture({
     onVideo,
     onClose,
     video: allowVideo = true,
+    photo: allowPhoto = true,
+    vertical = false,
+    maxSeconds = MAX_SECONDS,
+    onPick,
 }: {
-    onPhoto: (file: File) => void;
+    onPhoto?: (file: File) => void;
     onVideo: (file: File) => void;
     onClose: () => void;
     video?: boolean;
+    photo?: boolean;
+    /** A tall 9:16 frame, as for moments and clips. */
+    vertical?: boolean;
+    maxSeconds?: number;
+    /** Shows a button to take a file from the gallery instead. */
+    onPick?: () => void;
 }) {
     const t = useT();
     const { dir } = usePage<SharedData>().props;
@@ -68,7 +84,12 @@ export function CameraCapture({
         let cancelled = false;
         setReady(false);
         navigator.mediaDevices
-            .getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: allowVideo })
+            .getUserMedia({
+                video: vertical
+                    ? { facingMode: facing, width: { ideal: 720 }, height: { ideal: 1280 }, aspectRatio: { ideal: 9 / 16 } }
+                    : { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                audio: allowVideo,
+            })
             .then((stream) => {
                 // Closed while the browser was still asking: let the camera go at once.
                 if (cancelled) return stream.getTracks().forEach((track) => track.stop());
@@ -83,7 +104,7 @@ export function CameraCapture({
             streamRef.current?.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
         };
-    }, [facing, allowVideo]);
+    }, [facing, allowVideo, vertical]);
 
     useEffect(() => {
         if (!recording) return;
@@ -92,7 +113,7 @@ export function CameraCapture({
     }, [recording]);
 
     useEffect(() => {
-        if (recording && seconds >= MAX_SECONDS) stopRecording();
+        if (recording && seconds >= maxSeconds) stopRecording();
     });
 
     useEffect(() => {
@@ -110,7 +131,7 @@ export function CameraCapture({
         const context = canvas.getContext('2d')!;
         // The front camera is shown mirrored; the photo is saved the way others see you.
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => blob && onPhoto(new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' })), 'image/jpeg', 0.92);
+        canvas.toBlob((blob) => blob && onPhoto?.(new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' })), 'image/jpeg', 0.92);
     };
 
     const startRecording = () => {
@@ -118,7 +139,10 @@ export function CameraCapture({
         if (!stream) return;
         const type = recordingType();
         chunksRef.current = [];
-        const recorder = new MediaRecorder(stream, { ...(type ? { mimeType: type } : {}), videoBitsPerSecond: 2_500_000 });
+        const recorder = new MediaRecorder(stream, {
+            ...(type ? { mimeType: type } : {}),
+            videoBitsPerSecond: vertical ? VERTICAL_BITRATE : 2_500_000,
+        });
         recorder.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
         recorder.onstop = () => {
             const mime = (recorder.mimeType || type || 'video/webm').split(';')[0];
@@ -185,11 +209,12 @@ export function CameraCapture({
             {error ? (
                 <div className="cam-err">{t('No access to the camera or microphone.')}</div>
             ) : (
-                <div className="cam-fr">
+                <div className={vertical ? 'cam-fr vert' : 'cam-fr'}>
                     <video ref={videoRef} autoPlay playsInline muted className={facing === 'user' ? 'mirror' : ''} />
                     {recording && (
                         <div className="cam-rec">
                             <b>●</b> REC {time}
+                            {maxSeconds < MAX_SECONDS && ` / ${Math.floor(maxSeconds / 60)}:${String(maxSeconds % 60).padStart(2, '0')}`}
                         </div>
                     )}
                 </div>
@@ -197,7 +222,24 @@ export function CameraCapture({
 
             {!error && (
                 <div className="cam-bar">
-                    {!recording && (
+                    {!recording && onPick && (
+                        <button type="button" className="cam-b gal" aria-label={t('From the gallery')} title={t('From the gallery')} onClick={onPick}>
+                            <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <rect x="3" y="4" width="18" height="16" rx="2" />
+                                <path d="M3 16l5-5 4 4 3-3 6 6" />
+                            </svg>
+                        </button>
+                    )}
+                    {!recording && allowPhoto && onPhoto && (
                         <button type="button" className="cam-b ph" aria-label={t('Photo')} title={t('Photo')} onClick={takePhoto} disabled={!ready}>
                             <svg
                                 width="28"

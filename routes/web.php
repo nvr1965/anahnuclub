@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CallController;
+use App\Http\Controllers\ClipController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EmbedController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\GroupRoleController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\MomentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PeopleController;
@@ -157,6 +159,20 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::patch('videos/{video}', [VideoController::class, 'update'])->name('videos.update');
     Route::delete('videos/{video}', [VideoController::class, 'destroy'])->name('videos.destroy');
     Route::post('videos/{video}/like', [LikeController::class, 'video'])->name('videos.like');
+
+    Route::get('clips', [ClipController::class, 'index'])->name('clips.index');
+    Route::get('clips/more', [ClipController::class, 'more'])->name('clips.more');
+    Route::get('clips/{post}', [ClipController::class, 'index'])->whereNumber('post')->name('clips.show');
+    Route::post('clips/{post}/view', [ClipController::class, 'view'])->middleware('throttle:120,1')->name('clips.view');
+
+    Route::get('moments/archive', [MomentController::class, 'archive'])->name('moments.archive');
+    Route::get('moments/people/{user}', [MomentController::class, 'show'])->name('moments.user');
+    Route::post('moments', [MomentController::class, 'store'])->middleware('throttle:30,60')->name('moments.store');
+    Route::post('moments/{moment}/view', [MomentController::class, 'view'])->middleware('throttle:300,1')->name('moments.view');
+    Route::get('moments/{moment}/viewers', [MomentController::class, 'viewers'])->name('moments.viewers');
+    Route::post('moments/{moment}/reply', [MomentController::class, 'reply'])->middleware('throttle:30,1')->name('moments.reply');
+    Route::post('moments/{moment}/repost', [MomentController::class, 'repost'])->middleware('throttle:30,60')->name('moments.repost');
+    Route::delete('moments/{moment}', [MomentController::class, 'destroy'])->name('moments.destroy');
 
     Route::get('events', [EventController::class, 'index'])->name('events.index');
     Route::post('events', [EventController::class, 'store'])->name('events.store');

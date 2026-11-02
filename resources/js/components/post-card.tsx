@@ -318,7 +318,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             )}
             {post.video && (
                 <div className="mt-2">
-                    <PostVideo video={post.video} />
+                    <PostVideo video={post.video} postId={post.id} />
                 </div>
             )}
             {post.event && (

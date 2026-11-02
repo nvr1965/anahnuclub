@@ -3,8 +3,8 @@ import { coverStyle, defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type EventItem, type PhotoItem, type SharedData, type VideoItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, MapPin, Play } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarDays, Film, MapPin, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 /** Pictures in a post, laid out like Facebook: one big, two side by side, or a grid with "+N". */
 export function PostPhotos({ photos }: { photos: PhotoItem[] }) {
@@ -93,7 +93,9 @@ export function VideoPlayer({ video, autoPlay = false }: { video: VideoItem; aut
     );
 }
 
-export function PostVideo({ video }: { video: VideoItem }) {
+export function PostVideo({ video, postId }: { video: VideoItem; postId?: number }) {
+    if (video.is_clip && postId) return <ClipCard video={video} postId={postId} />;
+
     return (
         <div>
             <VideoPlayer video={video} />
@@ -103,6 +105,52 @@ export function PostVideo({ video }: { video: VideoItem }) {
                 className="block bg-slate-50 px-4 py-2.5 text-[15px] font-semibold hover:underline dark:bg-neutral-800/60"
             >
                 {video.title}
+            </Link>
+        </div>
+    );
+}
+
+/**
+ * A clip in the feed: tall, silent, playing only while fully on screen (never on "save data"),
+ * and a tap opens it in Clips with sound. Until it comes into view only its picture loads.
+ */
+function ClipCard({ video, postId }: { video: VideoItem; postId: number }) {
+    const t = useT();
+    const ref = useRef<HTMLVideoElement>(null);
+    const [seen, setSeen] = useState(false);
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const saveData = Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) setSeen(true);
+                if (entry.intersectionRatio >= 0.8 && !saveData) el.play().catch(() => undefined);
+                else el.pause();
+            },
+            { threshold: [0, 0.8] },
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div className="bg-black">
+            <Link href={route('clips.show', postId)} className="relative mx-auto block aspect-[9/16] h-[min(70vh,600px)] max-w-full overflow-hidden">
+                <video
+                    ref={ref}
+                    src={seen ? (video.file_url ?? undefined) : undefined}
+                    poster={video.thumb ?? undefined}
+                    muted
+                    loop
+                    playsInline
+                    preload="none"
+                    className="h-full w-full object-cover"
+                />
+                <span className="absolute start-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-xs font-semibold text-white">
+                    <Film className="size-3.5" /> {t('Clip')}
+                </span>
             </Link>
         </div>
     );

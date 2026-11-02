@@ -141,8 +141,47 @@ export interface VideoItem {
     embed_url: string | null;
     file_url: string | null;
     thumb: string | null;
+    is_clip?: boolean;
+    width?: number | null;
+    height?: number | null;
     created_at: string | null;
     author?: Person | null;
+}
+
+/** The strip of moments above the feed. */
+export interface MomentTray {
+    people: { user: Person; count: number; unseen: boolean }[];
+    lists: { id: number; name: string }[];
+    /** How many moments of the viewer's own are up now. */
+    mine: number;
+}
+
+export interface MomentItem extends Translatable {
+    kind: 'photo' | 'video' | 'text';
+    file_url: string | null;
+    thumb: string | null;
+    text: string | null;
+    text_position: 'top' | 'center' | 'bottom';
+    background: string | null;
+    duration: number | null;
+    created_at: string | null;
+    expires_at: string | null;
+    seen?: boolean;
+    views?: number | null;
+    can_delete?: boolean;
+}
+
+/** A clip as the Clips screen shows it: the post it belongs to, with its vertical video. */
+export interface ClipItem extends Translatable {
+    url: string;
+    body: string;
+    author: Person | null;
+    video: VideoItem;
+    views: number;
+    likes_count: number;
+    my_reaction: string | null;
+    comments_count: number;
+    can_delete: boolean;
 }
 
 export interface EventItem {

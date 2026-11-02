@@ -2,6 +2,7 @@
 
 use App\Jobs\TranslateInterface;
 use App\Models\LoginLog;
+use App\Models\Moment;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
@@ -18,3 +19,5 @@ Schedule::call([TranslateInterface::class, 'resumeAll'])->hourly()->name('transl
 Schedule::command('posts:link-previews --days=2')->hourly()->withoutOverlapping(10);
 // The login journal keeps a year.
 Schedule::command('model:prune', ['--model' => [LoginLog::class]])->daily();
+// Moments leave their authors' archive a few days after they disappear; their files go with them.
+Schedule::command('model:prune', ['--model' => [Moment::class]])->hourly()->name('prune-moments')->withoutOverlapping(10);
