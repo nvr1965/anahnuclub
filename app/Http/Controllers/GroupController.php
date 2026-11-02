@@ -50,7 +50,7 @@ class GroupController extends Controller
         $posts = FeedController::postQuery($request)->where('group_id', $group->id)
             // A closed group shows its posts to members only, not to someone still invited or waiting.
             ->when($group->is_private && ! $request->user()?->is_admin && ! $group->roleOf($request->user()), fn ($q) => $q->whereRaw('1 = 0'))
-            ->paginate(20);
+            ->simplePaginate(20);
 
         return Inertia::render('groups/show', [
             'group' => [

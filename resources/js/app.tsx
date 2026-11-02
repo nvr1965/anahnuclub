@@ -8,7 +8,9 @@ import { ChatDock } from './components/chat-dock';
 import { ErrorBoundary } from './components/error-boundary';
 import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
+import { keepInterfaceStrings } from './lib/i18n';
 import { setUpInstall } from './lib/install-app';
+import { type SharedData } from './types';
 
 declare global {
     const route: typeof routeFn;
@@ -23,6 +25,7 @@ createInertiaApp({
         const root = createRoot(el);
 
         syncDocumentLanguage(props.initialPage.props);
+        keepInterfaceStrings(props.initialPage.props as unknown as Partial<SharedData>);
 
         // The call window and the docked chats sit beside the page, so they carry on from page to page.
         root.render(

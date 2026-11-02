@@ -23,14 +23,14 @@ class Language extends Model
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget('languages.enabled'));
-        static::deleted(fn () => Cache::forget('languages.enabled'));
+        static::saved(fn () => Cache::memo()->forget('languages.enabled'));
+        static::deleted(fn () => Cache::memo()->forget('languages.enabled'));
     }
 
     /** @return Collection<int, Language> */
     public static function enabled(): Collection
     {
-        return Cache::rememberForever('languages.enabled', fn () => static::query()
+        return Cache::memo()->rememberForever('languages.enabled', fn () => static::query()
             ->where('enabled', true)->orderBy('sort')->get());
     }
 

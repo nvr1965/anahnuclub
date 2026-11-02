@@ -210,7 +210,7 @@ function ProfilePreview({ person, status, actions }: { person: Preview; status?:
     return (
         <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-neutral-900">
             <div className="from-header-from to-brand aspect-[3/1] w-full bg-gradient-to-r">
-                {person.cover && <img src={person.cover} alt="" className="size-full object-cover" />}
+                {person.cover && <img src={person.cover} loading="lazy" alt="" className="size-full object-cover" />}
             </div>
             <div className="px-4 pb-5 sm:px-6">
                 <div className="-mt-12 flex flex-col gap-2 sm:-mt-16 sm:flex-row sm:items-end sm:gap-4">

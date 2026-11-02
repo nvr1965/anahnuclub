@@ -42,7 +42,7 @@ export default function GroupsIndex({
                         href={route('groups.show', group.slug)}
                         className="group flex items-center gap-4 rounded-lg bg-white p-3 shadow-sm transition hover:shadow-md dark:bg-neutral-900"
                     >
-                        <img src={group.avatar || defaultImages.group} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
+                        <img src={group.avatar || defaultImages.group} loading="lazy" alt="" className="size-14 shrink-0 rounded-xl object-cover" />
                         <div className="min-w-0">
                             <div dir="auto" className="group-hover:text-brand truncate font-medium">
                                 {group.name}
