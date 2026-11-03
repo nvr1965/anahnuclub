@@ -7,7 +7,7 @@ name: deploy to SiteGround
 # Repository secrets (Settings > Secrets and variables > Actions):
 #   SITEGROUND_SSH_KEY  private key whose public half is added in SSH Keys Manager (required)
 #   SITEGROUND_HOST, SITEGROUND_USER, SITEGROUND_PORT  override the values below (optional)
-#   SITEGROUND_APP_DIR  folder of the app on the host (optional, www/test.anahnu.club/app if empty)
+#   SITEGROUND_APP_DIR  folder of the app on the host (optional, www/anahnu.club/app if empty)
 # Without SITEGROUND_SSH_KEY the job does nothing.
 on:
   workflow_run:
@@ -45,4 +45,4 @@ jobs:
           ssh -i ~/.ssh/id_deploy -p "${PORT:-18765}" \
               -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ServerAliveInterval=30 \
               "$USER@$HOST" \
-              "cd ${APP_DIR:-www/test.anahnu.club/app} && git pull --ff-only && bash deploy/siteground/deploy.sh"
+              "cd ${APP_DIR:-www/anahnu.club/app} && git pull --ff-only && bash deploy/siteground/deploy.sh"

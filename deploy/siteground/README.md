@@ -115,8 +115,7 @@ cd ~/www/test.anahnu.club/app && git pull && bash deploy/siteground/deploy.sh
 2. **Devs → SSH Keys Manager → Import**: вставить `anahnu_deploy.pub`.
 3. В GitHub, **Settings → Secrets and variables → Actions**, добавить секрет `SITEGROUND_SSH_KEY`
    (всё содержимое `anahnu_deploy`). Хост, пользователь и порт уже вписаны в workflow.
-   После переезда на anahnu.club добавить `SITEGROUND_APP_DIR=www/anahnu.club/app`
-   (по умолчанию `www/test.anahnu.club/app`).
+   Обновляется `www/anahnu.club/app`; другая папка задаётся секретом `SITEGROUND_APP_DIR`.
 
 Пока `SITEGROUND_SSH_KEY` не задан, деплой пропускается. Запустить вручную: **Actions →
 deploy to SiteGround → Run workflow**.
