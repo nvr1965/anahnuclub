@@ -103,6 +103,13 @@ return [
         'fallback' => env('LINK_PREVIEW_FALLBACK', 'https://api.microlink.io/'),
     ],
 
+    // Posts sent by our other sites (POST /api/autopost). An empty token turns it off.
+    'autopost' => [
+        'token' => env('AUTOPOST_TOKEN', ''),
+        'user' => env('AUTOPOST_USER_EMAIL'),
+        'group' => env('AUTOPOST_GROUP_ID'),
+    ],
+
     'webrtc' => [
         'stun' => env('WEBRTC_STUN', 'stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302'),
         'turn_urls' => env('TURN_URLS'),

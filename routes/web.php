@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AlbumController;
+use App\Http\Controllers\AutopostController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\ClipController;
@@ -40,6 +41,12 @@ Route::get('images/{path}', function (string $path) {
 
     return redirect('/storage/joomla/images/'.$path, 301);
 })->where('path', '.*');
+
+// News from our other sites (nofinfo.com), sent by their servers with a secret key.
+Route::post('api/autopost', AutopostController::class)
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->middleware('throttle:60,1')
+    ->name('autopost');
 
 // For search engines.
 Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
