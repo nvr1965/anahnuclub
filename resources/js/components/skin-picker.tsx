@@ -5,141 +5,45 @@ import { cn } from '@/lib/utils';
 import { type Skin } from '@/types';
 import { Check, Palette } from 'lucide-react';
 
-/** A tiny drawing of each style's page, made of boxes (no pictures to download): where the menu sits, how wide the feed is, what a post looks like. */
-const bar = (w: string, h = 'h-1') => <span className={`block ${h} ${w} shrink-0 rounded-full bg-slate-300`} />;
-const dot = (c: string, size = 'size-2') => <span className={`${size} shrink-0 rounded-full ${c}`} />;
-const photo = (h = 'h-6') => <span className={`block ${h} w-full shrink-0 rounded-sm bg-gradient-to-br from-amber-200 to-rose-300`} />;
+/** A tiny drawing of each style, made of boxes (no pictures to download): its colours, frames and where the photo goes. */
+const looks: Record<Skin, { page: string; card: string; accent: string; layout: 'cards' | 'dense' | 'large' | 'lines' | 'photo' }> = {
+    club: { page: 'bg-[#f0f2f5]', card: 'rounded-md bg-white shadow-sm', accent: 'bg-[#117892]', layout: 'cards' },
+    community: { page: 'bg-[#edeef0]', card: 'rounded-sm bg-white', accent: 'bg-[#3a6ea8]', layout: 'dense' },
+    large: { page: 'bg-[#f0f2f5]', card: 'rounded-md bg-white shadow-sm', accent: 'bg-[#117892]', layout: 'large' },
+    stream: { page: 'bg-white', card: 'border-b border-slate-200 bg-white', accent: 'bg-[#0f172a]', layout: 'lines' },
+    showcase: { page: 'bg-white', card: 'bg-white', accent: 'bg-[#c0265e]', layout: 'photo' },
+};
 
 function Preview({ skin }: { skin: Skin }) {
-    const frame = 'flex h-24 overflow-hidden rounded-md';
+    const look = looks[skin];
+    const line = (w: string, h = 'h-1') => <span className={`block ${h} ${w} rounded-full bg-slate-300`} />;
 
-    switch (skin) {
-        case 'stream':
-            return (
-                <div aria-hidden className={`${frame} gap-1 bg-white p-1`}>
-                    <span className="flex w-7 shrink-0 flex-col gap-1 pt-0.5">
-                        {dot('bg-[#0f172a]')}
-                        {bar('w-6')}
-                        {bar('w-5')}
-                        {bar('w-6')}
-                        {bar('w-4')}
-                        <span className="mt-1 h-2 w-6 rounded-full bg-[#0f172a]" />
+    return (
+        <div aria-hidden className={`flex h-24 flex-col gap-1 overflow-hidden rounded-md p-1.5 ${look.page}`}>
+            <span className={`block h-2 w-full shrink-0 rounded-sm ${look.accent}`} />
+            {look.layout === 'photo' ? (
+                <div className={`${look.card} flex flex-1 flex-col gap-1`}>
+                    <span className="flex items-center gap-1">
+                        <span className={`size-2.5 rounded-full ${look.accent}`} />
+                        {line('w-8')}
                     </span>
-                    <span className="flex flex-1 flex-col border-x border-slate-200">
-                        {[0, 1].map((i) => (
-                            <span key={i} className="flex gap-1 border-b border-slate-200 p-1">
-                                {dot('bg-slate-400')}
-                                <span className="flex flex-1 flex-col gap-0.5">
-                                    {bar('w-3/4')}
-                                    {i === 0 && photo('h-5')}
-                                </span>
-                            </span>
-                        ))}
-                    </span>
-                    <span className="flex w-6 shrink-0 flex-col gap-1">
-                        <span className="h-2 rounded-full border border-slate-300" />
-                        <span className="h-8 rounded-sm border border-slate-200" />
-                    </span>
+                    <span className="block flex-1 bg-gradient-to-br from-amber-200 to-rose-300" />
+                    {line('w-12')}
                 </div>
-            );
-        case 'showcase':
-            return (
-                <div aria-hidden className={`${frame} bg-white`}>
-                    <span className="flex w-3.5 shrink-0 flex-col items-center gap-1.5 border-e border-slate-200 pt-2">
-                        {[0, 1, 2, 3].map((i) => (
-                            <span key={i} className="size-1.5 rounded-sm bg-slate-400" />
-                        ))}
-                    </span>
-                    <span className="flex flex-1 justify-center gap-1.5 p-1">
-                        <span className="flex w-12 flex-col gap-0.5">
-                            <span className="flex gap-0.5">
-                                {[0, 1, 2].map((i) => (
-                                    <span key={i} className="size-2.5 rounded-full border border-[#c0265e]" />
-                                ))}
-                            </span>
-                            <span className="flex items-center gap-0.5">
-                                {dot('bg-slate-400', 'size-1.5')}
-                                {bar('w-5')}
-                            </span>
-                            {photo('h-11')}
-                        </span>
-                        <span className="flex w-6 flex-col gap-1 pt-1">
-                            {bar('w-6')}
-                            {bar('w-4')}
-                            {bar('w-5')}
-                        </span>
-                    </span>
-                </div>
-            );
-        case 'forum':
-            return (
-                <div aria-hidden className={`${frame} flex-col bg-[#eef1f5]`}>
-                    <span className="flex items-center gap-1 border-b border-slate-200 bg-white px-1 py-1">
-                        {dot('bg-[#d9480f]')}
-                        <span className="mx-auto h-2 w-1/2 rounded-full bg-slate-200" />
-                    </span>
-                    <span className="flex flex-1 gap-1 p-1">
-                        <span className="flex w-6 flex-col gap-1 border-e border-slate-200 bg-white p-0.5">
-                            {bar('w-4')}
-                            {bar('w-5')}
-                            {bar('w-3')}
-                        </span>
+            ) : (
+                Array.from({ length: look.layout === 'dense' ? 3 : look.layout === 'large' ? 1 : 2 }, (_, i) => (
+                    <div key={i} className={`${look.card} flex shrink-0 gap-1 p-1`}>
+                        <span className={`${look.layout === 'large' ? 'size-4' : 'size-2.5'} shrink-0 rounded-full ${look.accent}`} />
                         <span className="flex flex-1 flex-col gap-1">
-                            {[0, 1].map((i) => (
-                                <span key={i} className="flex flex-col gap-0.5 rounded-md border border-slate-200 bg-white p-1">
-                                    {bar('w-3/4', 'h-1.5')}
-                                    <span className="flex gap-0.5">
-                                        <span className="h-1.5 w-3 rounded-full bg-slate-200" />
-                                        <span className="h-1.5 w-3 rounded-full bg-slate-200" />
-                                    </span>
-                                </span>
-                            ))}
+                            {line('w-3/4', look.layout === 'large' ? 'h-2' : 'h-1')}
+                            {line('w-1/2', look.layout === 'large' ? 'h-2' : 'h-1')}
+                            {look.layout === 'large' && line('w-2/3', 'h-2')}
                         </span>
-                        <span className="h-10 w-5 rounded-md bg-white" />
-                    </span>
-                </div>
-            );
-        default: {
-            // Club, Community and Large text share the frame: top bar with tiles, menu, cards, people.
-            const blue = skin === 'community';
-            const large = skin === 'large';
-            return (
-                <div aria-hidden className={`${frame} flex-col ${blue ? 'bg-[#edeef0]' : 'bg-[#f0f2f5]'}`}>
-                    <span className={`flex items-center justify-center gap-1 px-1 py-1 ${blue ? 'bg-[#3a6ea8]' : 'bg-white'}`}>
-                        {[0, 1, 2, 3].map((i) => (
-                            <span
-                                key={i}
-                                className={`size-2 rounded-sm ${blue ? 'bg-white/70' : ['bg-[#117892]', 'bg-emerald-400', 'bg-violet-400', 'bg-sky-400'][i]}`}
-                            />
-                        ))}
-                    </span>
-                    <span className="flex flex-1 gap-1 p-1">
-                        <span className="flex w-5 flex-col gap-1 pt-0.5">
-                            {bar('w-5')}
-                            {bar('w-4')}
-                            {bar('w-5')}
-                        </span>
-                        <span className="flex flex-1 flex-col gap-1">
-                            {Array.from({ length: blue ? 3 : large ? 1 : 2 }, (_, i) => (
-                                <span key={i} className={`flex gap-1 bg-white p-1 ${blue ? 'rounded-sm' : 'rounded-md shadow-sm'}`}>
-                                    {dot(blue ? 'bg-[#3a6ea8]' : 'bg-[#117892]', large ? 'size-4' : 'size-2')}
-                                    <span className="flex flex-1 flex-col gap-0.5">
-                                        {bar('w-3/4', large ? 'h-2' : 'h-1')}
-                                        {bar('w-1/2', large ? 'h-2' : 'h-1')}
-                                        {large && bar('w-2/3', 'h-2')}
-                                    </span>
-                                </span>
-                            ))}
-                        </span>
-                        <span className="flex w-5 flex-col gap-1 pt-0.5">
-                            {dot('bg-slate-400')}
-                            {dot('bg-slate-400')}
-                        </span>
-                    </span>
-                </div>
-            );
-        }
-    }
+                    </div>
+                ))
+            )}
+        </div>
+    );
 }
 
 /** The style choice on the Appearance settings page. */

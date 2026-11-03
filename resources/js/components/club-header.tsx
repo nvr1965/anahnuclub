@@ -39,12 +39,6 @@ const tones = {
         active: 'border-transparent text-brand',
         label: 'text-slate-600 dark:text-neutral-300',
     },
-    /** Community: white icons on the blue bar. */
-    onblue: {
-        idle: 'border-transparent text-white/85',
-        active: 'border-white/25 bg-white/20 text-white',
-        label: 'text-white/85',
-    },
     amber: {
         idle: 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300',
         active: 'border-amber-600 bg-amber-600 text-white',
@@ -69,7 +63,7 @@ function Tile({
     badge?: number;
 }) {
     const { skin } = usePage<SharedData>().props;
-    const c = tones[skin === 'stream' || skin === 'showcase' ? 'mono' : skin === 'community' ? 'onblue' : tone];
+    const c = tones[skin === 'stream' || skin === 'showcase' ? 'mono' : tone];
     return (
         <>
             <span className={`relative flex h-9 w-10 items-center justify-center rounded-xl border transition-colors ${active ? c.active : c.idle}`}>
@@ -87,16 +81,11 @@ const tileLink =
     'flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-0.5 py-1 outline-none hover:bg-slate-50 sm:w-[76px] sm:flex-none dark:hover:bg-neutral-800';
 
 /** Facebook-style top bar: logo and search at the start, section tiles with their names in the middle, account at the end. */
-export function ClubHeader({ className = '' }: { className?: string }) {
+export function ClubHeader() {
     const t = useT();
     const page = usePage<SharedData>();
     const { auth, skin } = page.props;
     const flat = skin === 'stream' || skin === 'showcase';
-    // Community: a solid blue bar. Forum: name and a wide search, chats and notifications as round buttons, no tiles on wide screens.
-    const blue = skin === 'community';
-    const forum = skin === 'forum';
-    const field = blue ? 'bg-white/15 text-white placeholder:text-white/70' : 'bg-slate-100 dark:bg-neutral-800';
-    const round = 'relative flex size-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800';
     const [q, setQ] = useState(() => new URLSearchParams(page.url.split('?')[1] ?? '').get('q') ?? '');
 
     const counts = page.props.counts;
@@ -145,31 +134,16 @@ export function ClubHeader({ className = '' }: { className?: string }) {
     );
 
     return (
-        <header
-            className={`sticky top-0 z-40 ${blue ? 'bg-brand text-white' : forum ? 'border-b border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-950' : 'bg-white shadow-sm dark:bg-neutral-900'} ${className}`}
-        >
-            {!blue && !forum && <div className="from-header-from via-brand to-header-to h-1 bg-gradient-to-r" />}
-            <div
-                className={`grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 sm:gap-3 sm:px-3 ${forum ? 'sm:h-14 sm:grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_minmax(0,640px)_1fr]' : 'sm:h-[4.25rem] sm:grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr]'}`}
-            >
+        <header className="sticky top-0 z-40 bg-white shadow-sm dark:bg-neutral-900">
+            <div className="from-header-from via-brand to-header-to h-1 bg-gradient-to-r" />
+            <div className="grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 sm:h-[4.25rem] sm:grid-cols-[auto_1fr_auto] sm:gap-3 sm:px-3 lg:grid-cols-[1fr_auto_1fr]">
                 <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                     <Link href={auth.user ? route('dashboard') : route('home')} className="shrink-0" aria-label="anahnu.club">
                         <img src="/images/logo-mark.png" alt="" className="size-9 rounded-full sm:size-10" />
                     </Link>
-                    {(forum || blue) && (
-                        <Link
-                            href={auth.user ? route('dashboard') : route('home')}
-                            className="text-brand hidden text-xl font-bold tracking-tight lg:block"
-                        >
-                            <span className={blue ? 'text-white' : ''}>anahnu.club</span>
-                        </Link>
-                    )}
                     {auth.user && (
-                        <form
-                            onSubmit={search}
-                            className={`flex min-w-0 items-center gap-2 rounded-full px-3 py-2 ${field} ${forum ? 'sm:hidden' : ''}`}
-                        >
-                            <Search className={`size-4 shrink-0 ${blue ? 'text-white/80' : 'text-muted-foreground'}`} />
+                        <form onSubmit={search} className="flex min-w-0 items-center gap-2 rounded-full bg-slate-100 px-3 py-2 dark:bg-neutral-800">
+                            <Search className="text-muted-foreground size-4 shrink-0" />
                             <input
                                 value={q}
                                 onChange={(e) => setQ(e.target.value)}
@@ -181,39 +155,10 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                     )}
                 </div>
 
-                {forum ? (
-                    <form
-                        onSubmit={search}
-                        className="hidden w-full items-center gap-2 rounded-full bg-slate-100 px-4 py-2.5 sm:flex dark:bg-neutral-800"
-                    >
-                        <img src="/images/logo-mark.png" alt="" className="size-6 rounded-full" />
-                        <input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            placeholder={t('Search anahnu.club')}
-                            aria-label={t('Search anahnu.club')}
-                            className="w-full min-w-0 bg-transparent text-[0.9375rem] outline-none"
-                        />
-                        <Search className="text-muted-foreground size-5 shrink-0" />
-                    </form>
-                ) : (
-                    <nav className="hidden items-center justify-center gap-1 sm:flex">{tiles}</nav>
-                )}
+                <nav className="hidden items-center justify-center gap-1 sm:flex">{tiles}</nav>
 
                 <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-                    {forum && auth.user && (
-                        <>
-                            <MessengerMenu className={`${round} max-sm:hidden`}>
-                                <MessageCircle className="size-6" />
-                                <Badge count={counts?.messages ?? 0} className="-end-1 -top-1" />
-                            </MessengerMenu>
-                            <NotificationBell className={`${round} max-sm:hidden`}>
-                                <Bell className="size-6" />
-                                <Badge count={counts?.notifications ?? 0} className="-end-1 -top-1" />
-                            </NotificationBell>
-                        </>
-                    )}
-                    <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 text-slate-900 max-sm:px-2.5 dark:bg-neutral-800 dark:text-neutral-100 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block" />
+                    <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 max-sm:px-2.5 dark:bg-neutral-800 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block" />
                     {auth.user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger className="flex flex-col items-center gap-1 rounded-lg outline-none sm:w-14">
@@ -221,9 +166,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                                     <AvatarImage src={auth.user.avatar} alt={auth.user.name} className="object-cover" />
                                     <DefaultAvatarFallback />
                                 </Avatar>
-                                <span
-                                    className={`hidden w-full truncate text-center text-[0.6875rem] leading-tight sm:block ${blue ? 'text-white/85' : 'text-slate-600 dark:text-neutral-300'} ${forum ? 'sm:hidden' : ''}`}
-                                >
+                                <span className="hidden w-full truncate text-center text-[0.6875rem] leading-tight text-slate-600 sm:block dark:text-neutral-300">
                                     {t('Menu')}
                                 </span>
                             </DropdownMenuTrigger>
@@ -241,7 +184,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
             {/* On phones the tiles get a row of their own under the logo, so every name fits; Stream and Showcase put it at the bottom of the screen. */}
             {auth.user && (
                 <nav
-                    className={`flex items-start justify-around gap-0.5 border-t px-1 pb-1 sm:hidden ${blue ? 'border-white/15' : 'border-slate-100 dark:border-neutral-800'} ${flat ? 'fixed inset-x-0 bottom-0 z-40 border-slate-200 bg-white pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] dark:bg-neutral-900' : ''}`}
+                    className={`flex items-start justify-around gap-0.5 border-t border-slate-100 px-1 pb-1 sm:hidden dark:border-neutral-800 ${flat ? 'fixed inset-x-0 bottom-0 z-40 border-slate-200 bg-white pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] dark:bg-neutral-900' : ''}`}
                 >
                     {tiles}
                 </nav>

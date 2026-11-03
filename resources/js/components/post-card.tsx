@@ -33,9 +33,6 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     // Showcase: no card, the photo or video right under the name and the text after it.
     const stream = skin === 'stream';
     const showcase = skin === 'showcase';
-    // Forum: a framed card that lights up under the pointer, its buttons as grey pills with the counts in them.
-    const forum = skin === 'forum';
-    const hasMedia = post.photos.length > 0 || Boolean(post.video);
     // Stream lines everything up with the name: card padding (1rem) + avatar (2.5rem) + gap (0.625rem).
     const pad = stream ? 'ps-[4.125rem] pe-4' : 'px-4';
     const media = stream
@@ -75,9 +72,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             .replace(/\s+/g, ' ')
             .trim()
             .slice(0, 120);
-    const action = forum
-        ? 'inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold transition hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700'
-        : 'inline-flex items-center justify-center gap-2 rounded-md py-1.5 text-[0.9375rem] font-semibold transition hover:bg-slate-100 max-sm:flex-col max-sm:gap-0.5 max-sm:text-xs dark:hover:bg-neutral-800';
+    const action =
+        'inline-flex items-center justify-center gap-2 rounded-md py-1.5 text-[0.9375rem] font-semibold transition hover:bg-slate-100 max-sm:flex-col max-sm:gap-0.5 max-sm:text-xs dark:hover:bg-neutral-800';
 
     const submitComment: FormEventHandler = (e) => {
         e.preventDefault();
@@ -178,9 +174,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     ? 'border-b border-slate-200 bg-white dark:border-neutral-800 dark:bg-black'
                     : showcase
                       ? 'flex flex-col bg-white sm:rounded-lg sm:border sm:border-slate-200 dark:bg-black sm:dark:border-neutral-800'
-                      : forum
-                        ? 'border-b border-slate-200 bg-white transition-colors hover:bg-slate-50 sm:rounded-2xl sm:border sm:hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-900/70'
-                        : 'rounded-lg bg-white shadow-sm dark:bg-neutral-900'
+                      : 'rounded-lg bg-white shadow-sm dark:bg-neutral-900'
             }
         >
             <header className={`flex items-center gap-2.5 px-4 pt-3 ${showcase ? '-order-3 pb-3' : stream ? 'items-start' : ''}`}>
@@ -363,7 +357,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             )}
             <div className="pb-2" />
 
-            {!forum && (post.likes_count > 0 || post.comments.length > 0) && (
+            {(post.likes_count > 0 || post.comments.length > 0) && (
                 <div className={`text-muted-foreground flex items-center justify-between ${pad} pb-2 text-[0.9375rem]`}>
                     <span className="inline-flex items-center gap-1.5">
                         {post.likes_count > 0 && (
@@ -382,7 +376,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             )}
 
             <div
-                className={`${forum ? 'flex flex-wrap gap-2 px-4 pb-3' : showcase ? 'flex gap-5 py-1 [&>*]:px-0' : `grid ${post.official ? 'grid-cols-2' : 'grid-cols-3'} py-1`} ${forum ? '' : stream ? 'ms-[3.625rem] me-4' : showcase ? `${hasMedia ? '-order-1' : ''} mx-4` : 'mx-4 border-t border-slate-200 dark:border-neutral-800'}`}
+                className={`grid ${post.official ? 'grid-cols-2' : 'grid-cols-3'} py-1 ${stream ? 'ms-[3.625rem] me-4' : showcase ? '-order-1 mx-4' : 'mx-4 border-t border-slate-200 dark:border-neutral-800'}`}
             >
                 <ReactionButton
                     mine={post.my_reaction}
@@ -400,7 +394,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             setTyping(true);
                         }}
                     >
-                        <MessageCircle className="size-5" /> {forum ? post.comments.length : showcase ? null : t('Comment')}
+                        <MessageCircle className="size-5" /> {t('Comment')}
                     </button>
                 )}
                 <ShareMenu url={post.url} title={plainTitle} className={`${action} text-muted-foreground outline-none`} />

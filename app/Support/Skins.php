@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 class Skins
 {
     /** In the order they are offered. */
-    public const ALL = ['club', 'community', 'large', 'stream', 'showcase', 'forum'];
+    public const ALL = ['club', 'community', 'large', 'stream', 'showcase'];
 
     public const COOKIE = 'skin';
 

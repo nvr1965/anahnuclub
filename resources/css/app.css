@@ -263,24 +263,6 @@
     --primary: #f0568d;
 }
 
-/* «Forum»: framed cards on a cool grey, a wide search on top, a warm orange of its own. */
-[data-skin='forum'] {
-    --color-page: #eef1f5;
-    --color-brand: #d9480f;
-    --color-brand-dark: #b23a0c;
-    --color-brand-soft: #fff0e8;
-    --color-header-from: #d9480f;
-    --color-header-to: #d9480f;
-    --primary: #d9480f;
-    --ring: #d9480f;
-}
-[data-skin='forum'].dark {
-    --color-page: #0b0d0f;
-    --color-brand: #ff7a45;
-    --color-brand-soft: #3a1a0c;
-    --primary: #ff7a45;
-}
-
 @layer base {
     * {
         @apply border-border;
