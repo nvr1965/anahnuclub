@@ -69,7 +69,7 @@ export default function AlbumShow({ album, photos, open }: Props) {
     };
 
     return (
-        <ClubLayout>
+        <ClubLayout wide>
             <Head title={name} />
             <div className="mx-auto w-full max-w-[1100px] space-y-4">
                 <section className="rounded-lg bg-white p-5 shadow-sm dark:bg-neutral-900">

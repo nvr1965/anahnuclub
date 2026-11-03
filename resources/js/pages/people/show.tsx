@@ -106,7 +106,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
     const tabHref = (key: Props['tab']) => route('people.show', { user: profile.id, ...(key === 'posts' ? {} : { tab: key }) });
 
     return (
-        <ClubLayout>
+        <ClubLayout wide>
             <Head title={profile.name} />
             <div className="mx-auto w-full max-w-[1100px] space-y-4">
                 <section className="overflow-hidden rounded-b-lg bg-white shadow-sm dark:bg-neutral-900">

@@ -13,6 +13,8 @@ type Props = {
     right?: ReactNode;
     /** The page fills the screen under the top bar edge to edge, without the footer, as Messenger does. */
     full?: boolean;
+    /** A page without side columns that should keep its full width (up to 1100px) whatever its content, such as a profile. */
+    wide?: boolean;
 };
 
 /**
@@ -55,7 +57,7 @@ function FullFrame({ children, rail }: { children: ReactNode; rail?: { variant: 
     );
 }
 
-function ClubFrame({ children, left, right, full }: Props) {
+function ClubFrame({ children, left, right, full, wide }: Props) {
     if (full) return <FullFrame>{children}</FullFrame>;
 
     const columns =
@@ -63,7 +65,9 @@ function ClubFrame({ children, left, right, full }: Props) {
             ? 'lg:grid-cols-[280px_minmax(0,680px)] xl:grid-cols-[280px_minmax(0,680px)_300px]'
             : left
               ? 'lg:grid-cols-[280px_minmax(0,1fr)]'
-              : '';
+              : wide
+                ? 'grid-cols-[minmax(0,1100px)]'
+                : '';
 
     return (
         <div className="bg-page min-h-screen text-slate-900 dark:text-neutral-100">
