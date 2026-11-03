@@ -105,6 +105,21 @@ cd ~/www/test.anahnu.club/app && git pull && bash deploy/siteground/deploy.sh
 Если скрипт пишет «waiting for GitHub to build», он ждёт сборку фронтенда для нового
 кода (обычно пара минут) и продолжит сам.
 
+### Автоматически после слияния в main
+
+`.github/workflows/deploy-siteground.yml` делает то же самое сам: после каждого слияния в `main`
+ждёт сборку фронтенда, заходит по SSH и запускает команду выше. Один раз нужно:
+
+1. Сделать пару ключей без пароля: `ssh-keygen -t ed25519 -N "" -C github-deploy -f anahnu_deploy`.
+2. **Devs → SSH Keys Manager → Import**: вставить `anahnu_deploy.pub`.
+3. В GitHub, **Settings → Secrets and variables → Actions**, добавить секреты:
+   `SITEGROUND_HOST`, `SITEGROUND_USER`, `SITEGROUND_PORT` (18765), `SITEGROUND_SSH_KEY`
+   (всё содержимое `anahnu_deploy`) и, после переезда на anahnu.club,
+   `SITEGROUND_APP_DIR=www/anahnu.club/app` (по умолчанию `www/test.anahnu.club/app`).
+
+Пока `SITEGROUND_HOST` не задан, деплой пропускается. Запустить вручную: **Actions →
+deploy to SiteGround → Run workflow**.
+
 ## Если что-то не так
 
 - **PHP is too old / PHP is missing ...**: в SSH другая версия PHP, чем у сайта. Запустить
