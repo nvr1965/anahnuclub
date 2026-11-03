@@ -774,8 +774,11 @@
     "Stream": "التدفق",
     "Showcase": "الواجهة",
     "Cards on grey, three columns, the menu on the side": "بطاقات على خلفية رمادية، ثلاثة أعمدة، القائمة على الجانب",
-    "Denser and squarer, more posts on a screen": "أكثر كثافة وتربيعًا، منشورات أكثر في الشاشة",
     "Bigger letters and buttons, stronger contrast": "حروف وأزرار أكبر وتباين أقوى",
-    "One column of posts split by thin lines, menu at the bottom on phones": "عمود واحد من المنشورات تفصلها خطوط رفيعة، والقائمة في الأسفل على الهاتف",
-    "Photos first and edge to edge, a photo grid in profiles": "الصور أولًا وبعرض كامل، وشبكة صور في الملف الشخصي"
+    "Forum": "المنتدى",
+    "A wide search on top, posts as framed cards with buttons in pills": "بحث عريض في الأعلى، والمنشورات كبطاقات بإطار وأزرار مستديرة",
+    "A big menu on the side instead of the top bar, one column of posts split by thin lines": "قائمة كبيرة على الجانب بدل الشريط العلوي، وعمود واحد من المنشورات تفصلها خطوط رفيعة",
+    "A narrow strip of icons, a narrow feed with photos first, a photo grid in profiles": "شريط ضيق من الأيقونات، وصفحة ضيقة تبدأ بالصور، وشبكة صور في الملف الشخصي",
+    "A blue top bar, denser and squarer, more posts on a screen": "شريط علوي أزرق، أكثر كثافة وتربيعًا، ومنشورات أكثر في الشاشة",
+    "Write a post": "اكتب منشورًا"
 }

@@ -220,7 +220,9 @@ export function PostComposer({
                     ? 'bg-white px-4 py-3 dark:bg-black'
                     : skin === 'showcase'
                       ? 'bg-white px-4 py-3 sm:rounded-lg sm:border sm:border-slate-200 dark:bg-black sm:dark:border-neutral-800'
-                      : 'rounded-lg bg-white px-4 py-3 shadow-sm dark:bg-neutral-900'
+                      : skin === 'forum'
+                        ? 'bg-white px-4 py-3 sm:rounded-2xl sm:border sm:border-slate-200 dark:bg-neutral-900 sm:dark:border-neutral-800'
+                        : 'rounded-lg bg-white px-4 py-3 shadow-sm dark:bg-neutral-900'
             }
         >
             <input ref={picker} type="file" accept="image/*,video/*" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
@@ -268,6 +270,7 @@ export function PostComposer({
                 ) : (
                     <button
                         type="button"
+                        data-composer-open
                         onClick={() => setOpen(true)}
                         className="text-muted-foreground flex-1 rounded-full bg-slate-100 px-4 py-2.5 text-start text-[0.9375rem] hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                     >
