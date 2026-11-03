@@ -784,5 +784,10 @@
     "Get new messages and calls at once, even with the site closed.": "Получайте сообщения и звонки сразу, даже когда сайт закрыт.",
     "Turn on notifications": "Включить уведомления",
     "Not now": "Не сейчас",
-    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "Чтобы получать уведомления на iPhone, добавьте клуб на экран «Домой»: «Поделиться», затем «На экран „Домой“», и открывайте его оттуда."
+    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "Чтобы получать уведомления на iPhone, добавьте клуб на экран «Домой»: «Поделиться», затем «На экран „Домой“», и открывайте его оттуда.",
+    "Email confirmed": "Почта подтверждена",
+    ":email is confirmed. In this browser you are signed in as :name.": "Адрес :email подтверждён. В этом браузере вы вошли как :name.",
+    "Continue as :name": "Продолжить как :name",
+    "Log out to sign in with the confirmed address": "Выйти, чтобы войти с подтверждённым адресом",
+    "Your email is confirmed. Sign in to continue.": "Почта подтверждена. Войдите, чтобы продолжить."
 }

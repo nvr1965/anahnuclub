@@ -78,4 +78,36 @@ class EmailVerificationTest extends TestCase
             ->assertSessionHas('status', 'verification-link-expired');
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
+
+    public function test_the_link_opened_where_another_member_is_signed_in_still_confirms_the_address()
+    {
+        $newcomer = User::factory()->unverified()->create();
+        $other = User::factory()->create();
+        $url = (new VerifyEmail)->toMail($newcomer)->actionUrl;
+
+        $this->actingAs($other)->get($url)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('auth/email-verified')->where('email', $newcomer->email));
+        $this->assertTrue($newcomer->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_the_link_opened_signed_out_confirms_the_address_and_asks_to_sign_in()
+    {
+        $user = User::factory()->unverified()->create();
+        $url = (new VerifyEmail)->toMail($user)->actionUrl;
+
+        $this->get($url)->assertRedirect(route('login'))->assertSessionHas('status');
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+        $this->assertGuest();
+    }
+
+    public function test_a_link_for_an_address_changed_since_confirms_nothing()
+    {
+        $user = User::factory()->unverified()->create();
+        $url = (new VerifyEmail)->toMail($user)->actionUrl;
+        $user->forceFill(['email' => 'changed@example.com'])->save();
+
+        $this->actingAs($user)->get($url)->assertRedirect(route('verification.notice'));
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
 }

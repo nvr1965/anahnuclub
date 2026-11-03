@@ -35,7 +35,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         // An old or cut "confirm your email" link: instead of a bare 403, the page that sends a new one.
         $exceptions->render(function (InvalidSignatureException $e, Request $request) {
-            if ($request->routeIs('verification.verify') && $request->user()) {
+            if ($request->routeIs('verification.verify')) {
+                if (! $request->user()) {
+                    return redirect()->route('login');
+                }
+
                 return $request->user()->hasVerifiedEmail()
                     ? redirect()->route('dashboard')
                     : redirect()->route('verification.notice')->with('status', 'verification-link-expired');
