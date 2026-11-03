@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\PushSubscription;
+use App\Support\WebPush;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+/** Turning notifications on and off for one device. */
+class PushController extends Controller
+{
+    public function key(): JsonResponse
+    {
+        return response()->json(['key' => WebPush::publicKey()]);
+    }
+
+    public function store(Request $request): Response
+    {
+        $data = $request->validate([
+            'endpoint' => ['required', 'string', 'max:2000', 'url:https'],
+            'keys.p256dh' => ['required', 'string', 'max:120'],
+            'keys.auth' => ['required', 'string', 'max:40'],
+        ]);
+        // A device signed in as someone else now belongs to whoever is signed in.
+        PushSubscription::updateOrCreate(
+            ['endpoint_hash' => PushSubscription::hash($data['endpoint'])],
+            ['user_id' => $request->user()->id, 'endpoint' => $data['endpoint'], 'p256dh' => $data['keys']['p256dh'], 'auth' => $data['keys']['auth']],
+        );
+
+        return response()->noContent();
+    }
+
+    /**
+     * The browser renewed a subscription by itself (from the service worker, which has no session
+     * token): the old address, known only to that device, stands in for signing in.
+     */
+    public function renew(Request $request): Response
+    {
+        $data = $request->validate([
+            'old' => ['required', 'string', 'max:2000'],
+            'subscription.endpoint' => ['required', 'string', 'max:2000', 'url:https'],
+            'subscription.keys.p256dh' => ['required', 'string', 'max:120'],
+            'subscription.keys.auth' => ['required', 'string', 'max:40'],
+        ]);
+        $old = PushSubscription::where('endpoint_hash', PushSubscription::hash($data['old']))->first();
+        abort_unless($old, 404);
+        $new = $data['subscription'];
+        PushSubscription::where('endpoint_hash', PushSubscription::hash($new['endpoint']))->whereKeyNot($old->id)->delete();
+        $old->update(['endpoint' => $new['endpoint'], 'endpoint_hash' => PushSubscription::hash($new['endpoint']), 'p256dh' => $new['keys']['p256dh'], 'auth' => $new['keys']['auth']]);
+
+        return response()->noContent();
+    }
+
+    public function destroy(Request $request): Response
+    {
+        $request->validate(['endpoint' => ['required', 'string', 'max:2000']]);
+        PushSubscription::where('endpoint_hash', PushSubscription::hash($request->input('endpoint')))
+            ->where('user_id', $request->user()->id)
+            ->delete();
+
+        return response()->noContent();
+    }
+}

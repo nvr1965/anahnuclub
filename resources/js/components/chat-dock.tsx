@@ -3,6 +3,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { startCall } from '@/components/video-call';
 import { useAutoTranslate } from '@/hooks/use-auto-translate';
 import { useT } from '@/lib/i18n';
+import { onFreshNews } from '@/lib/push';
 import { relativeTime } from '@/lib/relative-time';
 import { type Person, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -198,7 +199,12 @@ function ChatWindow({ docked }: { docked: Docked }) {
         load();
         input.current?.focus();
         const timer = setInterval(() => document.visibilityState === 'visible' && load(), POLL_MS);
-        return () => clearInterval(timer);
+        // A push for this chat, the tab back in front or the connection back: fetched at once.
+        const stop = onFreshNews((news) => (!news?.conversation || news.conversation === docked.id) && load());
+        return () => {
+            clearInterval(timer);
+            stop();
+        };
     }, [docked.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {

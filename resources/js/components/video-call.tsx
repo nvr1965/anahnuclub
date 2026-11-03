@@ -1,5 +1,6 @@
 import { UserAvatar } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
+import { onFreshNews } from '@/lib/push';
 import { type Person, type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { Mic, MicOff, Phone, PhoneOff, SwitchCamera, Video, VideoOff } from 'lucide-react';
@@ -389,9 +390,12 @@ export function CallRoot() {
         };
         check();
         const timer = window.setInterval(check, phase === 'incoming' ? 2000 : RING_POLL_MS);
+        // A push about a call, or the club back in front (e.g. from the call's notification): asked at once.
+        const unlisten = onFreshNews((news) => (!news || news.kind === 'call') && check());
         return () => {
             stop = true;
             window.clearInterval(timer);
+            unlisten();
         };
     }, [userId, busy, phase]);
 

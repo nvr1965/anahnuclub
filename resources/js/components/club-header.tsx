@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useT } from '@/lib/i18n';
+import { onFreshNews } from '@/lib/push';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, House, type LucideIcon, MessageCircle, Search, UserRound, Users } from 'lucide-react';
@@ -119,7 +120,12 @@ export function ClubHeader({ className = '' }: { className?: string }) {
         const timer = setInterval(() => {
             if (document.visibilityState === 'visible') router.reload({ only: ['counts'] });
         }, 30000);
-        return () => clearInterval(timer);
+        // A push (a new message), the tab back in front or the connection back: the badges at once.
+        const stop = onFreshNews(() => router.reload({ only: ['counts'] }));
+        return () => {
+            clearInterval(timer);
+            stop();
+        };
     }, [auth.user?.id]);
 
     const search: FormEventHandler = (e) => {

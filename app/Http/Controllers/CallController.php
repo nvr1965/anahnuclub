@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendWebPush;
 use App\Models\Call;
 use App\Models\Conversation;
 use App\Models\User;
+use App\Support\Background;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -45,6 +47,17 @@ class CallController extends Controller
             'status' => 'ringing',
             'caller_seen_at' => now(),
         ]);
+        // Rings the phone even with the site closed; a call no one picks up in a minute is not worth showing later.
+        $locale = $other->ui_locale ?: $other->locale;
+        Background::run(new SendWebPush([$other->id], [
+            'kind' => 'call',
+            'title' => $me->name,
+            'body' => __($video ? 'Incoming video call' : 'Incoming audio call', [], $locale),
+            'url' => route('messages.show', $conversation, false),
+            'tag' => 'call-'.$call->id,
+            'icon' => $me->avatar,
+            'conversation' => $conversation->id,
+        ], 60));
 
         return response()->json(['call' => $this->payload($call, $me)]);
     }
