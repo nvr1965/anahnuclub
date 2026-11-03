@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendWebPush;
 use App\Models\Call;
 use App\Models\Conversation;
 use App\Models\User;
-use App\Support\Background;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -47,17 +45,9 @@ class CallController extends Controller
             'status' => 'ringing',
             'caller_seen_at' => now(),
         ]);
-        // Rings the phone even with the site closed; a call no one picks up in a minute is not worth showing later.
-        $locale = $other->ui_locale ?: $other->locale;
-        Background::run(new SendWebPush([$other->id], [
-            'kind' => 'call',
-            'title' => $me->name,
-            'body' => __($video ? 'Incoming video call' : 'Incoming audio call', [], $locale),
-            'url' => route('messages.show', $conversation, false),
-            'tag' => 'call-'.$call->id,
-            'icon' => $me->avatar,
-            'conversation' => $conversation->id,
-        ], 60));
+        // Rings the phone even with the site closed.
+        Cache::put('call-ring:'.$call->id, 1, Call::RERING_SECONDS);
+        $call->pushToCallee();
 
         return response()->json(['call' => $this->payload($call, $me)]);
     }
@@ -80,6 +70,11 @@ class CallController extends Controller
             $call->touchBy($me);
         }
         $call->settle();
+        // While it rings, the caller's page asks every second or so: the callee's phone is rung again
+        // every few seconds, the way a phone call keeps ringing, until it is answered or given up.
+        if ($call->status === 'ringing' && $call->caller_id === $me->id && Cache::add('call-ring:'.$call->id, 1, Call::RERING_SECONDS)) {
+            $call->pushToCallee();
+        }
 
         $signals = $call->signals()
             ->where('user_id', '!=', $me->id)
@@ -130,7 +125,11 @@ class CallController extends Controller
     {
         abort_unless($call->involves($request->user()), 404);
         if ($call->isLive()) {
-            $call->update(['status' => $call->status === 'ringing' ? 'missed' : 'ended', 'ended_at' => now()]);
+            $missed = $call->status === 'ringing';
+            $call->update(['status' => $missed ? 'missed' : 'ended', 'ended_at' => now()]);
+            if ($missed) {
+                $call->pushToCallee();
+            }
         }
 
         return response()->json(['ok' => true]);

@@ -60,6 +60,21 @@ export async function enablePush(): Promise<PushState> {
     return 'on';
 }
 
+export interface PushReport {
+    state: PushState;
+    /** Each of the member's devices and what its push service answered (201 = taken). */
+    devices: { service: string; status: number }[];
+}
+
+/** "Check notifications": signs this device up if needed and sends a test to all the member's devices. */
+export async function testPush(): Promise<PushReport> {
+    const state = await enablePush();
+    if (state !== 'on') return { state, devices: [] };
+    const response = await fetch(route('push.test'), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf() } });
+    const { devices } = (await response.json()) as { devices: PushReport['devices'] };
+    return { state, devices };
+}
+
 export async function disablePush(): Promise<PushState> {
     const subscription = supported() ? await (await registration()).pushManager.getSubscription() : null;
     if (subscription) {

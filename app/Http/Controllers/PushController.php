@@ -53,6 +53,27 @@ class PushController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * "Check notifications": a test notification to every device of the member, with what each
+     * push service answered, so a device that does not ring can be told apart from one never signed up.
+     */
+    public function test(Request $request): JsonResponse
+    {
+        $payload = json_encode([
+            'kind' => 'test',
+            'title' => 'Anahnu Club',
+            'body' => __('Notifications work on this device.'),
+            'url' => route('messages.index', [], false),
+            'tag' => 'test',
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $devices = PushSubscription::where('user_id', $request->user()->id)->get()->map(fn (PushSubscription $s) => [
+            'service' => parse_url($s->endpoint, PHP_URL_HOST),
+            'status' => WebPush::send($s, $payload, 300),
+        ]);
+
+        return response()->json(['devices' => $devices->values()]);
+    }
+
     public function destroy(Request $request): Response
     {
         $request->validate(['endpoint' => ['required', 'string', 'max:2000']]);

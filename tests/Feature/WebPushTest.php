@@ -153,7 +153,7 @@ class WebPushTest extends TestCase
         Http::assertSent(function (Request $request) use ($device) {
             $payload = json_decode($this->decrypt($request->body(), $device), true);
 
-            return $payload['kind'] === 'call' && $payload['body'] === 'Входящий видеозвонок' && $request->header('TTL')[0] === '60';
+            return $payload['kind'] === 'call' && $payload['body'] === 'Входящий видеозвонок' && $request->header('TTL')[0] === '45';
         });
     }
 
@@ -168,5 +168,50 @@ class WebPushTest extends TestCase
         $this->postJson('/push/subscriptions/renew', ['old' => 'https://push.example/old', 'subscription' => ['endpoint' => 'https://push.example/new', 'keys' => ['p256dh' => $device['p256dh'], 'auth' => $device['auth']]]])->assertNoContent();
 
         $this->assertSame([[$dana->id, 'https://push.example/new']], PushSubscription::get()->map(fn ($s) => [$s->user_id, $s->endpoint])->all());
+    }
+
+    public function test_a_ringing_call_rings_again_and_turns_into_a_missed_call()
+    {
+        Http::fake(['push.example/*' => Http::response('', 201)]);
+        $anna = User::factory()->create(['name' => 'Анна']);
+        $dana = User::factory()->create(['locale' => 'ru', 'ui_locale' => 'ru']);
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
+        $conversation = Conversation::between($anna, $dana);
+        $conversation->users()->updateExistingPivot($dana->id, ['accepted_at' => now()]);
+        $device = $this->device();
+        $this->actingAs($dana)->postJson('/push/subscriptions', ['endpoint' => 'https://push.example/dana', 'keys' => ['p256dh' => $device['p256dh'], 'auth' => $device['auth']]]);
+        $kinds = function () use ($device) {
+            return Http::recorded()->map(fn ($pair) => json_decode($this->decrypt($pair[0]->body(), $device), true)['kind'])->all();
+        };
+
+        $id = $this->actingAs($anna)->postJson("/messages/{$conversation->id}/call", ['video' => false])->json('call.id');
+        // The caller's page asks right away: too soon to ring again.
+        $this->getJson("/calls/{$id}")->assertOk();
+        $this->assertSame(['call'], $kinds());
+
+        $this->travel(10)->seconds();
+        $this->getJson("/calls/{$id}")->assertOk();
+        $this->getJson("/calls/{$id}")->assertOk();
+        $this->assertSame(['call', 'call'], $kinds());
+
+        $this->postJson("/calls/{$id}/end")->assertOk();
+        $this->assertSame(['call', 'call', 'missed-call'], $kinds());
+    }
+
+    public function test_check_notifications_sends_a_test_and_reports_each_device()
+    {
+        Http::fake(['push.example/ok' => Http::response('', 201), 'push.example/bad' => Http::response('', 403)]);
+        $dana = User::factory()->create();
+        $device = $this->device();
+        $this->actingAs($dana);
+        foreach (['ok', 'bad'] as $name) {
+            $this->postJson('/push/subscriptions', ['endpoint' => "https://push.example/{$name}", 'keys' => ['p256dh' => $device['p256dh'], 'auth' => $device['auth']]]);
+        }
+
+        $this->postJson('/push/test')->assertOk()
+            ->assertJsonPath('devices.0.status', 201)
+            ->assertJsonPath('devices.1.status', 403)
+            ->assertJsonPath('devices.0.service', 'push.example');
+        Http::assertSent(fn (Request $request) => json_decode($this->decrypt($request->body(), $device), true)['kind'] === 'test');
     }
 }

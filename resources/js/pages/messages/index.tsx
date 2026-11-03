@@ -16,6 +16,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Ban,
+    BellRing,
     Check,
     Ellipsis,
     FileText,
@@ -160,6 +161,17 @@ export default function Messages({ conversations, requests, friends, contacts, c
                                             >
                                                 <MessageCircleQuestion />
                                                 {t('Message requests')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={panelMenuItem}
+                                                onClick={() => {
+                                                    hide();
+                                                    window.dispatchEvent(new Event('club:push-check'));
+                                                }}
+                                            >
+                                                <BellRing />
+                                                {t('Check notifications')}
                                             </button>
                                         </>
                                     )}

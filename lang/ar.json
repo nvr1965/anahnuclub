@@ -789,5 +789,13 @@
     "Empty for over a year": "فارغة منذ أكثر من سنة",
     "Delete :count groups older than a year that have no posts? This cannot be undone.": "حذف :count مجموعة عمرها أكثر من سنة وبلا منشورات؟ لا يمكن التراجع عن ذلك.",
     "Delete all :count": "حذف الكل :count",
-    "Groups created more than a year ago with no posts, albums, videos or events.": "مجموعات أُنشئت قبل أكثر من سنة وليس فيها منشورات أو ألبومات أو فيديوهات أو فعاليات."
+    "Groups created more than a year ago with no posts, albums, videos or events.": "مجموعات أُنشئت قبل أكثر من سنة وليس فيها منشورات أو ألبومات أو فيديوهات أو فعاليات.",
+    "Check notifications": "فحص الإشعارات",
+    "Checking…": "جارٍ الفحص…",
+    "Notifications work on this device.": "الإشعارات تعمل على هذا الجهاز.",
+    "Notifications are blocked for this site. Allow them in the browser or phone settings and try again.": "الإشعارات محظورة لهذا الموقع. اسمح بها في إعدادات المتصفح أو الهاتف وحاول مرة أخرى.",
+    "This browser cannot show notifications.": "هذا المتصفح لا يستطيع عرض الإشعارات.",
+    "no answer": "لا رد",
+    "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "أُرسل إشعار تجريبي إلى :count من :total أجهزة. إذا لم يظهر خلال دقيقة، فالإشعارات لهذا المتصفح أو التطبيق مطفأة في إعدادات الهاتف، أو أن توفير البطارية يؤخرها.",
+    "Refused: :list": "مرفوض: :list"
 }

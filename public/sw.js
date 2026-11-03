@@ -72,7 +72,8 @@ self.addEventListener('push', (event) => {
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
             windows.forEach((client) => client.postMessage({ type: 'push', data }));
             const watching = windows.some((client) => client.visibilityState === 'visible' && client.focused);
-            if (watching) return undefined;
+            // A test from "Check notifications" shows even on the screen it was asked from.
+            if (watching && data.kind !== 'test') return undefined;
             return self.registration.showNotification(data.title || 'Anahnu Club', {
                 body: data.body || '',
                 icon: data.icon || '/icons/icon-192.png',

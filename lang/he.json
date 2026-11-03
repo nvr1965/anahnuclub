@@ -789,5 +789,13 @@
     "Empty for over a year": "ריקות יותר משנה",
     "Delete :count groups older than a year that have no posts? This cannot be undone.": "למחוק :count קבוצות בנות יותר משנה ללא פוסטים? לא ניתן לבטל זאת.",
     "Delete all :count": "למחוק את כל :count",
-    "Groups created more than a year ago with no posts, albums, videos or events.": "קבוצות שנוצרו לפני יותר משנה ואין בהן פוסטים, אלבומים, סרטונים או אירועים."
+    "Groups created more than a year ago with no posts, albums, videos or events.": "קבוצות שנוצרו לפני יותר משנה ואין בהן פוסטים, אלבומים, סרטונים או אירועים.",
+    "Check notifications": "בדיקת התראות",
+    "Checking…": "בודק…",
+    "Notifications work on this device.": "ההתראות פועלות במכשיר הזה.",
+    "Notifications are blocked for this site. Allow them in the browser or phone settings and try again.": "ההתראות חסומות לאתר הזה. אפשרו אותן בהגדרות הדפדפן או הטלפון ונסו שוב.",
+    "This browser cannot show notifications.": "הדפדפן הזה לא יכול להציג התראות.",
+    "no answer": "אין תשובה",
+    "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "התראת בדיקה נשלחה ל-:count מתוך :total מכשירים. אם היא לא מופיעה תוך דקה, ההתראות לדפדפן או לאפליקציה כבויות בהגדרות הטלפון, או שחיסכון בסוללה מעכב אותן.",
+    "Refused: :list": "נדחה: :list"
 }
