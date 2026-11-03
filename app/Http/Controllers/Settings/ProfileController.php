@@ -21,7 +21,9 @@ class ProfileController extends Controller
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
-            'locale' => $request->user()->locale,
+            // Not "locale": that name is the interface language shared with every page (the switcher, the texts);
+            // a page prop of the same name replaced it here, so the switcher showed this language instead.
+            'defaultLocale' => $request->user()->locale,
             'canDelete' => ! $request->user()->isSuperAdmin(),
         ]);
     }
