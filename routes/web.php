@@ -103,6 +103,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::patch('profile/about', [PeopleController::class, 'update'])->name('people.update');
     Route::post('profile/avatar', [PeopleController::class, 'avatar'])->name('people.avatar');
     Route::post('profile/cover', [PeopleController::class, 'cover'])->name('people.cover');
+    Route::get('profile/photos', [PeopleController::class, 'myPhotos'])->name('people.photos.mine');
 
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
     Route::get('friends/list', [FriendController::class, 'list'])->name('friends.list');

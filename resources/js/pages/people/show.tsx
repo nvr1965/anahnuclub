@@ -31,11 +31,13 @@ import {
     MessageCircleOff,
     Pencil,
     Plus,
+    Trash2,
+    Upload,
     UserCheck,
     UserPlus,
     UserX,
 } from 'lucide-react';
-import { type FormEventHandler, type ReactNode, useRef, useState } from 'react';
+import { type FormEventHandler, type ReactNode, useEffect, useRef, useState } from 'react';
 
 interface Profile {
     id: number;
@@ -108,7 +110,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                 <section className="overflow-hidden rounded-b-lg bg-white shadow-sm dark:bg-neutral-900">
                     <div className="relative">
                         <div
-                            className="from-brand via-header-from to-header-to aspect-[1640/624] max-h-[400px] w-full rounded-b-lg bg-gradient-to-br bg-cover bg-center"
+                            className="from-brand via-header-from to-header-to aspect-[3/1] max-h-[250px] w-full rounded-b-lg bg-gradient-to-br bg-cover bg-center sm:aspect-[4/1]"
                             style={profile.cover ? { backgroundImage: `url(${profile.cover})` } : undefined}
                         />
                         {profile.is_me && (
@@ -546,7 +548,10 @@ function FriendButton({ profile }: { profile: Profile }) {
     }
 }
 
-/** Picks a picture and uploads it right away; a menu offers removing the current one. */
+/**
+ * Changes the profile picture or the cover: a new file from the device, or one of the member's own photos
+ * already on the site; a menu item removes the current one.
+ */
 function PictureButton({
     route: name,
     hasPicture,
@@ -561,42 +566,85 @@ function PictureButton({
     const t = useT();
     const input = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
+    const [picking, setPicking] = useState(false);
+    const busy = { preserveScroll: true, onStart: () => setUploading(true), onFinish: () => setUploading(false) };
 
     const upload = (file: File | undefined) => {
         if (!file) return;
-        router.post(
-            route(name),
-            { image: file },
-            { forceFormData: true, preserveScroll: true, onStart: () => setUploading(true), onFinish: () => setUploading(false) },
-        );
+        router.post(route(name), { image: file }, { forceFormData: true, ...busy });
+    };
+
+    const choose = (photoId: number) => {
+        setPicking(false);
+        router.post(route(name), { photo_id: photoId }, busy);
     };
 
     return (
         <>
             <input ref={input} type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
-            {hasPicture ? (
-                <DropdownMenu>
-                    <DropdownMenuTrigger className={`${className} ${uploading ? 'animate-pulse' : ''}`} aria-label={t('Change picture')}>
-                        {children}
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => input.current?.click()}>{t('Upload new picture')}</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => router.post(route(name), { remove: true }, { preserveScroll: true })}>
-                            {t('Remove picture')}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            ) : (
-                <button
-                    type="button"
-                    className={`${className} ${uploading ? 'animate-pulse' : ''}`}
-                    onClick={() => input.current?.click()}
-                    aria-label={t('Change picture')}
-                >
+            <DropdownMenu>
+                <DropdownMenuTrigger className={`${className} ${uploading ? 'animate-pulse' : ''}`} aria-label={t('Change picture')}>
                     {children}
-                </button>
-            )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => input.current?.click()}>
+                        <Upload className="size-4" /> {t('Upload from this device')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setPicking(true)}>
+                        <Images className="size-4" /> {t('Choose from my photos')}
+                    </DropdownMenuItem>
+                    {hasPicture && (
+                        <DropdownMenuItem onSelect={() => router.post(route(name), { remove: true }, { preserveScroll: true })}>
+                            <Trash2 className="size-4" /> {t('Remove picture')}
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            {picking && <MyPhotos onClose={() => setPicking(false)} onChoose={choose} />}
         </>
+    );
+}
+
+/** The member's own photos on the site, loaded when the window opens; a tap picks one. */
+function MyPhotos({ onClose, onChoose }: { onClose: () => void; onChoose: (id: number) => void }) {
+    const t = useT();
+    const [photos, setPhotos] = useState<{ id: number; thumb: string }[] | null>(null);
+
+    useEffect(() => {
+        const ask = new AbortController();
+        fetch(route('people.photos.mine'), { headers: { Accept: 'application/json' }, signal: ask.signal })
+            .then((r) => (r.ok ? r.json() : []))
+            .then(setPhotos)
+            .catch(() => !ask.signal.aborted && setPhotos([]));
+        return () => ask.abort();
+    }, []);
+
+    return (
+        <Dialog open onOpenChange={(value) => !value && onClose()}>
+            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>{t('Choose from my photos')}</DialogTitle>
+                </DialogHeader>
+                {photos === null ? (
+                    <p className="text-muted-foreground py-8 text-center text-sm">…</p>
+                ) : photos.length === 0 ? (
+                    <p className="text-muted-foreground py-8 text-center text-[15px]">{t('You have no photos on the site yet.')}</p>
+                ) : (
+                    <div className="grid grid-cols-3 gap-1 sm:grid-cols-4">
+                        {photos.map((photo) => (
+                            <button
+                                key={photo.id}
+                                type="button"
+                                onClick={() => onChoose(photo.id)}
+                                className="focus-visible:ring-brand bg-muted block aspect-square overflow-hidden rounded-md outline-none focus-visible:ring-2"
+                            >
+                                <img src={photo.thumb} alt="" loading="lazy" className="size-full object-cover transition hover:opacity-85" />
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }
 

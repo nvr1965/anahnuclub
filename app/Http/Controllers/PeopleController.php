@@ -9,9 +9,12 @@ use App\Models\User;
 use App\Support\ImageStore;
 use App\Translation\ContentTranslator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -194,12 +197,28 @@ class PeopleController extends Controller
             return back();
         }
 
-        $request->validate(['image' => ['required', 'image', 'max:10240']]);
+        // A new file from the device, or one of the member's own photos already on the site.
+        if ($request->filled('photo_id')) {
+            $photo = Photo::query()->where('user_id', $user->id)->findOrFail($request->integer('photo_id'));
+            $file = new UploadedFile(Storage::disk('public')->path($photo->path), basename($photo->path), null, null, true);
+        } else {
+            $request->validate(['image' => ['required', 'image', 'max:10240']]);
+            $file = $request->file('image');
+        }
         $old = $user->{$column};
-        $user->update([$column => ImageStore::save($request->file('image'), $folder, $width, $height)]);
+        $user->update([$column => ImageStore::save($file, $folder, $width, $height)]);
         ImageStore::delete($old);
 
         return back();
+    }
+
+    /** The member's own photos on the site, newest first, to pick a profile picture or cover from. */
+    public function myPhotos(Request $request): JsonResponse
+    {
+        return response()->json(
+            Photo::query()->where('user_id', $request->user()->id)->latest('id')->limit(300)->get()
+                ->map(fn (Photo $p) => ['id' => $p->id, 'thumb' => asset('storage/'.($p->thumb_path ?: $p->path))])
+        );
     }
 
     /** A member as shown in friend lists and suggestions. */
