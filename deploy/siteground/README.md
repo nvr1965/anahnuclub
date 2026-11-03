@@ -110,7 +110,8 @@ cd ~/www/test.anahnu.club/app && git pull && bash deploy/siteground/deploy.sh
 `.github/workflows/deploy-siteground.yml` делает то же самое сам: после каждого слияния в `main`
 ждёт сборку фронтенда, заходит по SSH и запускает команду выше. Один раз нужно:
 
-1. Сделать пару ключей без пароля: `ssh-keygen -t ed25519 -N "" -C github-deploy -f anahnu_deploy`.
+1. Сделать пару ключей без пароля: `ssh-keygen -t ed25519 -C github-deploy -f anahnu_deploy`
+   и на вопрос о passphrase дважды нажать Enter.
 2. **Devs → SSH Keys Manager → Import**: вставить `anahnu_deploy.pub`.
 3. В GitHub, **Settings → Secrets and variables → Actions**, добавить секреты:
    `SITEGROUND_HOST`, `SITEGROUND_USER`, `SITEGROUND_PORT` (18765), `SITEGROUND_SSH_KEY`
