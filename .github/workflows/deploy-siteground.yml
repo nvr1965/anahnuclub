@@ -1,0 +1,48 @@
+name: deploy to SiteGround
+
+# After each push to main, once the frontend is built (build-assets.yml), log in to
+# SiteGround over SSH and run the usual update: git pull && bash deploy/siteground/deploy.sh
+#
+# Repository secrets (Settings > Secrets and variables > Actions):
+#   SITEGROUND_HOST     SSH host from Site Tools > Devs > SSH Keys Manager > SSH Credentials
+#   SITEGROUND_USER     SSH user from the same place
+#   SITEGROUND_PORT     SSH port, usually 18765 (optional, 18765 if empty)
+#   SITEGROUND_SSH_KEY  private key whose public half is added in SSH Keys Manager
+#   SITEGROUND_APP_DIR  folder of the app on the host (optional, www/test.anahnu.club/app if empty)
+# Without SITEGROUND_HOST the job does nothing.
+on:
+  workflow_run:
+    workflows: ['build assets']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-siteground
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HOST: ${{ secrets.SITEGROUND_HOST }}
+      USER: ${{ secrets.SITEGROUND_USER }}
+      PORT: ${{ secrets.SITEGROUND_PORT }}
+      KEY: ${{ secrets.SITEGROUND_SSH_KEY }}
+      APP_DIR: ${{ secrets.SITEGROUND_APP_DIR }}
+    steps:
+      - name: Deploy over SSH
+        run: |
+          if [ -z "$HOST" ]; then
+            echo "SITEGROUND_HOST is not set: skipping the deploy."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh -i ~/.ssh/id_deploy -p "${PORT:-18765}" \
+              -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ServerAliveInterval=30 \
+              "$USER@$HOST" \
+              "cd ${APP_DIR:-www/test.anahnu.club/app} && git pull --ff-only && bash deploy/siteground/deploy.sh"
