@@ -116,6 +116,8 @@ ln -sfn "$APP_DIR/storage/app/public" "$WEB_DIR/storage"
 echo
 echo "==> Mail"
 "$PHP" artisan mail:check || true
+# The last translation errors, if any (why new posts stay untranslated).
+grep -hE "Content translation failed|Translator failed|Interface translation paused" storage/logs/laravel*.log 2>/dev/null | tail -5 | cut -c1-300 || true
 
 echo
 echo "Done: $(grep '^APP_URL=' .env | cut -d= -f2)"

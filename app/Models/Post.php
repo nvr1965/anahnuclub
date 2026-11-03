@@ -37,7 +37,7 @@ class Post extends Model
                 // Right after the response for a new post. From the console (the import) it goes to the
                 // queue instead: "after the response" there means the end of the command, page after page.
                 app()->runningInConsole()
-                    ? FetchLinkPreview::dispatch($post->link_url)
+                    ? FetchLinkPreview::dispatch($post->link_url)->onQueue(FetchLinkPreview::SLOW_QUEUE)
                     : Background::run(new FetchLinkPreview($post->link_url));
             }
         });

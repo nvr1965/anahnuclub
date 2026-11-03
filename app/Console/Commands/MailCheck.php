@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use App\Support\MailHealth;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 /** Shows the mail settings and what stops letters, and with an address sends a test letter right away. */
 class MailCheck extends Command
@@ -22,6 +25,7 @@ class MailCheck extends Command
         $cron = MailHealth::lastCronRun();
         $this->line('Cron last ran: '.($cron ? now()->setTimestamp($cron)->diffForHumans() : 'never'));
         $this->line('Letters waiting in the queue: '.MailHealth::waiting());
+        $this->queueSummary();
         foreach (MailHealth::problems() as $problem) {
             $this->warn($problem);
         }
@@ -37,5 +41,29 @@ class MailCheck extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /** What else waits in the queue (translations, link cards) and the last failures, for the deploy log. */
+    private function queueSummary(): void
+    {
+        try {
+            if (Schema::hasTable('jobs')) {
+                $waiting = DB::table('jobs')->selectRaw('queue, count(*) as n, min(created_at) as oldest')->groupBy('queue')->get();
+                foreach ($waiting as $row) {
+                    $this->line("Queue {$row->queue}: {$row->n} waiting, oldest ".now()->setTimestamp((int) $row->oldest)->diffForHumans());
+                }
+                $this->line('Jobs by kind: '.DB::table('jobs')->get(['payload'])
+                    ->countBy(fn ($job) => class_basename((string) (json_decode($job->payload, true)['displayName'] ?? '?')))
+                    ->map(fn ($n, $kind) => "$kind $n")->implode(', '));
+            }
+            if (Schema::hasTable('failed_jobs')) {
+                $this->line('Failed jobs: '.DB::table('failed_jobs')->count());
+                foreach (DB::table('failed_jobs')->latest('failed_at')->limit(3)->get() as $failed) {
+                    $this->line('  '.$failed->failed_at.' '.class_basename((string) (json_decode($failed->payload, true)['displayName'] ?? '?')).': '.mb_substr(strtok((string) $failed->exception, "\n"), 0, 200));
+                }
+            }
+        } catch (Throwable $e) {
+            $this->warn('Queue not readable: '.$e->getMessage());
+        }
     }
 }
