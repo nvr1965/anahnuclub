@@ -784,5 +784,10 @@
     "Get new messages and calls at once, even with the site closed.": "Get new messages and calls at once, even with the site closed.",
     "Turn on notifications": "Turn on notifications",
     "Not now": "Not now",
-    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there."
+    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.",
+    "Email confirmed": "Email confirmed",
+    ":email is confirmed. In this browser you are signed in as :name.": ":email is confirmed. In this browser you are signed in as :name.",
+    "Continue as :name": "Continue as :name",
+    "Log out to sign in with the confirmed address": "Log out to sign in with the confirmed address",
+    "Your email is confirmed. Sign in to continue.": "Your email is confirmed. Sign in to continue."
 }

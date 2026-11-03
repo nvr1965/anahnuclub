@@ -784,5 +784,10 @@
     "Get new messages and calls at once, even with the site closed.": "קבלו הודעות ושיחות מיד, גם כשהאתר סגור.",
     "Turn on notifications": "הפעלת התראות",
     "Not now": "לא עכשיו",
-    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "כדי לקבל התראות באייפון, הוסיפו את המועדון למסך הבית: שיתוף, ואז \"הוספה למסך הבית\", ופתחו אותו משם."
+    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "כדי לקבל התראות באייפון, הוסיפו את המועדון למסך הבית: שיתוף, ואז \"הוספה למסך הבית\", ופתחו אותו משם.",
+    "Email confirmed": "הדוא״ל אומת",
+    ":email is confirmed. In this browser you are signed in as :name.": "הכתובת :email אומתה. בדפדפן הזה אתם מחוברים בתור :name.",
+    "Continue as :name": "להמשיך בתור :name",
+    "Log out to sign in with the confirmed address": "להתנתק כדי להתחבר עם הכתובת שאומתה",
+    "Your email is confirmed. Sign in to continue.": "הדוא״ל אומת. התחברו כדי להמשיך."
 }
