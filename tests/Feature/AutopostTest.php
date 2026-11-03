@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Group;
+use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,6 +45,20 @@ class AutopostTest extends TestCase
 
         $this->assertSame('https://nofinfo.com/?id=9', Post::first()->link_url);
         $this->send(['text' => 'Новость', 'url' => 'https://nofinfo.com/?id=9'])->assertJsonPath('duplicate', true);
+    }
+
+    public function test_the_card_sent_with_the_post_is_used_as_is()
+    {
+        User::factory()->create(['email' => 'news@nofinfo.com']);
+        $this->send([
+            'text' => 'Новость', 'url' => 'https://nofinfo.com/?id=10',
+            'card_title' => 'Заголовок', 'card_description' => 'Описание', 'card_image' => 'https://img.example.com/a.jpg',
+        ])->assertCreated();
+
+        $card = LinkPreview::where('url', 'https://nofinfo.com/?id=10')->first();
+        $this->assertSame('Заголовок', $card->title);
+        $this->assertSame('https://img.example.com/a.jpg', $card->image);
+        $this->assertSame('https://nofinfo.com/?id=10', Post::first()->link_url);
     }
 
     public function test_the_same_link_twice_stays_one_post()
