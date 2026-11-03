@@ -17,6 +17,7 @@ use App\Http\Controllers\GroupRoleController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PushController;
 use App\Http\Controllers\MomentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
@@ -49,6 +50,10 @@ Route::get('{key}.txt', [SeoController::class, 'indexNowKey'])->where('key', '[A
 
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
 Route::post('skin', [SkinController::class, 'update'])->middleware('throttle:30,1')->name('skin.update');
+// From the service worker, which has no session token: the old subscription address proves the device.
+Route::post('push/subscriptions/renew', [PushController::class, 'renew'])
+    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+    ->middleware('throttle:10,1')->name('push.renew');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 
 // Open to anyone with the link, so posts can be shared outside the club; guests can page through them all.
@@ -127,6 +132,9 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::post('groups/{group}/block', [BlockController::class, 'blockGroup'])->name('blocks.group');
     Route::delete('groups/{group}/block', [BlockController::class, 'unblockGroup'])->name('blocks.group.destroy');
 
+    Route::get('push/key', [PushController::class, 'key'])->name('push.key');
+    Route::post('push/subscriptions', [PushController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
+    Route::delete('push/subscriptions', [PushController::class, 'destroy'])->name('push.destroy');
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('messages/latest', [MessageController::class, 'latest'])->name('messages.latest');
     Route::post('messages/read', [MessageController::class, 'readAll'])->name('messages.read');

@@ -1,6 +1,7 @@
 import { Bubble, fileSize, gap, type Message } from '@/components/chat-bubble';
 import { EMOJI } from '@/components/chat-dock';
 import { PanelMenu, panelMenuItem } from '@/components/notification-bell';
+import { PushPrompt } from '@/components/push-prompt';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
 import { startCall } from '@/components/video-call';
@@ -8,6 +9,7 @@ import { useAutoTranslate } from '@/hooks/use-auto-translate';
 import { useKeyboardViewport } from '@/hooks/use-keyboard-viewport';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
+import { onFreshNews } from '@/lib/push';
 import { relativeTime, shortAgo } from '@/lib/relative-time';
 import { type Person, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
@@ -95,15 +97,20 @@ export default function Messages({ conversations, requests, friends, contacts, c
     }, [conversation?.id, conversation?.request]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
+        // The open chat too: a friendship accepted meanwhile brings up the call buttons.
+        const refresh = () => router.reload({ only: ['conversations', 'requests', 'friends', 'contacts', 'conversation', 'messages', 'counts'] });
         const timer = setInterval(
             () => {
-                if (document.visibilityState === 'visible')
-                    // The open chat too: a friendship accepted meanwhile brings up the call buttons.
-                    router.reload({ only: ['conversations', 'requests', 'friends', 'contacts', 'conversation', 'messages', 'counts'] });
+                if (document.visibilityState === 'visible') refresh();
             },
             conversation ? POLL_MS : POLL_MS * 3,
         );
-        return () => clearInterval(timer);
+        // A push, the tab back in front or the connection back: no waiting for the next round.
+        const stop = onFreshNews(refresh);
+        return () => {
+            clearInterval(timer);
+            stop();
+        };
     }, [conversation?.id]);
 
     const markAllRead = async () => {
@@ -189,6 +196,8 @@ export default function Messages({ conversations, requests, friends, contacts, c
                             </button>
                         )}
                     </label>
+
+                    {!composing && <PushPrompt />}
 
                     {!composing && (
                         <div className="flex gap-1 px-3 pb-2">

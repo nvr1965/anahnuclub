@@ -10,6 +10,7 @@ import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
 import { keepInterfaceStrings } from './lib/i18n';
 import { setUpInstall } from './lib/install-app';
+import { listenForPush, syncPush } from './lib/push';
 import { type SharedData } from './types';
 
 declare global {
@@ -26,6 +27,7 @@ createInertiaApp({
 
         syncDocumentLanguage(props.initialPage.props);
         keepInterfaceStrings(props.initialPage.props as unknown as Partial<SharedData>);
+        syncPush(Boolean((props.initialPage.props as unknown as Partial<SharedData>).auth?.user)).catch(() => undefined);
 
         // The call window and the docked chats sit beside the page, so they carry on from page to page.
         root.render(
@@ -78,6 +80,7 @@ router.on('success', () => {
 });
 
 setUpInstall();
+listenForPush();
 
 // This will set light / dark mode on load...
 initializeTheme();
