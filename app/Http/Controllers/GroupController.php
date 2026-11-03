@@ -21,12 +21,17 @@ class GroupController extends Controller
 {
     public function index(Request $request): Response
     {
+        $q = mb_substr(trim((string) $request->query('q')), 0, 100);
+
         $groups = Group::query()
             ->where('published', true)
-            ->when($request->user(), fn ($q, $viewer) => $q->whereNotIn('id', $viewer->blockedGroupIds()))
-            ->withCount(['members' => fn ($q) => $q->where('group_user.approved', true), 'posts'])
+            ->when($request->user(), fn ($query, $viewer) => $query->whereNotIn('id', $viewer->blockedGroupIds()))
+            ->when($q !== '', fn ($query) => $query->matching($q))
+            ->withCount(['members' => fn ($query) => $query->where('group_user.approved', true), 'posts'])
             ->orderByDesc('posts_count')
+            ->orderBy('id')
             ->paginate(30)
+            ->withQueryString()
             ->through(fn (Group $g) => [
                 'id' => $g->id,
                 'name' => $g->name,
@@ -36,7 +41,7 @@ class GroupController extends Controller
                 'posts_count' => $g->posts_count,
             ]);
 
-        return Inertia::render('groups/index', ['groups' => $groups, 'sidebar' => CommunitySidebar::for($request->user())]);
+        return Inertia::render('groups/index', ['groups' => $groups, 'q' => $q, 'sidebar' => CommunitySidebar::for($request->user())]);
     }
 
     public function show(Request $request, Group $group): Response
@@ -140,9 +145,7 @@ class GroupController extends Controller
     public function destroy(Request $request, Group $group): RedirectResponse
     {
         abort_unless($group->roleOf($request->user()) === 'owner', 403);
-        ImageStore::delete($group->avatar_path);
-        ImageStore::delete($group->cover_path);
-        $group->delete();
+        $group->purge();
 
         return to_route('groups.index');
     }

@@ -4,8 +4,9 @@ import AppLayout from '@/layouts/app-layout';
 import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { MessageSquare, Users } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { MessageSquare, Search, Users, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface GroupRow {
     id: number;
@@ -18,12 +19,28 @@ interface GroupRow {
 
 export default function GroupsIndex({
     groups,
+    q,
     sidebar,
 }: {
     groups: { data: GroupRow[]; next_page_url: string | null; prev_page_url: string | null };
+    q: string;
     sidebar: Sidebar;
 }) {
     const t = useT();
+    const [query, setQuery] = useState(q ?? '');
+    const first = useRef(true);
+
+    // The list narrows as the name is typed.
+    useEffect(() => {
+        if (first.current) {
+            first.current = false;
+            return;
+        }
+        const timer = setTimeout(() => {
+            router.get(route('groups.index'), { q: query.trim() || undefined }, { preserveState: true, preserveScroll: true, replace: true });
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [query]);
 
     return (
         <AppLayout sidebar={sidebar}>
@@ -35,6 +52,28 @@ export default function GroupsIndex({
                     <InviteButton />
                 </div>
             </div>
+            <form
+                role="search"
+                onSubmit={(e) => e.preventDefault()}
+                className="mb-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm dark:bg-neutral-900"
+            >
+                <Search className="text-muted-foreground size-4 shrink-0" />
+                <input
+                    type="search"
+                    dir="auto"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t('Search groups')}
+                    aria-label={t('Search groups')}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none [&::-webkit-search-cancel-button]:hidden"
+                />
+                {query && (
+                    <button type="button" onClick={() => setQuery('')} aria-label={t('Clear')} className="text-muted-foreground hover:text-foreground">
+                        <X className="size-4" />
+                    </button>
+                )}
+            </form>
+            {groups.data.length === 0 && <p className="text-muted-foreground py-10 text-center">{t('Nothing found.')}</p>}
             <div className="grid gap-3 sm:grid-cols-2">
                 {groups.data.map((group) => (
                     <Link
