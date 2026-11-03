@@ -784,5 +784,10 @@
     "Get new messages and calls at once, even with the site closed.": "קבלו הודעות ושיחות מיד, גם כשהאתר סגור.",
     "Turn on notifications": "הפעלת התראות",
     "Not now": "לא עכשיו",
-    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "כדי לקבל התראות באייפון, הוסיפו את המועדון למסך הבית: שיתוף, ואז \"הוספה למסך הבית\", ופתחו אותו משם."
+    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "כדי לקבל התראות באייפון, הוסיפו את המועדון למסך הבית: שיתוף, ואז \"הוספה למסך הבית\", ופתחו אותו משם.",
+    "Search groups": "חיפוש קבוצות",
+    "Empty for over a year": "ריקות יותר משנה",
+    "Delete :count groups older than a year that have no posts? This cannot be undone.": "למחוק :count קבוצות בנות יותר משנה ללא פוסטים? לא ניתן לבטל זאת.",
+    "Delete all :count": "למחוק את כל :count",
+    "Groups created more than a year ago with no posts, albums, videos or events.": "קבוצות שנוצרו לפני יותר משנה ואין בהן פוסטים, אלבומים, סרטונים או אירועים."
 }

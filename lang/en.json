@@ -784,5 +784,10 @@
     "Get new messages and calls at once, even with the site closed.": "Get new messages and calls at once, even with the site closed.",
     "Turn on notifications": "Turn on notifications",
     "Not now": "Not now",
-    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there."
+    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.",
+    "Search groups": "Search groups",
+    "Empty for over a year": "Empty for over a year",
+    "Delete :count groups older than a year that have no posts? This cannot be undone.": "Delete :count groups older than a year that have no posts? This cannot be undone.",
+    "Delete all :count": "Delete all :count",
+    "Groups created more than a year ago with no posts, albums, videos or events.": "Groups created more than a year ago with no posts, albums, videos or events."
 }

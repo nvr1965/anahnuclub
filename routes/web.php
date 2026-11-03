@@ -224,6 +224,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('moderation/keep', [Admin\ModerationController::class, 'keep'])->name('moderation.keep');
     Route::put('moderation/words', [Admin\ModerationController::class, 'words'])->name('moderation.words');
     Route::get('groups', [Admin\GroupController::class, 'index'])->name('groups.index');
+    Route::post('groups/prune-stale', [Admin\GroupController::class, 'pruneStale'])->name('groups.prune-stale');
     Route::patch('groups/{group:id}', [Admin\GroupController::class, 'update'])->name('groups.update');
     Route::delete('groups/{group:id}', [Admin\GroupController::class, 'destroy'])->name('groups.destroy');
     Route::get('translators', [Admin\TranslatorController::class, 'index'])->name('translators.index');

@@ -12,13 +12,38 @@ interface Row {
     is_private: boolean;
     members_count: number;
     posts_count: number;
+    created_at: string | null;
 }
 
-export default function AdminGroups({ groups, q }: { groups: Page<Row>; q: string }) {
+export default function AdminGroups({ groups, q, stale, stale_count }: { groups: Page<Row>; q: string; stale: boolean; stale_count: number }) {
     const t = useT();
 
     return (
-        <AdminLayout title={t('Groups')} actions={<AdminSearch value={q} routeName="admin.groups.index" />}>
+        <AdminLayout title={t('Groups')} actions={<AdminSearch value={q} routeName="admin.groups.index" params={stale ? { stale: 1 } : {}} />}>
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+                <Link
+                    href={route('admin.groups.index', stale ? {} : { stale: 1 })}
+                    className={`rounded-full px-3 py-1 font-medium shadow-sm ${stale ? 'bg-brand text-white' : 'bg-white dark:bg-neutral-900'}`}
+                >
+                    {t('Empty for over a year')} ({stale_count})
+                </Link>
+                {stale && stale_count > 0 && (
+                    <ActionButton
+                        danger
+                        onClick={() =>
+                            confirm(t('Delete :count groups older than a year that have no posts? This cannot be undone.', { count: stale_count })) &&
+                            send('post', route('admin.groups.prune-stale'))
+                        }
+                    >
+                        {t('Delete all :count', { count: stale_count })}
+                    </ActionButton>
+                )}
+            </div>
+            {stale && (
+                <p className="text-muted-foreground mb-3 text-sm">
+                    {t('Groups created more than a year ago with no posts, albums, videos or events.')}
+                </p>
+            )}
             <div className={`${card} divide-y dark:divide-neutral-800`}>
                 {groups.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
                 {groups.data.map((group) => (
@@ -33,6 +58,7 @@ export default function AdminGroups({ groups, q }: { groups: Page<Row>; q: strin
                             </div>
                             <div className="text-muted-foreground text-xs">
                                 {group.owner && <>{group.owner} · </>}
+                                {group.created_at && <>{group.created_at} · </>}
                                 {t(':count members', { count: group.members_count })} · {t(':count posts', { count: group.posts_count })}
                             </div>
                         </div>

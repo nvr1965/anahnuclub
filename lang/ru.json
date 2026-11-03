@@ -784,5 +784,10 @@
     "Get new messages and calls at once, even with the site closed.": "Получайте сообщения и звонки сразу, даже когда сайт закрыт.",
     "Turn on notifications": "Включить уведомления",
     "Not now": "Не сейчас",
-    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "Чтобы получать уведомления на iPhone, добавьте клуб на экран «Домой»: «Поделиться», затем «На экран „Домой“», и открывайте его оттуда."
+    "To get notifications on iPhone, add the club to the Home Screen: Share, then \"Add to Home Screen\", and open it from there.": "Чтобы получать уведомления на iPhone, добавьте клуб на экран «Домой»: «Поделиться», затем «На экран „Домой“», и открывайте его оттуда.",
+    "Search groups": "Поиск по группам",
+    "Empty for over a year": "Пустые больше года",
+    "Delete :count groups older than a year that have no posts? This cannot be undone.": "Удалить :count групп старше года без записей? Это нельзя отменить.",
+    "Delete all :count": "Удалить все :count",
+    "Groups created more than a year ago with no posts, albums, videos or events.": "Группы, созданные больше года назад, в которых нет ни записей, ни альбомов, ни видео, ни событий."
 }
