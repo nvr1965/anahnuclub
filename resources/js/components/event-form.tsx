@@ -55,7 +55,7 @@ export function EventForm({
         remove_cover: false,
     });
     const field =
-        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

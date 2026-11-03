@@ -130,7 +130,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => e.stopPropagation()}
                         placeholder={t('Search messages')}
-                        className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none"
+                        className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
                     />
                     {query && (
                         <button type="button" onClick={() => setQuery('')} aria-label={t('Clear')} className="text-muted-foreground">
@@ -152,10 +152,10 @@ export function MessengerMenu({ className, children }: { className: string; chil
                             type="button"
                             aria-pressed={tab === key}
                             onClick={() => setTab(key)}
-                            className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[0.9375rem] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[15px] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
                         >
                             {label}
-                            {count > 0 && key !== 'all' && <span className="ms-1 text-[0.8125rem] opacity-80">{count}</span>}
+                            {count > 0 && key !== 'all' && <span className="ms-1 text-[13px] opacity-80">{count}</span>}
                         </button>
                     ))}
                 </div>
@@ -164,7 +164,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
                     {chats === null ? (
                         <p className="text-muted-foreground p-6 text-center text-sm">…</p>
                     ) : rows.length === 0 ? (
-                        <p className="text-muted-foreground px-3 py-8 text-center text-[0.9375rem]">
+                        <p className="text-muted-foreground px-3 py-8 text-center text-[15px]">
                             {needle
                                 ? t('Nothing found.')
                                 : tab === 'requests'
@@ -189,11 +189,11 @@ export function MessengerMenu({ className, children }: { className: string; chil
                             >
                                 <UserAvatar person={row.with} className="size-14" />
                                 <span className="min-w-0 flex-1">
-                                    <span dir="auto" className={`block truncate text-[0.9375rem] ${row.unread ? 'font-bold' : 'font-medium'}`}>
+                                    <span dir="auto" className={`block truncate text-[15px] ${row.unread ? 'font-bold' : 'font-medium'}`}>
                                         {row.with.name}
                                     </span>
                                     <span
-                                        className={`flex min-w-0 gap-1 text-[0.8125rem] ${row.unread ? 'font-semibold text-slate-900 dark:text-white' : 'text-muted-foreground'}`}
+                                        className={`flex min-w-0 gap-1 text-[13px] ${row.unread ? 'font-semibold text-slate-900 dark:text-white' : 'text-muted-foreground'}`}
                                     >
                                         <span dir="auto" className="min-w-0 truncate">
                                             {row.last && (
@@ -216,7 +216,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
                     <Link
                         href={route('messages.index')}
                         onClick={close}
-                        className="text-brand block rounded-md p-2 text-center text-[0.9375rem] font-medium hover:bg-slate-100 dark:hover:bg-neutral-800"
+                        className="text-brand block rounded-md p-2 text-center text-[15px] font-medium hover:bg-slate-100 dark:hover:bg-neutral-800"
                     >
                         {t('Open messages')}
                     </Link>

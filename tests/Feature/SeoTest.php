@@ -30,7 +30,7 @@ class SeoTest extends TestCase
             ->assertSee('<link rel="canonical" href="'.route('register').'?lang=he">', false)
             ->assertSee('<link rel="alternate" hreflang="ar" href="'.route('register').'?lang=ar">', false)
             ->assertSee('<link rel="alternate" hreflang="x-default" href="'.route('register').'">', false)
-            ->assertSee('<html translate="no" lang="he" dir="rtl" data-skin="club">', false);
+            ->assertSee('<html translate="no" lang="he" dir="rtl">', false);
 
         $this->get('/')->assertSee('<link rel="canonical" href="'.url('/').'/">', false);
     }
@@ -50,7 +50,7 @@ class SeoTest extends TestCase
             // Arabic is the translation of an older version of the text; English there is none.
             ->assertDontSee('hreflang="ar"', false)
             ->assertDontSee('hreflang="en"', false)
-            ->assertSee('<html translate="no" lang="he" dir="rtl" data-skin="club">', false);
+            ->assertSee('<html translate="no" lang="he" dir="rtl">', false);
 
         // The post under a menu in another language is the same text: it points to the plain address.
         $this->get("/posts/{$post->id}?lang=en")->assertSee('<link rel="canonical" href="'.$url.'">', false);

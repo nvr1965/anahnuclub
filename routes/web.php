@@ -23,7 +23,6 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\SkinController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TranslationController;
@@ -48,7 +47,6 @@ Route::get('sitemap-posts-{part}.xml', [SeoController::class, 'posts'])->whereNu
 Route::get('{key}.txt', [SeoController::class, 'indexNowKey'])->where('key', '[A-Za-z0-9-]{8,128}')->name('indexnow.key');
 
 Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
-Route::post('skin', [SkinController::class, 'update'])->middleware('throttle:30,1')->name('skin.update');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 
 // Open to anyone with the link, so posts can be shared outside the club; guests can page through them all.
@@ -105,6 +103,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::patch('profile/about', [PeopleController::class, 'update'])->name('people.update');
     Route::post('profile/avatar', [PeopleController::class, 'avatar'])->name('people.avatar');
     Route::post('profile/cover', [PeopleController::class, 'cover'])->name('people.cover');
+    Route::get('profile/photos', [PeopleController::class, 'myPhotos'])->name('people.photos.mine');
 
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
     Route::get('friends/list', [FriendController::class, 'list'])->name('friends.list');
@@ -229,7 +228,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('pages/{page}', [Admin\PageController::class, 'destroy'])->name('pages.destroy');
     Route::post('pages/{page}/translate', [Admin\PageController::class, 'translate'])->name('pages.translate');
     Route::patch('site-settings', [Admin\PageController::class, 'settings'])->name('settings.update');
-    Route::patch('skins', [Admin\PageController::class, 'skins'])->name('skins.update');
     Route::get('contact', [Admin\ContactController::class, 'index'])->name('contact.index');
     Route::patch('contact/{message}', [Admin\ContactController::class, 'update'])->name('contact.update');
     Route::delete('contact/{message}', [Admin\ContactController::class, 'destroy'])->name('contact.destroy');

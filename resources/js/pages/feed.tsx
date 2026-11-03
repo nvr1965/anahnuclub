@@ -12,7 +12,7 @@ export default function Feed({ posts, sidebar, moments }: { posts: Paginated<Pos
     return (
         <AppLayout sidebar={sidebar}>
             <Head title={t('Feed')} />
-            <div className="stream:space-y-0 space-y-4">
+            <div className="space-y-4">
                 {moments && <MomentTray tray={moments} />}
                 <PostComposer />
                 <PostList posts={posts} />

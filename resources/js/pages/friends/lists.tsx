@@ -38,7 +38,7 @@ export default function Lists({ menu, lists, current }: Props) {
     };
     const others = (current?.others ?? []).filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()));
     const card = 'rounded-lg bg-white p-4 shadow-sm dark:bg-neutral-900';
-    const input = 'w-full rounded-md border bg-transparent px-3 py-2 text-[0.9375rem] dark:border-neutral-700';
+    const input = 'w-full rounded-md border bg-transparent px-3 py-2 text-[15px] dark:border-neutral-700';
 
     return (
         <FriendsLayout active="lists" menu={menu}>
@@ -77,10 +77,10 @@ export default function Lists({ menu, lists, current }: Props) {
                                     <ListChecks className="size-5" />
                                 </span>
                                 <span className="min-w-0 flex-1">
-                                    <span dir="auto" className="block truncate text-[0.9375rem] font-semibold">
+                                    <span dir="auto" className="block truncate text-[15px] font-semibold">
                                         {list.name}
                                     </span>
-                                    <span className="text-muted-foreground text-[0.8125rem]">{t(':count friends', { count: list.count })}</span>
+                                    <span className="text-muted-foreground text-[13px]">{t(':count friends', { count: list.count })}</span>
                                 </span>
                             </Link>
                         ))}
@@ -135,7 +135,7 @@ export default function Lists({ menu, lists, current }: Props) {
                                 )}
                             </div>
                             {current.members.length === 0 && (
-                                <p className="text-muted-foreground text-[0.9375rem]">{t('No one in this list yet. Add friends below.')}</p>
+                                <p className="text-muted-foreground text-[15px]">{t('No one in this list yet. Add friends below.')}</p>
                             )}
                             <div className="grid gap-1 sm:grid-cols-2">
                                 {current.members.map((p) => (
@@ -146,7 +146,7 @@ export default function Lists({ menu, lists, current }: Props) {
                                         <Link
                                             href={route('people.show', p.id)}
                                             dir="auto"
-                                            className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold hover:underline"
+                                            className="min-w-0 flex-1 truncate text-[15px] font-semibold hover:underline"
                                         >
                                             {p.name}
                                         </Link>
@@ -173,7 +173,7 @@ export default function Lists({ menu, lists, current }: Props) {
                                     className={`${input} ps-9`}
                                 />
                             </div>
-                            {others.length === 0 && <p className="text-muted-foreground text-[0.9375rem]">{t('No friends to add.')}</p>}
+                            {others.length === 0 && <p className="text-muted-foreground text-[15px]">{t('No friends to add.')}</p>}
                             <div className="grid max-h-[480px] gap-1 overflow-y-auto sm:grid-cols-2">
                                 {others.map((p) => (
                                     <button
@@ -182,7 +182,7 @@ export default function Lists({ menu, lists, current }: Props) {
                                         className="flex items-center gap-3 rounded-lg p-2 text-start hover:bg-black/5 dark:hover:bg-white/10"
                                     >
                                         <UserAvatar person={p} className="size-11" />
-                                        <span dir="auto" className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">
+                                        <span dir="auto" className="min-w-0 flex-1 truncate text-[15px] font-semibold">
                                             {p.name}
                                         </span>
                                         <Plus className="text-brand size-5" />

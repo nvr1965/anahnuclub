@@ -58,7 +58,7 @@ export default function Browse({ kind, menu, people, sent = [], preview }: Props
             </div>
             {preview ? (
                 <div>
-                    <button onClick={() => open(null)} className="text-brand mb-3 flex items-center gap-1 text-[0.9375rem] font-semibold lg:hidden">
+                    <button onClick={() => open(null)} className="text-brand mb-3 flex items-center gap-1 text-[15px] font-semibold lg:hidden">
                         <ArrowLeft className="size-4 rtl:rotate-180" /> {t(titles[kind])}
                     </button>
                     <ProfilePreview person={preview} status={actions.status[preview.id]} actions={actions} />
@@ -103,13 +103,13 @@ function PeopleList({
                     <ArrowLeft className="size-5 rtl:rotate-180" />
                 </Link>
                 <div>
-                    <Link href={route('friends.index')} className="text-muted-foreground text-[0.8125rem] hover:underline">
+                    <Link href={route('friends.index')} className="text-muted-foreground text-[13px] hover:underline">
                         {t('Friends')}
                     </Link>
                     <h1 className="text-2xl leading-tight font-bold">{t(titles[kind])}</h1>
                 </div>
             </div>
-            <p className="mb-2 px-1 text-[0.9375rem] font-semibold">
+            <p className="mb-2 px-1 text-[15px] font-semibold">
                 {kind === 'requests'
                     ? t(':count friend requests', { count: menu.requests })
                     : kind === 'all'
@@ -117,7 +117,7 @@ function PeopleList({
                       : t('People you may know')}
             </p>
             {shown.length === 0 && (
-                <p className="text-muted-foreground px-1 py-4 text-[0.9375rem]">
+                <p className="text-muted-foreground px-1 py-4 text-[15px]">
                     {kind === 'requests' ? t('No new requests.') : kind === 'all' ? t('No friends yet.') : t('No suggestions right now.')}
                 </p>
             )}
@@ -130,7 +130,7 @@ function PeopleList({
             </div>
             {kind === 'requests' && shownSent.length > 0 && (
                 <>
-                    <p className="mt-6 mb-2 px-1 text-[0.9375rem] font-semibold">{t('Sent requests')}</p>
+                    <p className="mt-6 mb-2 px-1 text-[15px] font-semibold">{t('Sent requests')}</p>
                     <div className="space-y-1">
                         {shownSent.map((person) => (
                             <Row key={person.id} person={person} active={person.id === selected} onOpen={() => open(person.id)}>
@@ -154,7 +154,7 @@ function Row({ person, active, onOpen, children }: { person: FriendCard; active:
             </button>
             <div className="min-w-0 flex-1 space-y-1.5">
                 <button onClick={onOpen} className="block w-full text-start">
-                    <span dir="auto" className="block truncate text-[0.9375rem] font-semibold">
+                    <span dir="auto" className="block truncate text-[15px] font-semibold">
                         {person.name}
                     </span>
                     <MutualLine person={person} />
@@ -222,7 +222,7 @@ function ProfilePreview({ person, status, actions }: { person: Preview; status?:
                             {person.name}
                         </Link>
                         {person.friends_count !== null && (
-                            <p className="text-muted-foreground text-[0.9375rem]">{t(':count friends', { count: person.friends_count })}</p>
+                            <p className="text-muted-foreground text-[15px]">{t(':count friends', { count: person.friends_count })}</p>
                         )}
                     </div>
                 </div>
@@ -265,7 +265,7 @@ function ProfilePreview({ person, status, actions }: { person: Preview; status?:
                 </div>
 
                 {(person.status || person.about || person.location) && (
-                    <div className="mt-5 space-y-2 border-t pt-4 text-[0.9375rem] dark:border-neutral-800">
+                    <div className="mt-5 space-y-2 border-t pt-4 text-[15px] dark:border-neutral-800">
                         {person.status && (
                             <p dir="auto" className="font-medium">
                                 {person.status}

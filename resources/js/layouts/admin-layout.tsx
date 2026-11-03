@@ -33,7 +33,7 @@ export default function AdminLayout({ title, children, actions }: { title: strin
                 <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[0.9375rem] ${item.match(url) ? 'bg-brand-soft text-brand font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[15px] ${item.match(url) ? 'bg-brand-soft text-brand font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
                 >
                     <item.icon className="size-5" />
                     {item.title}

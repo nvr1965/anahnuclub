@@ -37,8 +37,8 @@ export function LinkPreview({ link, onRemove }: { link: LinkCard; onRemove?: () 
                 )}
             </span>
             <span dir="ltr" className="min-w-0 flex-1 text-start">
-                <span className="block truncate text-[0.9375rem] font-semibold">{link.domain}</span>
-                <span className="text-muted-foreground block truncate text-[0.8125rem]">{address}</span>
+                <span className="block truncate text-[15px] font-semibold">{link.domain}</span>
+                <span className="text-muted-foreground block truncate text-[13px]">{address}</span>
             </span>
             <ExternalLink className="text-muted-foreground size-5 shrink-0 transition group-hover:text-current rtl:-scale-x-100" />
         </a>
@@ -61,9 +61,9 @@ export function LinkPreview({ link, onRemove }: { link: LinkCard; onRemove?: () 
                 />
             )}
             <div dir="auto" className="min-w-0 px-4 py-2.5">
-                <div className="text-muted-foreground truncate text-[0.8125rem] uppercase">{link.domain}</div>
-                {link.title && <div className="line-clamp-2 text-[1.0625rem] leading-snug font-semibold">{link.title}</div>}
-                {link.description && <div className="text-muted-foreground mt-0.5 line-clamp-1 text-[0.9375rem]">{link.description}</div>}
+                <div className="text-muted-foreground truncate text-[13px] uppercase">{link.domain}</div>
+                {link.title && <div className="line-clamp-2 text-[17px] leading-snug font-semibold">{link.title}</div>}
+                {link.description && <div className="text-muted-foreground mt-0.5 line-clamp-1 text-[15px]">{link.description}</div>}
             </div>
         </a>
     );

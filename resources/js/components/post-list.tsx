@@ -7,16 +7,12 @@ import { useMemo } from 'react';
 
 export function PostList({ posts, full = false }: { posts: Paginated<Post> | { data: Post[]; links?: undefined }; full?: boolean }) {
     const t = useT();
-    const { locale, skin } = usePage<SharedData>().props;
+    const { locale } = usePage<SharedData>().props;
     const items = useMemo(() => posts.data.flatMap((post) => [post, ...post.comments]), [posts]);
     const translated = useAutoTranslate(items, locale);
 
     return (
-        <div
-            className={
-                skin === 'stream' ? 'border-t border-slate-200 dark:border-neutral-800' : skin === 'showcase' ? 'space-y-4 sm:space-y-6' : 'space-y-4'
-            }
-        >
+        <div className="space-y-4">
             {posts.data.length === 0 && (
                 <p className="text-muted-foreground rounded-2xl bg-white p-6 text-center text-sm dark:bg-neutral-900">{t('No posts yet.')}</p>
             )}

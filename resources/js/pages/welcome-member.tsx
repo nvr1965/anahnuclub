@@ -66,7 +66,7 @@ export default function WelcomeMember({ again, rules }: Props) {
                             className="prose prose-sm prose-slate dark:prose-invert max-h-96 max-w-none overflow-y-auto rounded-md border border-slate-200 p-4 dark:border-neutral-800"
                             dangerouslySetInnerHTML={{ __html: rules.body }}
                         />
-                        <label className="flex items-start gap-3 text-[0.9375rem]">
+                        <label className="flex items-start gap-3 text-[15px]">
                             <input
                                 type="checkbox"
                                 className="accent-brand mt-1 size-4 shrink-0"

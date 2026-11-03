@@ -35,10 +35,10 @@ export default function Birthdays({ menu, people }: { menu: FriendsMenuCounts; p
                 <UserAvatar person={p} className="size-14" />
             </Link>
             <div className="min-w-0 flex-1">
-                <Link href={route('people.show', p.id)} dir="auto" className="block truncate text-[0.9375rem] font-semibold hover:underline">
+                <Link href={route('people.show', p.id)} dir="auto" className="block truncate text-[15px] font-semibold hover:underline">
                     {p.name}
                 </Link>
-                <p className="text-muted-foreground text-[0.8125rem]">
+                <p className="text-muted-foreground text-[13px]">
                     {showDay && <>{dayOf(p.birthday)} · </>}
                     {t('Turns :age', { age: p.age })}
                 </p>
@@ -64,7 +64,7 @@ export default function Birthdays({ menu, people }: { menu: FriendsMenuCounts; p
                 {people.length === 0 && (
                     <div className={`${card} text-muted-foreground flex flex-col items-center gap-3 py-10 text-center`}>
                         <Cake className="size-10" />
-                        <p className="text-[0.9375rem]">{t("Your friends' birthdays will appear here when they share them in their profile.")}</p>
+                        <p className="text-[15px]">{t("Your friends' birthdays will appear here when they share them in their profile.")}</p>
                     </div>
                 )}
                 {today.length > 0 && (

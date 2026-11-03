@@ -32,7 +32,7 @@ export default function Share({ body, url, sidebar }: { body: string; url: strin
                 {posted ? (
                     <div className="rounded-lg bg-white p-6 text-center shadow-sm dark:bg-neutral-900">
                         <CheckCircle2 className="mx-auto mb-2 size-10 text-green-600" />
-                        <p className="text-[0.9375rem] font-semibold">{t('Posted')}</p>
+                        <p className="text-[15px] font-semibold">{t('Posted')}</p>
                         {stayed && (
                             <div className="mt-4 flex flex-wrap justify-center gap-2">
                                 {(popup || host) && (

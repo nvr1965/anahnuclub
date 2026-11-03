@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Group;
+use App\Models\Photo;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,6 +56,29 @@ class ProfileAndFriendsTest extends TestCase
         Storage::disk('public')->assertMissing($path);
 
         $this->post('/profile/avatar', ['image' => UploadedFile::fake()->create('virus.exe', 10)])->assertSessionHasErrors('image');
+    }
+
+    public function test_the_profile_picture_and_cover_can_come_from_the_members_own_photos()
+    {
+        Storage::fake('public');
+        [$member, $other] = User::factory()->count(2)->create();
+        $mine = Photo::create(['user_id' => $member->id, 'path' => UploadedFile::fake()->image('sea.jpg', 1600, 1200)->store('photos', 'public')]);
+        $theirs = Photo::create(['user_id' => $other->id, 'path' => UploadedFile::fake()->image('x.jpg', 800, 600)->store('photos', 'public')]);
+
+        $this->actingAs($member)->getJson('/profile/photos')->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', $mine->id);
+
+        $this->post('/profile/avatar', ['photo_id' => $mine->id])->assertRedirect();
+        $path = $member->fresh()->avatar_path;
+        $this->assertSame([400, 400], array_slice(getimagesizefromstring(Storage::disk('public')->get($path)), 0, 2));
+        // The photo itself stays where it was.
+        Storage::disk('public')->assertExists($mine->path);
+
+        $this->post('/profile/cover', ['photo_id' => $mine->id])->assertRedirect();
+        $this->assertSame([1640, 624], array_slice(getimagesizefromstring(Storage::disk('public')->get($member->fresh()->cover_path)), 0, 2));
+
+        // Someone else's photo is not offered and cannot be used.
+        $this->post('/profile/avatar', ['photo_id' => $theirs->id])->assertNotFound();
+        $this->assertSame($path, $member->fresh()->avatar_path);
     }
 
     public function test_friend_requests_can_be_sent_accepted_and_ended()

@@ -29,7 +29,7 @@ interface Props {
     groups: { id: number; name: string }[];
 }
 
-const button = 'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[0.9375rem] font-semibold transition';
+const button = 'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[15px] font-semibold transition';
 const primary = `${button} bg-brand hover:bg-brand-dark text-white`;
 const secondary = `${button} bg-slate-200 hover:bg-slate-300 dark:bg-neutral-800 dark:hover:bg-neutral-700`;
 
@@ -55,7 +55,7 @@ export default function EventShow({ event, going, interested, groups }: Props) {
                         style={coverStyle(event.cover, defaultImages.eventCover)}
                     />
                     <div className="space-y-4 p-5">
-                        <div className="text-[0.9375rem] font-semibold text-red-600 uppercase dark:text-red-400">
+                        <div className="text-[15px] font-semibold text-red-600 uppercase dark:text-red-400">
                             {eventDate(event.starts_at, locale)}
                             {event.ends_at && <> – {eventDate(event.ends_at, locale)}</>}
                         </div>
@@ -67,7 +67,7 @@ export default function EventShow({ event, going, interested, groups }: Props) {
                         />
                         <div className="flex flex-wrap gap-2">
                             {past ? (
-                                <span className="text-muted-foreground text-[0.9375rem]">{t('This event has ended.')}</span>
+                                <span className="text-muted-foreground text-[15px]">{t('This event has ended.')}</span>
                             ) : (
                                 <>
                                     <button
@@ -98,14 +98,14 @@ export default function EventShow({ event, going, interested, groups }: Props) {
                                 </button>
                             )}
                         </div>
-                        <div className="space-y-2.5 border-t border-slate-200 pt-4 text-[0.9375rem] dark:border-neutral-800">
+                        <div className="space-y-2.5 border-t border-slate-200 pt-4 text-[15px] dark:border-neutral-800">
                             <Fact icon={<CalendarDays />}>{eventDate(event.starts_at, locale)}</Fact>
                             {event.location && <Fact icon={<MapPin />}>{event.location}</Fact>}
                             <Fact icon={<Users />}>
                                 {t(':count going', { count: going.length })} · {t(':count interested', { count: interested.length })}
                             </Fact>
                             {event.author && (
-                                <Fact icon={<UserAvatar person={event.author} className="size-5" fallbackClassName="text-[0.5625rem]" />}>
+                                <Fact icon={<UserAvatar person={event.author} className="size-5" fallbackClassName="text-[9px]" />}>
                                     {t('Organised by')}{' '}
                                     <Link href={route('people.show', event.author.id)} className="font-semibold hover:underline">
                                         {event.author.name}

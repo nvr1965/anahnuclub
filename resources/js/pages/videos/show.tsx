@@ -58,8 +58,8 @@ export default function VideoShow({ video, more }: { video: Video; more: VideoIt
                                 <Link href={route('people.show', video.author.id)} className="flex items-center gap-2">
                                     <UserAvatar person={video.author} className="size-9" />
                                     <span>
-                                        <span className="block text-[0.9375rem] font-semibold">{video.author.name}</span>
-                                        <span className="text-muted-foreground block text-[0.8125rem]">{relativeTime(video.created_at, locale)}</span>
+                                        <span className="block text-[15px] font-semibold">{video.author.name}</span>
+                                        <span className="text-muted-foreground block text-[13px]">{relativeTime(video.created_at, locale)}</span>
                                     </span>
                                 </Link>
                             )}
@@ -119,7 +119,7 @@ function EditVideo({ video, open, onClose }: { video: Video; open: boolean; onCl
     const t = useT();
     const form = useForm({ title: video.title, description: video.description_text ?? '' });
     const field =
-        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         form.patch(route('videos.update', video.id), { preserveScroll: true, onSuccess: onClose });

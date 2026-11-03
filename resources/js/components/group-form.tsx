@@ -15,7 +15,7 @@ export interface EditableGroup {
 }
 
 const field =
-    'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none focus:border-brand dark:border-neutral-700 dark:bg-neutral-900';
+    'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none focus:border-brand dark:border-neutral-700 dark:bg-neutral-900';
 
 /** Creating a group, or (with `group`) its settings for the owner and admins. */
 export function GroupForm({ group, isOwner = false }: { group?: EditableGroup; isOwner?: boolean }) {
@@ -144,7 +144,7 @@ export function GroupForm({ group, isOwner = false }: { group?: EditableGroup; i
                         </label>
                         {picture('avatar', t('Group picture'), group?.avatar ?? null)}
                         {picture('cover', t('Cover'), group?.cover ?? null)}
-                        <label className="flex items-start gap-2 text-[0.9375rem]">
+                        <label className="flex items-start gap-2 text-[15px]">
                             <input
                                 type="checkbox"
                                 className="mt-1"

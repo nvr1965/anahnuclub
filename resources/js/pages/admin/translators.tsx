@@ -88,7 +88,7 @@ export default function Translators({ translators }: { translators: Translator[]
         paid: { text: t('Paid'), tone: 'gray' },
     };
     const field =
-        'focus:border-brand rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand rounded-md border border-slate-300 bg-white px-2 py-1.5 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 
     return (
         <AdminLayout title={t('Translators')}>

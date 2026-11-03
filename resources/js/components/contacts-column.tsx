@@ -37,7 +37,7 @@ export function ContactsColumn({ sidebar }: { sidebar: Sidebar }) {
                     <Link
                         key={member.id}
                         href={route('people.show', member.id)}
-                        className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[0.9375rem] hover:bg-black/5 dark:hover:bg-white/10"
+                        className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-[15px] hover:bg-black/5 dark:hover:bg-white/10"
                     >
                         <UserAvatar person={member} className="size-9" fallbackClassName="text-sm" />
                         <span dir="auto" className="truncate">

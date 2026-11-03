@@ -28,21 +28,7 @@ const actions: Record<string, string> = {
 
 export function PostCard({ post, translated, full = false }: { post: Post; translated: Lookup; full?: boolean }) {
     const t = useT();
-    const { locale, auth, skin } = usePage<SharedData>().props;
-    // Stream: no card, a thin line between posts, everything under the name lined up past the avatar.
-    // Showcase: no card, the photo or video right under the name and the text after it.
-    const stream = skin === 'stream';
-    const showcase = skin === 'showcase';
-    // Forum: a framed card that lights up under the pointer, its buttons as grey pills with the counts in them.
-    const forum = skin === 'forum';
-    const hasMedia = post.photos.length > 0 || Boolean(post.video);
-    // Stream lines everything up with the name: card padding (1rem) + avatar (2.5rem) + gap (0.625rem).
-    const pad = stream ? 'ps-[4.125rem] pe-4' : 'px-4';
-    const media = stream
-        ? 'ms-[4.125rem] me-4 overflow-hidden rounded-2xl border border-slate-200 dark:border-neutral-800'
-        : showcase
-          ? '-order-2'
-          : '';
+    const { locale, auth } = usePage<SharedData>().props;
     const [commenting, setCommenting] = useState(full);
     const [typing, setTyping] = useState(full);
     const form = useForm({ body: '' });
@@ -75,9 +61,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             .replace(/\s+/g, ' ')
             .trim()
             .slice(0, 120);
-    const action = forum
-        ? 'inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold transition hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700'
-        : 'inline-flex items-center justify-center gap-2 rounded-md py-1.5 text-[0.9375rem] font-semibold transition hover:bg-slate-100 max-sm:flex-col max-sm:gap-0.5 max-sm:text-xs dark:hover:bg-neutral-800';
+    const action =
+        'inline-flex items-center justify-center gap-2 rounded-md py-1.5 text-[15px] font-semibold transition hover:bg-slate-100 max-sm:flex-col max-sm:gap-0.5 max-sm:text-xs dark:hover:bg-neutral-800';
 
     const submitComment: FormEventHandler = (e) => {
         e.preventDefault();
@@ -118,13 +103,13 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 <DefaultAvatarFallback />
             </Avatar>
             <div className="min-w-0">
-                <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[0.9375rem] dark:bg-neutral-800">
+                <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[15px] dark:bg-neutral-800">
                     {comment.author ? (
-                        <Link href={route('people.show', comment.author.id)} className="block text-[0.8125rem] font-semibold hover:underline">
+                        <Link href={route('people.show', comment.author.id)} className="block text-[13px] font-semibold hover:underline">
                             {comment.author.name}
                         </Link>
                     ) : (
-                        <div className="text-[0.8125rem] font-semibold">{t('Former member')}</div>
+                        <div className="text-[13px] font-semibold">{t('Former member')}</div>
                     )}
                     <TranslatedText item={comment} fetched={translated('comment', comment.id)} original={{ body: comment.body }} />
                 </div>
@@ -152,7 +137,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 <div className="flex flex-1 items-center rounded-full bg-slate-100 pe-1 dark:bg-neutral-800">
                     <input
                         dir="auto"
-                        className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[0.9375rem] outline-none"
+                        className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[15px] outline-none"
                         placeholder={isReply ? t('Write a reply…') : t('Write a comment…')}
                         value={f.data.body}
                         autoFocus={isReply || typing}
@@ -172,18 +157,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     };
 
     return (
-        <article
-            className={
-                stream
-                    ? 'border-b border-slate-200 bg-white dark:border-neutral-800 dark:bg-black'
-                    : showcase
-                      ? 'flex flex-col bg-white sm:rounded-lg sm:border sm:border-slate-200 dark:bg-black sm:dark:border-neutral-800'
-                      : forum
-                        ? 'border-b border-slate-200 bg-white transition-colors hover:bg-slate-50 sm:rounded-2xl sm:border sm:hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-900/70'
-                        : 'rounded-lg bg-white shadow-sm dark:bg-neutral-900'
-            }
-        >
-            <header className={`flex items-center gap-2.5 px-4 pt-3 ${showcase ? '-order-3 pb-3' : stream ? 'items-start' : ''}`}>
+        <article className="rounded-lg bg-white shadow-sm dark:bg-neutral-900">
+            <header className="flex items-center gap-2.5 px-4 pt-3">
                 {post.official ? (
                     <Avatar className="size-10 shrink-0">
                         <AvatarImage src="/images/logo-mark.png" alt="anahnu.club" />
@@ -196,7 +171,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         </Avatar>
                     </Link>
                 )}
-                <div className="min-w-0 flex-1 text-[0.9375rem] leading-tight">
+                <div className="min-w-0 flex-1 text-[15px] leading-tight">
                     <div>
                         {post.official ? (
                             <span className="font-semibold">anahnu.club</span>
@@ -219,7 +194,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             </>
                         )}
                     </div>
-                    <div className="text-muted-foreground mt-0.5 text-[0.8125rem]" title={post.created_at ?? ''}>
+                    <div className="text-muted-foreground mt-0.5 text-[13px]" title={post.created_at ?? ''}>
                         <Link href={post.url} className="hover:underline">
                             {relativeTime(post.created_at, locale)}
                         </Link>
@@ -298,14 +273,14 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             </header>
 
             {(editing || hasText) && (
-                <div className={`${pad} pb-2 ${stream ? 'pt-1' : 'pt-3'}`}>
+                <div className="px-4 pt-3 pb-2">
                     {editing ? (
                         <form onSubmit={saveEdit} className="space-y-2">
                             <textarea
                                 dir="auto"
                                 autoFocus
                                 rows={5}
-                                className="w-full resize-y rounded-xl bg-slate-100 px-4 py-2.5 text-[0.9375rem] outline-none dark:bg-neutral-800"
+                                className="w-full resize-y rounded-xl bg-slate-100 px-4 py-2.5 text-[15px] outline-none dark:bg-neutral-800"
                                 value={edit.data.body}
                                 onChange={(e) => edit.setData('body', e.target.value)}
                             />
@@ -337,17 +312,17 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 </div>
             )}
             {post.photos.length > 0 && (
-                <div className={`mt-2 ${media}`}>
+                <div className="mt-2">
                     <PostPhotos photos={post.photos} />
                 </div>
             )}
             {post.video && (
-                <div className={`mt-2 ${media}`}>
+                <div className="mt-2">
                     <PostVideo video={post.video} postId={post.id} />
                 </div>
             )}
             {post.event && (
-                <div className={`mt-2 ${media}`}>
+                <div className="mt-2">
                     <EventCard event={post.event} />
                 </div>
             )}
@@ -363,8 +338,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             )}
             <div className="pb-2" />
 
-            {!forum && (post.likes_count > 0 || post.comments.length > 0) && (
-                <div className={`text-muted-foreground flex items-center justify-between ${pad} pb-2 text-[0.9375rem]`}>
+            {(post.likes_count > 0 || post.comments.length > 0) && (
+                <div className="text-muted-foreground flex items-center justify-between px-4 pb-2 text-[15px]">
                     <span className="inline-flex items-center gap-1.5">
                         {post.likes_count > 0 && (
                             <>
@@ -381,9 +356,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 </div>
             )}
 
-            <div
-                className={`${forum ? 'flex flex-wrap gap-2 px-4 pb-3' : showcase ? 'flex gap-5 py-1 [&>*]:px-0' : `grid ${post.official ? 'grid-cols-2' : 'grid-cols-3'} py-1`} ${forum ? '' : stream ? 'ms-[3.625rem] me-4' : showcase ? `${hasMedia ? '-order-1' : ''} mx-4` : 'mx-4 border-t border-slate-200 dark:border-neutral-800'}`}
-            >
+            <div className={`mx-4 grid ${post.official ? 'grid-cols-2' : 'grid-cols-3'} border-t border-slate-200 py-1 dark:border-neutral-800`}>
                 <ReactionButton
                     mine={post.my_reaction}
                     disabled={!auth.user}
@@ -400,7 +373,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             setTyping(true);
                         }}
                     >
-                        <MessageCircle className="size-5" /> {forum ? post.comments.length : showcase ? null : t('Comment')}
+                        <MessageCircle className="size-5" /> {t('Comment')}
                     </button>
                 )}
                 <ShareMenu url={post.url} title={plainTitle} className={`${action} text-muted-foreground outline-none`} />
