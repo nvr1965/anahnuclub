@@ -39,7 +39,11 @@ export default function AdminGroups({ groups, q, stale, stale_count }: { groups:
                     </ActionButton>
                 )}
             </div>
-            {stale && <p className="text-muted-foreground mb-3 text-sm">{t('Groups created more than a year ago with no posts, albums, videos or events.')}</p>}
+            {stale && (
+                <p className="text-muted-foreground mb-3 text-sm">
+                    {t('Groups created more than a year ago with no posts, albums, videos or events.')}
+                </p>
+            )}
             <div className={`${card} divide-y dark:divide-neutral-800`}>
                 {groups.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
                 {groups.data.map((group) => (

@@ -68,7 +68,12 @@ export default function GroupsIndex({
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none [&::-webkit-search-cancel-button]:hidden"
                 />
                 {query && (
-                    <button type="button" onClick={() => setQuery('')} aria-label={t('Clear')} className="text-muted-foreground hover:text-foreground">
+                    <button
+                        type="button"
+                        onClick={() => setQuery('')}
+                        aria-label={t('Clear')}
+                        className="text-muted-foreground hover:text-foreground"
+                    >
                         <X className="size-4" />
                     </button>
                 )}
