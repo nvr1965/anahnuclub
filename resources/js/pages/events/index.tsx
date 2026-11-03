@@ -35,7 +35,7 @@ export default function Events({ upcoming, past, groups }: Props) {
 
                 <h2 className="text-lg font-semibold">{t('Upcoming events')}</h2>
                 {upcoming.length === 0 ? (
-                    <p className="text-muted-foreground rounded-lg bg-white p-6 text-center text-[15px] shadow-sm dark:bg-neutral-900">
+                    <p className="text-muted-foreground rounded-lg bg-white p-6 text-center text-[0.9375rem] shadow-sm dark:bg-neutral-900">
                         {t('No upcoming events. Create the first one!')}
                     </p>
                 ) : (
@@ -50,7 +50,11 @@ export default function Events({ upcoming, past, groups }: Props) {
 
                 {past.length > 0 && (
                     <>
-                        <button type="button" onClick={() => setShowPast(!showPast)} className="text-brand text-[15px] font-semibold hover:underline">
+                        <button
+                            type="button"
+                            onClick={() => setShowPast(!showPast)}
+                            className="text-brand text-[0.9375rem] font-semibold hover:underline"
+                        >
                             {showPast ? t('Hide past events') : t('Past events (:count)', { count: past.length })}
                         </button>
                         {showPast && (

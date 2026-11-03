@@ -35,7 +35,7 @@ export default function Videos({ videos, author }: Props) {
                 </div>
                 <section className="rounded-lg bg-white p-4 shadow-sm dark:bg-neutral-900">
                     {videos.data.length === 0 ? (
-                        <p className="text-muted-foreground py-6 text-center text-[15px]">{t('No videos yet.')}</p>
+                        <p className="text-muted-foreground py-6 text-center text-[0.9375rem]">{t('No videos yet.')}</p>
                     ) : (
                         <VideoGrid videos={videos.data} />
                     )}
@@ -62,7 +62,7 @@ function AddVideo({ open, onClose }: { open: boolean; onClose: () => void }) {
         share: true,
     });
     const field =
-        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
     const tab = (active: boolean) =>
         `flex-1 inline-flex items-center justify-center gap-2 rounded-md py-2 text-sm font-semibold ${active ? 'bg-white shadow-sm dark:bg-neutral-700' : 'text-muted-foreground'}`;
 

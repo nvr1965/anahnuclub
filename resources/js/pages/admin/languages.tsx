@@ -120,7 +120,7 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
     };
 
     const field =
-        'focus:border-brand rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 
     return (
         <AdminLayout title={t('Languages')}>

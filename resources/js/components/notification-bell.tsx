@@ -31,7 +31,7 @@ export function PanelMenu({ children }: { children: (close: () => void) => React
 }
 
 export const panelMenuItem =
-    'flex w-full items-center gap-3 rounded-md px-2 py-2 text-start text-[15px] font-medium hover:bg-slate-100 dark:hover:bg-neutral-800 [&>svg]:size-5';
+    'flex w-full items-center gap-3 rounded-md px-2 py-2 text-start text-[0.9375rem] font-medium hover:bg-slate-100 dark:hover:bg-neutral-800 [&>svg]:size-5';
 
 /** The bell in the top bar (its look comes from the children): opening it loads the latest notices, as on Facebook. */
 export function NotificationBell({ className, children }: { className: string; children: ReactNode }) {

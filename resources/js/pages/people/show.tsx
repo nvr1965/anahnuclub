@@ -85,13 +85,15 @@ interface Props {
 }
 
 const card = 'rounded-lg bg-white p-4 shadow-sm dark:bg-neutral-900';
-const button = 'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[15px] font-semibold transition';
+const button = 'inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[0.9375rem] font-semibold transition';
 const primary = `${button} bg-brand hover:bg-brand-dark text-white`;
 const secondary = `${button} bg-slate-200 text-slate-900 hover:bg-slate-300 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700`;
 
 export default function PersonShow({ profile, tab, posts, friends, photos, albums, videos }: Props) {
     const t = useT();
-    const { locale } = usePage<SharedData>().props;
+    const { locale, skin } = usePage<SharedData>().props;
+    // Showcase puts the member's photos first, as big squares.
+    const showcase = skin === 'showcase';
     const [editing, setEditing] = useState(false);
     const [creatingAlbum, setCreatingAlbum] = useState(false);
     const tabs: { key: Props['tab']; label: string }[] = [
@@ -146,7 +148,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                 {profile.name}
                             </h1>
                             {profile.friends_count !== null && (
-                                <Link href={tabHref('friends')} className="text-muted-foreground text-[15px] font-semibold hover:underline">
+                                <Link href={tabHref('friends')} className="text-muted-foreground text-[0.9375rem] font-semibold hover:underline">
                                     {t(':count friends', { count: profile.friends_count })}
                                 </Link>
                             )}
@@ -227,7 +229,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                 key={item.key}
                                 href={tabHref(item.key)}
                                 preserveScroll
-                                className={`relative shrink-0 rounded-md px-4 py-3.5 text-[15px] font-semibold ${tab === item.key ? 'text-brand' : 'text-muted-foreground hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+                                className={`relative shrink-0 rounded-md px-4 py-3.5 text-[0.9375rem] font-semibold ${tab === item.key ? 'text-brand' : 'text-muted-foreground hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
                             >
                                 {item.label}
                                 {tab === item.key && <span className="bg-brand absolute inset-x-1 bottom-0 h-[3px] rounded-full" />}
@@ -237,14 +239,14 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                 </section>
 
                 {profile.blocked_by_me && (
-                    <section className={`${card} text-muted-foreground text-center text-[15px]`}>
+                    <section className={`${card} text-muted-foreground text-center text-[0.9375rem]`}>
                         {t('You blocked :name. You do not see each other’s posts, comments or messages.', { name: profile.name })}
                     </section>
                 )}
 
                 {tab === 'posts' && !profile.blocked_by_me && (
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                        <div className="space-y-4 lg:sticky lg:top-[88px] lg:self-start">
+                        <div className="space-y-4 lg:sticky lg:top-[5.5rem] lg:self-start">
                             <section className={card}>
                                 <h2 className="mb-3 text-xl font-bold">{t('Intro')}</h2>
                                 <Details profile={profile} locale={locale} short />
@@ -254,7 +256,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                     </button>
                                 )}
                             </section>
-                            {photos.length > 0 && (
+                            {photos.length > 0 && !showcase && (
                                 <section className={card}>
                                     <Heading title={t('Photos')} href={tabHref('photos')} />
                                     <PhotoGrid photos={photos} className="grid-cols-3 overflow-hidden rounded-lg" />
@@ -263,7 +265,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             {!profile.friends_hidden && (
                                 <section className={card}>
                                     <Heading title={t('Friends')} href={tabHref('friends')} />
-                                    <p className="text-muted-foreground -mt-2 mb-3 text-[15px]">
+                                    <p className="text-muted-foreground -mt-2 mb-3 text-[0.9375rem]">
                                         {t(':count friends', { count: profile.friends_count ?? 0 })}
                                     </p>
                                     <FriendGrid friends={friends} small />
@@ -271,6 +273,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             )}
                         </div>
                         <div className="min-w-0 space-y-4">
+                            {showcase && photos.length > 0 && <PhotoGrid photos={photos} className="grid-cols-3 gap-0.5 sm:gap-1" />}
                             {profile.is_me && <PostComposer />}
                             {posts && <PostList posts={posts} />}
                         </div>
@@ -293,7 +296,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                     <section className={card}>
                         <h2 className="mb-4 text-xl font-bold">{t('Friends')}</h2>
                         {profile.friends_hidden ? (
-                            <p className="text-muted-foreground text-[15px]">{t('The friends list is hidden.')}</p>
+                            <p className="text-muted-foreground text-[0.9375rem]">{t('The friends list is hidden.')}</p>
                         ) : (
                             <FriendGrid friends={friends} />
                         )}
@@ -311,7 +314,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             )}
                         </div>
                         {albums.length === 0 ? (
-                            <p className="text-muted-foreground text-[15px]">{t('No albums yet.')}</p>
+                            <p className="text-muted-foreground text-[0.9375rem]">{t('No albums yet.')}</p>
                         ) : (
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                                 {albums.map((album) => (
@@ -328,10 +331,12 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                                 <Images className="text-muted-foreground size-10" />
                                             )}
                                         </div>
-                                        <div dir="auto" className="mt-1 truncate text-[15px] font-semibold">
+                                        <div dir="auto" className="mt-1 truncate text-[0.9375rem] font-semibold">
                                             {albumName(album, t)}
                                         </div>
-                                        <div className="text-muted-foreground text-[13px]">{t(':count photos', { count: album.photos_count })}</div>
+                                        <div className="text-muted-foreground text-[0.8125rem]">
+                                            {t(':count photos', { count: album.photos_count })}
+                                        </div>
                                     </Link>
                                 ))}
                             </div>
@@ -341,7 +346,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                 {tab === 'photos' && photos.length > 0 && (
                     <section className={card}>
                         <h2 className="mb-4 text-xl font-bold">{t('All photos')}</h2>
-                        <PhotoGrid photos={photos} className="grid-cols-3 sm:grid-cols-5" />
+                        <PhotoGrid photos={photos} className={showcase ? 'grid-cols-3 gap-0.5 sm:gap-1' : 'grid-cols-3 sm:grid-cols-5'} />
                     </section>
                 )}
 
@@ -356,7 +361,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             )}
                         </div>
                         {videos.length === 0 ? (
-                            <p className="text-muted-foreground text-[15px]">{t('No videos yet.')}</p>
+                            <p className="text-muted-foreground text-[0.9375rem]">{t('No videos yet.')}</p>
                         ) : (
                             <VideoGrid videos={videos} />
                         )}
@@ -376,7 +381,7 @@ function Heading({ title, href }: { title: string; href: string }) {
     return (
         <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xl font-bold">{title}</h2>
-            <Link href={href} className="text-brand rounded-md px-2 py-1 text-[15px] hover:bg-slate-100 dark:hover:bg-neutral-800">
+            <Link href={href} className="text-brand rounded-md px-2 py-1 text-[0.9375rem] hover:bg-slate-100 dark:hover:bg-neutral-800">
                 {t('See all')}
             </Link>
         </div>
@@ -419,7 +424,7 @@ function Details({ profile, locale, short = false }: { profile: Profile; locale:
         rows.push([<Check key="i" />, t('Last seen :time', { time: relativeTime(profile.last_seen_at, locale) })]);
 
     return (
-        <div className="space-y-3 text-[15px]">
+        <div className="space-y-3 text-[0.9375rem]">
             {profile.status && (
                 <p dir="auto" className="text-center font-medium">
                     {profile.status}
@@ -444,7 +449,7 @@ function Details({ profile, locale, short = false }: { profile: Profile; locale:
 
 function FriendGrid({ friends, small = false }: { friends: Person[]; small?: boolean }) {
     const t = useT();
-    if (friends.length === 0) return <p className="text-muted-foreground text-[15px]">{t('No friends yet.')}</p>;
+    if (friends.length === 0) return <p className="text-muted-foreground text-[0.9375rem]">{t('No friends yet.')}</p>;
 
     return (
         <div className={`grid gap-3 ${small ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'}`}>
@@ -452,7 +457,7 @@ function FriendGrid({ friends, small = false }: { friends: Person[]; small?: boo
                 small ? (
                     <Link key={friend.id} href={route('people.show', friend.id)} className="min-w-0 space-y-1">
                         <FriendPicture friend={friend} />
-                        <div dir="auto" className="truncate text-[13px] font-semibold">
+                        <div dir="auto" className="truncate text-[0.8125rem] font-semibold">
                             {friend.name}
                         </div>
                     </Link>
@@ -463,7 +468,7 @@ function FriendGrid({ friends, small = false }: { friends: Person[]; small?: boo
                         className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 p-2 hover:bg-slate-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
                     >
                         <UserAvatar person={friend} className="size-16 rounded-lg" fallbackClassName="rounded-lg" />
-                        <span dir="auto" className="truncate text-[15px] font-semibold">
+                        <span dir="auto" className="truncate text-[0.9375rem] font-semibold">
                             {friend.name}
                         </span>
                     </Link>
@@ -485,7 +490,7 @@ function PhotoGrid({ photos, className }: { photos: Photo[]; className: string }
     const [open, setOpen] = useState<number | null>(null);
 
     return (
-        <div className={`grid gap-1 ${className}`}>
+        <div className={`grid ${className.includes('gap-') ? '' : 'gap-1'} ${className}`}>
             <PhotoViewer photos={photos} index={open} onClose={() => setOpen(null)} />
             {photos.map((photo, i) => (
                 <button key={photo.id} type="button" onClick={() => setOpen(i)} className="block overflow-hidden">
@@ -678,7 +683,7 @@ function EditProfile({ profile, open, onClose }: { profile: Profile; open: boole
     };
 
     const field =
-        'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none focus:border-brand dark:border-neutral-700 dark:bg-neutral-900';
+        'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none focus:border-brand dark:border-neutral-700 dark:bg-neutral-900';
     type TextKey = Exclude<keyof typeof form.data, 'privacy'>;
     /** Who sees one detail: everyone, friends, or only the owner. */
     const seen = (key: PrivateField) => (

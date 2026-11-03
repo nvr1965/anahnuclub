@@ -762,5 +762,20 @@
     "Reply…": "Reply…",
     "Upload from this device": "Upload from this device",
     "Choose from my photos": "Choose from my photos",
-    "You have no photos on the site yet.": "You have no photos on the site yet."
+    "You have no photos on the site yet.": "You have no photos on the site yet.",
+    "Interface style": "Interface style",
+    "Interface styles": "Interface styles",
+    "How the feed, the top bar and profiles look. Everything works the same in every style.": "How the feed, the top bar and profiles look. Everything works the same in every style.",
+    "Members choose a style in Settings → Appearance or in the account menu. The default style is for guests and for members who have not chosen.": "Members choose a style in Settings → Appearance or in the account menu. The default style is for guests and for members who have not chosen.",
+    "Default": "Default",
+    "Club": "Club",
+    "Community": "Community",
+    "Large text": "Large text",
+    "Stream": "Stream",
+    "Showcase": "Showcase",
+    "Cards on grey, three columns, the menu on the side": "Cards on grey, three columns, the menu on the side",
+    "Denser and squarer, more posts on a screen": "Denser and squarer, more posts on a screen",
+    "Bigger letters and buttons, stronger contrast": "Bigger letters and buttons, stronger contrast",
+    "One column of posts split by thin lines, menu at the bottom on phones": "One column of posts split by thin lines, menu at the bottom on phones",
+    "Photos first and edge to edge, a photo grid in profiles": "Photos first and edge to edge, a photo grid in profiles"
 }

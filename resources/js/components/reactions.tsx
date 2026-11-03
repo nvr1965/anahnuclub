@@ -22,7 +22,7 @@ export function ReactionFaces({ types }: { types: Reaction[] }) {
             {types.map((type, i) => (
                 <span
                     key={type}
-                    className="-ms-1 inline-flex size-[20px] items-center justify-center rounded-full bg-white text-[14px] leading-none ring-2 ring-white first:ms-0 dark:bg-neutral-900 dark:ring-neutral-900"
+                    className="-ms-1 inline-flex size-[20px] items-center justify-center rounded-full bg-white text-[0.875rem] leading-none ring-2 ring-white first:ms-0 dark:bg-neutral-900 dark:ring-neutral-900"
                     style={{ zIndex: types.length - i }}
                 >
                     {byType[type]?.emoji}
@@ -83,7 +83,7 @@ export function ReactionButton({
                             title={t(r.label)}
                             aria-label={t(r.label)}
                             onClick={() => pick(r.type)}
-                            className={`origin-bottom rounded-full p-1 text-[28px] leading-none transition-transform hover:-translate-y-1 hover:scale-125 max-sm:text-[26px] ${mine === r.type ? 'bg-slate-100 dark:bg-neutral-700' : ''}`}
+                            className={`origin-bottom rounded-full p-1 text-[1.75rem] leading-none transition-transform hover:-translate-y-1 hover:scale-125 max-sm:text-[1.625rem] ${mine === r.type ? 'bg-slate-100 dark:bg-neutral-700' : ''}`}
                         >
                             {r.emoji}
                         </button>
@@ -109,7 +109,7 @@ export function ReactionButton({
                 onContextMenu={(e) => e.preventDefault()}
             >
                 {chosen && chosen.type !== 'like' ? (
-                    <span className="text-[18px] leading-none">{chosen.emoji}</span>
+                    <span className="text-[1.125rem] leading-none">{chosen.emoji}</span>
                 ) : (
                     <ThumbsUp className={`size-5 ${chosen ? 'fill-current' : ''}`} />
                 )}{' '}

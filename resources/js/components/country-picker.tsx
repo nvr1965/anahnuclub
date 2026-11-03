@@ -139,7 +139,7 @@ export function CountryPicker({
                                 pick(o.code);
                             }}
                             onMouseEnter={() => setActive(i)}
-                            className={`cursor-pointer px-3 py-1.5 text-[15px] ${i === active ? 'bg-slate-100 dark:bg-neutral-800' : ''} ${o.code === value ? 'font-semibold' : ''}`}
+                            className={`cursor-pointer px-3 py-1.5 text-[0.9375rem] ${i === active ? 'bg-slate-100 dark:bg-neutral-800' : ''} ${o.code === value ? 'font-semibold' : ''}`}
                         >
                             <span className="flex items-center gap-2">
                                 <CountryFlag code={o.code} />

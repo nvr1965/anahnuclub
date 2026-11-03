@@ -1,4 +1,5 @@
 import { LanguageSubmenu } from '@/components/language-switcher';
+import { SkinSubmenu } from '@/components/skin-picker';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
@@ -29,6 +30,8 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <div className="sm:hidden">
                 <LanguageSubmenu />
             </div>
+            <SkinSubmenu />
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={route('people.show', user.id)} as="button" onClick={cleanup}>

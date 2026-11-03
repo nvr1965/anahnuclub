@@ -1,6 +1,8 @@
 import { Badge, card } from '@/components/admin-ui';
 import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
+import { skinInfo } from '@/lib/skins';
+import { type Skin } from '@/types';
 import { Link, router, useForm } from '@inertiajs/react';
 import { Eye, Languages, Plus, Trash2 } from 'lucide-react';
 import { type FormEventHandler, useState } from 'react';
@@ -19,16 +21,17 @@ interface Props {
     pages: { slug: string; title: string; published: boolean; in_footer: boolean; languages: string[] }[];
     edit: { slug: string | null; content: Content; in_footer: boolean; published: boolean; sort: number } | null;
     donate_links: { label: string; url: string; on: boolean }[];
+    skins: { default: Skin; enabled: Skin[] };
     can_translate: boolean;
 }
 
 const field =
-    'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+    'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 const primary = 'bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold text-white disabled:opacity-40';
 const secondary =
     'inline-flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300 disabled:opacity-40 dark:bg-neutral-800 dark:hover:bg-neutral-700';
 
-export default function AdminPages({ languages, pages, edit, donate_links, can_translate }: Props) {
+export default function AdminPages({ languages, pages, edit, donate_links, skins, can_translate }: Props) {
     const t = useT();
     const settings = useForm<{ donate_links: { label: string; url: string; on: boolean }[] }>({ donate_links: donate_links });
     const links = settings.data.donate_links;
@@ -150,8 +153,71 @@ export default function AdminPages({ languages, pages, edit, donate_links, can_t
                         </button>
                     </div>
                 </form>
+
+                <SkinSettings skins={skins} />
             </div>
         </AdminLayout>
+    );
+}
+
+/** Which interface styles members may pick, and the one guests and members who never chose see. */
+function SkinSettings({ skins }: { skins: Props['skins'] }) {
+    const t = useT();
+    const form = useForm<{ default: Skin; enabled: Skin[] }>({ default: skins.default, enabled: skins.enabled });
+    const all = Object.keys(skinInfo) as Skin[];
+
+    return (
+        <form
+            className={`${card} space-y-3 p-4`}
+            onSubmit={(e) => {
+                e.preventDefault();
+                form.patch(route('admin.skins.update'), { preserveScroll: true });
+            }}
+        >
+            <h2 className="font-semibold">{t('Interface styles')}</h2>
+            <p className="text-muted-foreground text-sm">
+                {t(
+                    'Members choose a style in Settings → Appearance or in the account menu. The default style is for guests and for members who have not chosen.',
+                )}
+            </p>
+            <div className="divide-y rounded-md border dark:divide-neutral-800">
+                {all.map((skin) => (
+                    <div key={skin} className="flex flex-wrap items-center gap-3 p-2.5">
+                        <label className="flex min-w-0 flex-1 items-center gap-2">
+                            <input
+                                type="checkbox"
+                                className="accent-brand size-4"
+                                checked={form.data.enabled.includes(skin) || form.data.default === skin}
+                                disabled={form.data.default === skin}
+                                onChange={(e) =>
+                                    form.setData(
+                                        'enabled',
+                                        e.target.checked ? [...form.data.enabled, skin] : form.data.enabled.filter((s) => s !== skin),
+                                    )
+                                }
+                            />
+                            <span className="font-medium">{t(skinInfo[skin].name)}</span>
+                            <span className="text-muted-foreground truncate text-sm">{t(skinInfo[skin].about)}</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 text-sm">
+                            <input
+                                type="radio"
+                                name="default-skin"
+                                className="accent-brand"
+                                checked={form.data.default === skin}
+                                onChange={() => form.setData('default', skin)}
+                            />
+                            {t('Default')}
+                        </label>
+                    </div>
+                ))}
+            </div>
+            <div className="flex justify-end">
+                <button className={primary} disabled={form.processing || !form.isDirty}>
+                    {t('Save')}
+                </button>
+            </div>
+        </form>
     );
 }
 
@@ -224,7 +290,7 @@ function Editor({ edit, languages, canTranslate }: { edit: NonNullable<Props['ed
             <textarea
                 dir={rtl ? 'rtl' : 'ltr'}
                 rows={16}
-                className={`${field} font-mono text-[13px]`}
+                className={`${field} font-mono text-[0.8125rem]`}
                 placeholder={t('Text of the page. HTML is allowed: <h2>, <p>, <a>, <ul>, <strong>…')}
                 value={current.body}
                 onChange={(e) => setText('body', e.target.value)}

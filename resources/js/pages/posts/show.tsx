@@ -17,7 +17,7 @@ export default function PostShow({ post, sidebar }: { post: { data: Post } | Pos
             <PostList posts={{ data: [item] }} full />
             {!auth.user && (
                 <div className="rounded-lg bg-white p-5 text-center shadow-sm dark:bg-neutral-900">
-                    <p className="mb-3 text-[15px]">{t('Join anahnu.club to comment and meet the community.')}</p>
+                    <p className="mb-3 text-[0.9375rem]">{t('Join anahnu.club to comment and meet the community.')}</p>
                     <Link href={route('register')} className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold text-white">
                         {t('Sign up')}
                     </Link>

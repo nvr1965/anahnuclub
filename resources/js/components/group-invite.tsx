@@ -84,7 +84,7 @@ export function GroupInvite({ group }: { group: { slug: string; name: string } }
                                     >
                                         <UserAvatar person={p} className="size-10" />
                                         <span className="min-w-0 flex-1">
-                                            <span dir="auto" className="block truncate text-[15px] font-medium">
+                                            <span dir="auto" className="block truncate text-[0.9375rem] font-medium">
                                                 {p.name}
                                             </span>
                                             {(p.friend || p.invited) && (
@@ -121,7 +121,7 @@ export function InvitationBanner({ group, invitation }: { group: { slug: string 
     return (
         <section className="border-brand/30 bg-brand-soft/50 flex flex-wrap items-center gap-3 rounded-lg border p-4">
             <UserAvatar person={invitation.from} className="size-10" />
-            <p className="min-w-0 flex-1 text-[15px]">{t(':name invites you to join this group.', { name: invitation.from.name })}</p>
+            <p className="min-w-0 flex-1 text-[0.9375rem]">{t(':name invites you to join this group.', { name: invitation.from.name })}</p>
             <div className="flex gap-2">
                 <button
                     type="button"

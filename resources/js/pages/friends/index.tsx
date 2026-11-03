@@ -61,7 +61,9 @@ export default function Friends({ menu, requests, suggestions }: Props) {
                     {shownSuggestions.length === 0 && (
                         <div className="col-span-full flex flex-col items-center gap-3 rounded-lg bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
                             <UsersRound className="text-muted-foreground size-10" />
-                            <p className="text-muted-foreground text-[15px]">{t('No suggestions right now. Invite your friends to the club.')}</p>
+                            <p className="text-muted-foreground text-[0.9375rem]">
+                                {t('No suggestions right now. Invite your friends to the club.')}
+                            </p>
                             <InviteButton />
                         </div>
                     )}
@@ -117,7 +119,7 @@ function Section({ title, count, href, children }: { title: string; count?: numb
                 <h2 className="text-xl font-bold">
                     {title} {!!count && <span className="text-red-500">{count}</span>}
                 </h2>
-                <Link href={href} className="text-brand text-[15px] font-semibold hover:underline">
+                <Link href={href} className="text-brand text-[0.9375rem] font-semibold hover:underline">
                     {t('See all')}
                 </Link>
             </div>

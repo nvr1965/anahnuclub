@@ -85,7 +85,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={t('Search anahnu.club')}
                         autoFocus={!q}
-                        className="w-full bg-transparent text-[15px] outline-none"
+                        className="w-full bg-transparent text-[0.9375rem] outline-none"
                     />
                 </form>
 
@@ -125,7 +125,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                                     <AvatarImage src={person.avatar ?? undefined} alt="" className="object-cover" />
                                     <DefaultAvatarFallback />
                                 </Avatar>
-                                <span dir="auto" className="truncate text-[15px] font-medium">
+                                <span dir="auto" className="truncate text-[0.9375rem] font-medium">
                                     {person.name}
                                 </span>
                             </Link>
@@ -189,7 +189,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
 
                 {more && (
                     <div className="text-center">
-                        <Link href={more} className="text-brand text-[15px] font-semibold hover:underline">
+                        <Link href={more} className="text-brand text-[0.9375rem] font-semibold hover:underline">
                             {t('More')}
                         </Link>
                     </div>

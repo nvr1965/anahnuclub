@@ -1,5 +1,7 @@
 import { ClubHeader } from '@/components/club-header';
 import { SiteFooter } from '@/components/site-footer';
+import { type SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
 import { type ReactNode } from 'react';
 
 /**
@@ -18,28 +20,40 @@ export default function ClubLayout({
     /** The page fills the screen under the top bar edge to edge, without the footer, as Messenger does. */
     full?: boolean;
 }) {
+    const { skin } = usePage<SharedData>().props;
+    // Stream and Showcase: one column of posts (plus the menu on wide screens) and a menu bar at the bottom on phones.
+    const flat = skin === 'stream' || skin === 'showcase';
+
     if (full)
         return (
             <div className="flex h-dvh flex-col bg-white text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
                 <ClubHeader />
-                <main className="min-h-0 flex-1">{children}</main>
+                <main className={`min-h-0 flex-1 ${flat ? 'max-sm:pb-16' : ''}`}>{children}</main>
             </div>
         );
 
     const columns =
-        left && right
-            ? 'lg:grid-cols-[280px_minmax(0,680px)] xl:grid-cols-[280px_minmax(0,680px)_300px]'
-            : left
-              ? 'lg:grid-cols-[280px_minmax(0,1fr)]'
-              : '';
+        left && right && flat
+            ? 'lg:grid-cols-[280px_minmax(0,600px)]'
+            : left && right
+              ? 'lg:grid-cols-[280px_minmax(0,680px)] xl:grid-cols-[280px_minmax(0,680px)_300px]'
+              : left
+                ? 'lg:grid-cols-[280px_minmax(0,1fr)]'
+                : '';
 
     return (
-        <div className="min-h-screen bg-[#f0f2f5] text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
+        <div className="bg-page min-h-screen text-slate-900 dark:text-neutral-100">
             <ClubHeader />
-            <main className={`mx-auto grid max-w-[1320px] justify-center gap-6 px-3 py-4 sm:px-4 ${columns}`}>
-                {left && <aside className="sticky top-[88px] hidden max-h-[calc(100vh-102px)] self-start overflow-y-auto lg:block">{left}</aside>}
+            <main
+                className={`mx-auto grid max-w-[1320px] justify-center gap-6 px-3 py-4 sm:px-4 ${columns} ${flat ? 'max-sm:px-0 max-sm:pb-20' : ''}`}
+            >
+                {left && (
+                    <aside className="sticky top-[5.5rem] hidden max-h-[calc(100vh-6.375rem)] self-start overflow-y-auto lg:block">{left}</aside>
+                )}
                 <div className="min-w-0">{children}</div>
-                {right && <aside className="sticky top-[88px] hidden max-h-[calc(100vh-102px)] self-start overflow-y-auto xl:block">{right}</aside>}
+                {right && !flat && (
+                    <aside className="sticky top-[5.5rem] hidden max-h-[calc(100vh-6.375rem)] self-start overflow-y-auto xl:block">{right}</aside>
+                )}
             </main>
             <SiteFooter />
         </div>
