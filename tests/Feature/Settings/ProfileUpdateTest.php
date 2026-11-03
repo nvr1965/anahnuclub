@@ -21,6 +21,16 @@ class ProfileUpdateTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_profile_page_keeps_the_interface_language_apart_from_the_default_one()
+    {
+        // Letters in Russian, the interface switched to Arabic: the switcher must still say Arabic here.
+        $user = User::factory()->create(['locale' => 'ru', 'ui_locale' => 'ar']);
+
+        $this->actingAs($user)
+            ->get('/settings/profile')
+            ->assertInertia(fn ($page) => $page->where('locale', 'ar')->where('defaultLocale', 'ru'));
+    }
+
     public function test_profile_information_can_be_updated()
     {
         $user = User::factory()->create();

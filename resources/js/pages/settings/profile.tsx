@@ -23,12 +23,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Profile({
     mustVerifyEmail,
     status,
-    locale,
+    defaultLocale,
     canDelete,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
-    locale: string | null;
+    defaultLocale: string | null;
     canDelete: boolean;
 }) {
     const t = useT();
@@ -37,7 +37,7 @@ export default function Profile({
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         name: auth.user.name,
         email: auth.user.email,
-        locale: locale && languages.some((l) => l.code === locale) ? locale : current,
+        locale: defaultLocale && languages.some((l) => l.code === defaultLocale) ? defaultLocale : current,
     });
 
     const submit: FormEventHandler = (e) => {
