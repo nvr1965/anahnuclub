@@ -789,5 +789,13 @@
     "Empty for over a year": "Пустые больше года",
     "Delete :count groups older than a year that have no posts? This cannot be undone.": "Удалить :count групп старше года без записей? Это нельзя отменить.",
     "Delete all :count": "Удалить все :count",
-    "Groups created more than a year ago with no posts, albums, videos or events.": "Группы, созданные больше года назад, в которых нет ни записей, ни альбомов, ни видео, ни событий."
+    "Groups created more than a year ago with no posts, albums, videos or events.": "Группы, созданные больше года назад, в которых нет ни записей, ни альбомов, ни видео, ни событий.",
+    "Check notifications": "Проверить уведомления",
+    "Checking…": "Проверяю…",
+    "Notifications work on this device.": "Уведомления на этом устройстве работают.",
+    "Notifications are blocked for this site. Allow them in the browser or phone settings and try again.": "Уведомления для сайта запрещены. Разрешите их в настройках браузера или телефона и попробуйте снова.",
+    "This browser cannot show notifications.": "Этот браузер не умеет показывать уведомления.",
+    "no answer": "нет ответа",
+    "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "Тестовое уведомление отправлено на :count из :total устройств. Если оно не появится в течение минуты, уведомления для этого браузера или приложения выключены в настройках телефона, или их задерживает экономия батареи.",
+    "Refused: :list": "Отказ: :list"
 }

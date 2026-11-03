@@ -142,6 +142,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('push/key', [PushController::class, 'key'])->name('push.key');
     Route::post('push/subscriptions', [PushController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
     Route::delete('push/subscriptions', [PushController::class, 'destroy'])->name('push.destroy');
+    Route::post('push/test', [PushController::class, 'test'])->middleware('throttle:10,1')->name('push.test');
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
     Route::get('messages/latest', [MessageController::class, 'latest'])->name('messages.latest');
     Route::post('messages/read', [MessageController::class, 'readAll'])->name('messages.read');

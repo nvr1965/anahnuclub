@@ -43,7 +43,8 @@ class WebPush
         }
     }
 
-    public static function send(PushSubscription $subscription, string $payload, int $ttl = 86400, string $urgency = 'high'): bool
+    /** The push service's answer: 201 delivered to it, 0 no answer, anything else refused. */
+    public static function send(PushSubscription $subscription, string $payload, int $ttl = 86400, string $urgency = 'high'): int
     {
         try {
             $body = self::encrypt($payload, $subscription->p256dh, $subscription->auth);
@@ -59,7 +60,7 @@ class WebPush
         } catch (\Throwable $e) {
             Log::warning('Web push failed: '.$e->getMessage());
 
-            return false;
+            return 0;
         }
         // Unsubscribed, expired or a broken record: no use trying again.
         if (in_array($response->status(), [400, 403, 404, 410], true)) {
@@ -68,7 +69,7 @@ class WebPush
             Log::warning('Web push refused: '.$response->status().' '.mb_substr($response->body(), 0, 200));
         }
 
-        return $response->successful();
+        return $response->status();
     }
 
     /** The message encrypted for one device (RFC 8291), with the aes128gcm header in front. */

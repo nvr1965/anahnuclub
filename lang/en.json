@@ -789,5 +789,13 @@
     "Empty for over a year": "Empty for over a year",
     "Delete :count groups older than a year that have no posts? This cannot be undone.": "Delete :count groups older than a year that have no posts? This cannot be undone.",
     "Delete all :count": "Delete all :count",
-    "Groups created more than a year ago with no posts, albums, videos or events.": "Groups created more than a year ago with no posts, albums, videos or events."
+    "Groups created more than a year ago with no posts, albums, videos or events.": "Groups created more than a year ago with no posts, albums, videos or events.",
+    "Check notifications": "Check notifications",
+    "Checking…": "Checking…",
+    "Notifications work on this device.": "Notifications work on this device.",
+    "Notifications are blocked for this site. Allow them in the browser or phone settings and try again.": "Notifications are blocked for this site. Allow them in the browser or phone settings and try again.",
+    "This browser cannot show notifications.": "This browser cannot show notifications.",
+    "no answer": "no answer",
+    "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.",
+    "Refused: :list": "Refused: :list"
 }
