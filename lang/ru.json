@@ -759,20 +759,5 @@
     "Up now": "Сейчас виден",
     "Viewers": "Просмотры",
     "Your moments": "Ваши моменты",
-    "Reply…": "Ответить…",
-    "Interface style": "Стиль интерфейса",
-    "Interface styles": "Стили интерфейса",
-    "How the feed, the top bar and profiles look. Everything works the same in every style.": "Как выглядят лента, верхняя панель и профили. Всё работает одинаково в любом стиле.",
-    "Members choose a style in Settings → Appearance or in the account menu. The default style is for guests and for members who have not chosen.": "Участники выбирают стиль в Настройки → Внешний вид или в меню аккаунта. Стиль по умолчанию видят гости и те, кто ещё не выбрал.",
-    "Default": "По умолчанию",
-    "Club": "Клуб",
-    "Community": "Сообщество",
-    "Large text": "Крупный",
-    "Stream": "Поток",
-    "Showcase": "Витрина",
-    "Cards on grey, three columns, the menu on the side": "Карточки на сером фоне, три колонки, меню сбоку",
-    "Denser and squarer, more posts on a screen": "Плотнее и строже, больше постов на экране",
-    "Bigger letters and buttons, stronger contrast": "Крупные буквы и кнопки, выше контраст",
-    "One column of posts split by thin lines, menu at the bottom on phones": "Одна колонка постов через тонкие линии, меню внизу на телефоне",
-    "Photos first and edge to edge, a photo grid in profiles": "Сначала фото на всю ширину, сетка фото в профиле"
+    "Reply…": "Ответить…"
 }

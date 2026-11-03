@@ -56,7 +56,7 @@ export default function LanguageTexts({
     };
     const count = (source: Row['source']) => rows.filter((r) => r.source === source).length;
     const field =
-        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 
     return (
         <AdminLayout title={`${t('Interface texts')}: ${language.native_name}`}>

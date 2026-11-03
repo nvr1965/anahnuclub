@@ -759,20 +759,5 @@
     "Up now": "معروضة الآن",
     "Viewers": "المشاهدات",
     "Your moments": "لحظاتك",
-    "Reply…": "رد…",
-    "Interface style": "نمط الواجهة",
-    "Interface styles": "أنماط الواجهة",
-    "How the feed, the top bar and profiles look. Everything works the same in every style.": "كيف تبدو الصفحة الرئيسية والشريط العلوي والملفات الشخصية. كل شيء يعمل بالطريقة نفسها في كل نمط.",
-    "Members choose a style in Settings → Appearance or in the account menu. The default style is for guests and for members who have not chosen.": "يختار الأعضاء النمط من الإعدادات ← المظهر أو من قائمة الحساب. النمط الافتراضي للزوار ولمن لم يختر بعد.",
-    "Default": "افتراضي",
-    "Club": "النادي",
-    "Community": "المجتمع",
-    "Large text": "نص كبير",
-    "Stream": "التدفق",
-    "Showcase": "الواجهة",
-    "Cards on grey, three columns, the menu on the side": "بطاقات على خلفية رمادية، ثلاثة أعمدة، القائمة على الجانب",
-    "Denser and squarer, more posts on a screen": "أكثر كثافة وتربيعًا، منشورات أكثر في الشاشة",
-    "Bigger letters and buttons, stronger contrast": "حروف وأزرار أكبر وتباين أقوى",
-    "One column of posts split by thin lines, menu at the bottom on phones": "عمود واحد من المنشورات تفصلها خطوط رفيعة، والقائمة في الأسفل على الهاتف",
-    "Photos first and edge to edge, a photo grid in profiles": "الصور أولًا وبعرض كامل، وشبكة صور في الملف الشخصي"
+    "Reply…": "رد…"
 }

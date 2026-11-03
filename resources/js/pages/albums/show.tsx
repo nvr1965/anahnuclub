@@ -81,14 +81,14 @@ export default function AlbumShow({ album, photos, open }: Props) {
                             {album.owner && (
                                 <Link
                                     href={route('people.show', { user: album.owner.id, tab: 'photos' })}
-                                    className="text-muted-foreground mt-1 inline-flex items-center gap-2 text-[0.9375rem] hover:underline"
+                                    className="text-muted-foreground mt-1 inline-flex items-center gap-2 text-[15px] hover:underline"
                                 >
-                                    <UserAvatar person={album.owner} className="size-6" fallbackClassName="text-[0.625rem]" /> {album.owner.name} ·{' '}
+                                    <UserAvatar person={album.owner} className="size-6" fallbackClassName="text-[10px]" /> {album.owner.name} ·{' '}
                                     {t(':count photos', { count: photos.length })}
                                 </Link>
                             )}
                             {album.description && (
-                                <p dir="auto" className="mt-2 text-[0.9375rem] whitespace-pre-line">
+                                <p dir="auto" className="mt-2 text-[15px] whitespace-pre-line">
                                     {album.description}
                                 </p>
                             )}
@@ -134,7 +134,7 @@ export default function AlbumShow({ album, photos, open }: Props) {
 
                 <section className="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-900">
                     {photos.length === 0 ? (
-                        <p className="text-muted-foreground p-6 text-center text-[0.9375rem]">{t('No photos yet.')}</p>
+                        <p className="text-muted-foreground p-6 text-center text-[15px]">{t('No photos yet.')}</p>
                     ) : (
                         <div className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-5">
                             {photos.map((photo, i) => (

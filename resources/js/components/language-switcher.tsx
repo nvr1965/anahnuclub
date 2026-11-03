@@ -25,7 +25,7 @@ export function LanguageFlag({ code, className = 'h-3.5 w-5' }: { code: string; 
     ) : (
         <span
             aria-hidden="true"
-            className={`${className} inline-flex shrink-0 items-center justify-center rounded-[2px] bg-slate-200 text-[0.5rem] font-bold text-slate-600 uppercase`}
+            className={`${className} inline-flex shrink-0 items-center justify-center rounded-[2px] bg-slate-200 text-[8px] font-bold text-slate-600 uppercase`}
         >
             {code.slice(0, 2)}
         </span>

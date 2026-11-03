@@ -102,7 +102,7 @@ export function PostVideo({ video, postId }: { video: VideoItem; postId?: number
             <Link
                 href={route('videos.show', video.id)}
                 dir="auto"
-                className="block bg-slate-50 px-4 py-2.5 text-[0.9375rem] font-semibold hover:underline dark:bg-neutral-800/60"
+                className="block bg-slate-50 px-4 py-2.5 text-[15px] font-semibold hover:underline dark:bg-neutral-800/60"
             >
                 {video.title}
             </Link>
@@ -184,20 +184,18 @@ export function EventCard({ event }: { event: EventItem }) {
             <div className="flex gap-3 px-4 py-3">
                 {start && (
                     <div className="w-12 shrink-0 overflow-hidden rounded-lg bg-white text-center shadow-sm dark:bg-neutral-900">
-                        <div className="bg-red-500 text-[0.6875rem] font-semibold text-white uppercase">
+                        <div className="bg-red-500 text-[11px] font-semibold text-white uppercase">
                             {start.toLocaleString(locale, { month: 'short' })}
                         </div>
                         <div className="text-xl font-bold">{start.getDate()}</div>
                     </div>
                 )}
-                <div className="min-w-0 text-[0.9375rem]">
-                    <div className="text-[0.8125rem] font-semibold text-red-600 uppercase dark:text-red-400">
-                        {eventDate(event.starts_at, locale)}
-                    </div>
+                <div className="min-w-0 text-[15px]">
+                    <div className="text-[13px] font-semibold text-red-600 uppercase dark:text-red-400">{eventDate(event.starts_at, locale)}</div>
                     <div dir="auto" className="truncate font-semibold">
                         {event.title}
                     </div>
-                    <div className="text-muted-foreground flex flex-wrap gap-x-3 text-[0.8125rem]">
+                    <div className="text-muted-foreground flex flex-wrap gap-x-3 text-[13px]">
                         {event.location && (
                             <span className="inline-flex items-center gap-1" dir="auto">
                                 <MapPin className="size-3.5" /> {event.location}

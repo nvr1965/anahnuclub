@@ -363,7 +363,7 @@ export default function MomentViewer({ people, start, onClose }: { people: Perso
                                     onFocus={() => setTyping(true)}
                                     onBlur={() => !reply && setTyping(false)}
                                     placeholder={t('Reply…')}
-                                    className="min-w-0 flex-1 rounded-full border border-white/50 bg-transparent px-4 py-2.5 text-[0.9375rem] text-white outline-none placeholder:text-white/70"
+                                    className="min-w-0 flex-1 rounded-full border border-white/50 bg-transparent px-4 py-2.5 text-[15px] text-white outline-none placeholder:text-white/70"
                                 />
                                 {reply.trim() && (
                                     <button type="submit" className="rounded-full p-2 hover:bg-white/15" aria-label={t('Send')}>

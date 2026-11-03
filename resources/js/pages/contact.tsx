@@ -10,7 +10,7 @@ export default function Contact({ sent, email }: { sent: boolean; email: string 
     const { auth } = usePage<SharedData>().props;
     const form = useForm({ name: '', email: '', subject: '', body: '', website: '' });
     const field =
-        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
+        'focus:border-brand w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -30,7 +30,7 @@ export default function Contact({ sent, email }: { sent: boolean; email: string 
             <Head title={t('Contact us')} />
             <section className="mx-auto w-full max-w-[640px] rounded-lg bg-white p-6 shadow-sm sm:p-8 dark:bg-neutral-900">
                 <h1 className="text-2xl font-bold">{t('Contact us')}</h1>
-                <p className="text-muted-foreground mt-1 mb-5 text-[0.9375rem]">
+                <p className="text-muted-foreground mt-1 mb-5 text-[15px]">
                     {t('Questions, ideas, a complaint about a post or a request about your data: write to the club administration.')}
                     {email && (
                         <>

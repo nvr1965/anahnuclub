@@ -47,12 +47,11 @@ createInertiaApp({
     },
 });
 
-// Inertia visits (e.g. switching language or style) don't reload the page, so keep <html lang/dir/data-skin> in sync.
+// Inertia visits (e.g. switching language) don't reload the page, so keep <html lang/dir> in sync.
 function syncDocumentLanguage(pageProps: Record<string, unknown>) {
-    const { locale, dir, skin } = pageProps as { locale?: string; dir?: string; skin?: string };
+    const { locale, dir } = pageProps as { locale?: string; dir?: string };
     if (locale) document.documentElement.lang = locale;
     if (dir) document.documentElement.dir = dir;
-    if (skin) document.documentElement.dataset.skin = skin;
 }
 
 router.on('navigate', (event) => syncDocumentLanguage(event.detail.page.props));

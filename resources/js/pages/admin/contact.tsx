@@ -72,7 +72,7 @@ export default function AdminContact({ messages }: { messages: Page<Row> }) {
                                 {m.subject}
                             </h2>
                         )}
-                        <p className="mt-1 text-[0.9375rem] whitespace-pre-wrap" dir="auto">
+                        <p className="mt-1 text-[15px] whitespace-pre-wrap" dir="auto">
                             {m.body}
                         </p>
                     </article>

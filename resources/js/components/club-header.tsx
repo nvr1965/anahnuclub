@@ -33,12 +33,6 @@ const tones = {
         active: 'border-sky-600 bg-sky-600 text-white',
         label: 'text-sky-700 dark:text-sky-300',
     },
-    /** Stream and Showcase: plain icons in the text colour, the open section in the accent colour. */
-    mono: {
-        idle: 'border-transparent text-slate-800 dark:text-neutral-100',
-        active: 'border-transparent text-brand',
-        label: 'text-slate-600 dark:text-neutral-300',
-    },
     amber: {
         idle: 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300',
         active: 'border-amber-600 bg-amber-600 text-white',
@@ -62,15 +56,14 @@ function Tile({
     active?: boolean;
     badge?: number;
 }) {
-    const { skin } = usePage<SharedData>().props;
-    const c = tones[skin === 'stream' || skin === 'showcase' ? 'mono' : tone];
+    const c = tones[tone];
     return (
         <>
             <span className={`relative flex h-9 w-10 items-center justify-center rounded-xl border transition-colors ${active ? c.active : c.idle}`}>
                 <Icon className="size-5" />
                 <Badge count={badge} className="-end-2 -top-1.5" />
             </span>
-            <span className={`w-full truncate text-center text-[0.6875rem] leading-tight tracking-tight ${c.label} ${active ? 'font-semibold' : ''}`}>
+            <span className={`w-full truncate text-center text-[11px] leading-tight tracking-tight ${c.label} ${active ? 'font-semibold' : ''}`}>
                 {label}
             </span>
         </>
@@ -84,8 +77,7 @@ const tileLink =
 export function ClubHeader() {
     const t = useT();
     const page = usePage<SharedData>();
-    const { auth, skin } = page.props;
-    const flat = skin === 'stream' || skin === 'showcase';
+    const { auth } = page.props;
     const [q, setQ] = useState(() => new URLSearchParams(page.url.split('?')[1] ?? '').get('q') ?? '');
 
     const counts = page.props.counts;
@@ -136,7 +128,7 @@ export function ClubHeader() {
     return (
         <header className="sticky top-0 z-40 bg-white shadow-sm dark:bg-neutral-900">
             <div className="from-header-from via-brand to-header-to h-1 bg-gradient-to-r" />
-            <div className="grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 sm:h-[4.25rem] sm:grid-cols-[auto_1fr_auto] sm:gap-3 sm:px-3 lg:grid-cols-[1fr_auto_1fr]">
+            <div className="grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 sm:h-[68px] sm:grid-cols-[auto_1fr_auto] sm:gap-3 sm:px-3 lg:grid-cols-[1fr_auto_1fr]">
                 <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                     <Link href={auth.user ? route('dashboard') : route('home')} className="shrink-0" aria-label="anahnu.club">
                         <img src="/images/logo-mark.png" alt="" className="size-9 rounded-full sm:size-10" />
@@ -166,7 +158,7 @@ export function ClubHeader() {
                                     <AvatarImage src={auth.user.avatar} alt={auth.user.name} className="object-cover" />
                                     <DefaultAvatarFallback />
                                 </Avatar>
-                                <span className="hidden w-full truncate text-center text-[0.6875rem] leading-tight text-slate-600 sm:block dark:text-neutral-300">
+                                <span className="hidden w-full truncate text-center text-[11px] leading-tight text-slate-600 sm:block dark:text-neutral-300">
                                     {t('Menu')}
                                 </span>
                             </DropdownMenuTrigger>
@@ -181,11 +173,9 @@ export function ClubHeader() {
                     )}
                 </div>
             </div>
-            {/* On phones the tiles get a row of their own under the logo, so every name fits; Stream and Showcase put it at the bottom of the screen. */}
+            {/* On phones the tiles get a row of their own under the logo, so every name fits. */}
             {auth.user && (
-                <nav
-                    className={`flex items-start justify-around gap-0.5 border-t border-slate-100 px-1 pb-1 sm:hidden dark:border-neutral-800 ${flat ? 'fixed inset-x-0 bottom-0 z-40 border-slate-200 bg-white pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] dark:bg-neutral-900' : ''}`}
-                >
+                <nav className="flex items-start justify-around gap-0.5 border-t border-slate-100 px-1 pb-1 sm:hidden dark:border-neutral-800">
                     {tiles}
                 </nav>
             )}
@@ -198,7 +188,7 @@ function Badge({ count, className }: { count: number; className: string }) {
 
     return (
         <span
-            className={`absolute flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[0.6875rem] font-bold text-white ${className}`}
+            className={`absolute flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white ${className}`}
         >
             {count > 99 ? '99+' : count}
         </span>

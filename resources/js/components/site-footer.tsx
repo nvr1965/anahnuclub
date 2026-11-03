@@ -10,10 +10,10 @@ export function SiteFooter() {
     const { footer } = usePage<SharedData>().props;
     const link = 'hover:text-brand hover:underline';
     const donate =
-        'inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[0.8125rem] font-semibold text-slate-900 shadow-sm transition hover:bg-amber-300';
+        'inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-[13px] font-semibold text-slate-900 shadow-sm transition hover:bg-amber-300';
 
     return (
-        <footer className="text-muted-foreground mx-auto flex max-w-[1320px] flex-wrap items-center justify-center gap-x-5 gap-y-3 px-4 pt-2 pb-8 text-[0.8125rem]">
+        <footer className="text-muted-foreground mx-auto flex max-w-[1320px] flex-wrap items-center justify-center gap-x-5 gap-y-3 px-4 pt-2 pb-8 text-[13px]">
             {footer?.pages.map((page) => (
                 <Link key={page.slug} href={route('pages.show', page.slug)} className={link} dir="auto">
                     {page.title}
