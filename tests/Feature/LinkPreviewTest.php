@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\FetchLinkPreview;
 use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\User;
 use App\Support\LinkPreviewFetcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class LinkPreviewTest extends TestCase
@@ -180,5 +182,23 @@ class LinkPreviewTest extends TestCase
         $up = true;
         $this->artisan('posts:link-previews --days=2')->assertSuccessful();
         $this->assertSame('Марокко: министр уволена через два дня', LinkPreview::firstOrFail()->title);
+    }
+
+    public function test_a_deploy_does_not_queue_dead_links_again_and_old_links_wait_behind_new_posts()
+    {
+        $user = User::factory()->create();
+        $id = Post::create(['user_id' => $user->id, 'type' => 'status', 'body' => 'старый'])->id;
+        Post::whereKey($id)->update(['link_url' => 'http://93.184.216.34/dead']);
+        LinkPreview::create(['url' => 'http://93.184.216.34/dead']);
+        $this->travel(2)->hours();
+        Queue::fake();
+
+        // The deploy run: the page was tried before, so it is not queued again.
+        $this->artisan('posts:link-previews')->assertSuccessful();
+        Queue::assertNothingPushed();
+
+        // The hourly retry takes it, on the slow queue the worker reads after the main one.
+        $this->artisan('posts:link-previews --days=2')->assertSuccessful();
+        Queue::assertPushedOn(FetchLinkPreview::SLOW_QUEUE, FetchLinkPreview::class);
     }
 }

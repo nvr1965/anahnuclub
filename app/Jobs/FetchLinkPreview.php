@@ -12,6 +12,9 @@ class FetchLinkPreview implements ShouldQueue
 {
     use Queueable;
 
+    /** Bulk reading of older links; the cron worker takes it only when the main queue is empty. */
+    public const SLOW_QUEUE = 'previews';
+
     public function __construct(public string $url) {}
 
     public function handle(LinkPreviewFetcher $fetcher): void

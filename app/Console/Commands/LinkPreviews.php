@@ -42,10 +42,18 @@ class LinkPreviews extends Command
             }
         });
 
-        // Pages not read yet, and ones that failed before (each is asked again only after a few hours).
+        // Without --days (each deploy): only pages never asked yet, so a deploy does not queue
+        // hundreds of dead links again. With --days (the hourly retry): recent posts' pages that
+        // failed, once the last try is half an hour old (the job skips younger ones anyway).
+        $days = $this->option('days');
+        $skip = $days
+            ? LinkPreview::where(fn ($q) => $q->whereNotNull('title')->orWhereNotNull('image')->orWhere('updated_at', '>', now()->subMinutes(30)))->select('url')
+            : LinkPreview::select('url');
         $missing = Post::where('link_url', '!=', '')
-            ->when($this->option('days'), fn ($q, $days) => $q->where('created_at', '>', now()->subDays((int) $days)))->whereNotIn('link_url', LinkPreview::where(fn ($q) => $q->whereNotNull('title')->orWhereNotNull('image'))->select('url'))->distinct()->pluck('link_url');
-        $missing->each(fn ($url) => FetchLinkPreview::dispatch($url));
+            ->when($days, fn ($q, $days) => $q->where('created_at', '>', now()->subDays((int) $days)))
+            ->whereNotIn('link_url', $skip)->distinct()->pluck('link_url');
+        // A queue of their own, read after the main one: old links never hold up new posts' translations.
+        $missing->each(fn ($url) => FetchLinkPreview::dispatch($url)->onQueue(FetchLinkPreview::SLOW_QUEUE));
         $this->info("Links found: $found, pages queued: {$missing->count()}");
     }
 }
