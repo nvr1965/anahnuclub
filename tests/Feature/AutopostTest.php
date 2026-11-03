@@ -37,6 +37,15 @@ class AutopostTest extends TestCase
         $this->assertStringContainsString('Ракета упала', $post->body);
     }
 
+    public function test_the_card_is_for_the_link_sent_even_when_the_text_has_another()
+    {
+        User::factory()->create(['email' => 'news@nofinfo.com']);
+        $this->send(['text' => "Новость\n\nПодробнее: https://www.jpost.com/israel-news/1", 'url' => 'https://nofinfo.com/?id=9'])->assertCreated();
+
+        $this->assertSame('https://nofinfo.com/?id=9', Post::first()->link_url);
+        $this->send(['text' => 'Новость', 'url' => 'https://nofinfo.com/?id=9'])->assertJsonPath('duplicate', true);
+    }
+
     public function test_the_same_link_twice_stays_one_post()
     {
         User::factory()->create(['email' => 'news@nofinfo.com']);

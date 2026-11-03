@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\FetchLinkPreview;
 use App\Jobs\SubmitToIndexNow;
 use App\Jobs\TranslateContent;
 use App\Models\Post;
@@ -51,6 +52,12 @@ class AutopostController extends Controller
         ]);
         if (! $groupId) {
             $post->update(['audience' => 'public']);
+        }
+        // The card is always for the link sent, even when the text itself carries another one
+        // (news descriptions often end with the source's address).
+        if ($post->link_url !== $data['url']) {
+            $post->forceFill(['link_url' => $data['url']])->saveQuietly();
+            Background::run(new FetchLinkPreview($data['url']));
         }
 
         Background::run(new TranslateContent($post));
