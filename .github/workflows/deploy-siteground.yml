@@ -3,13 +3,12 @@ name: deploy to SiteGround
 # After each push to main, once the frontend is built (build-assets.yml), log in to
 # SiteGround over SSH and run the usual update: git pull && bash deploy/siteground/deploy.sh
 #
+# Host, user and port are below (Site Tools > Devs > SSH Keys Manager > SSH Credentials).
 # Repository secrets (Settings > Secrets and variables > Actions):
-#   SITEGROUND_HOST     SSH host from Site Tools > Devs > SSH Keys Manager > SSH Credentials
-#   SITEGROUND_USER     SSH user from the same place
-#   SITEGROUND_PORT     SSH port, usually 18765 (optional, 18765 if empty)
-#   SITEGROUND_SSH_KEY  private key whose public half is added in SSH Keys Manager
+#   SITEGROUND_SSH_KEY  private key whose public half is added in SSH Keys Manager (required)
+#   SITEGROUND_HOST, SITEGROUND_USER, SITEGROUND_PORT  override the values below (optional)
 #   SITEGROUND_APP_DIR  folder of the app on the host (optional, www/test.anahnu.club/app if empty)
-# Without SITEGROUND_HOST the job does nothing.
+# Without SITEGROUND_SSH_KEY the job does nothing.
 on:
   workflow_run:
     workflows: ['build assets']
@@ -35,8 +34,9 @@ jobs:
     steps:
       - name: Deploy over SSH
         run: |
-          if [ -z "$HOST" ]; then
-            echo "SITEGROUND_HOST is not set: skipping the deploy."
+          HOST="${HOST:-ssh.anahnu.club}" USER="${USER:-u3426-5m3gmacvg6mp}"
+          if [ -z "$KEY" ]; then
+            echo "SITEGROUND_SSH_KEY is not set: skipping the deploy."
             exit 0
           fi
           mkdir -p ~/.ssh
