@@ -55,7 +55,7 @@ export function Bubble({ message, fetched, showTime }: { message: Message; fetch
                                     >
                                         <FileText className="text-brand size-6 shrink-0" />
                                         <span className="min-w-0">
-                                            <span dir="auto" className="block truncate text-[15px] font-medium">
+                                            <span dir="auto" className="block truncate text-[0.9375rem] font-medium">
                                                 {file.name}
                                             </span>
                                             <span className="text-muted-foreground block text-xs">{fileSize(file.size)}</span>
@@ -69,13 +69,13 @@ export function Bubble({ message, fetched, showTime }: { message: Message; fetch
                         <div
                             dir="auto"
                             title={message.created_at ? new Date(message.created_at).toLocaleString(locale) : ''}
-                            className={`rounded-2xl px-3 py-2 text-[15px] break-words whitespace-pre-wrap ${message.mine ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-neutral-800'}`}
+                            className={`rounded-2xl px-3 py-2 text-[0.9375rem] break-words whitespace-pre-wrap ${message.mine ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-neutral-800'}`}
                         >
                             {text}
                         </div>
                     )}
                     {(translated || message.translation?.pending) && (
-                        <div className="text-muted-foreground inline-flex items-center gap-1 px-2 pt-0.5 text-[11px]">
+                        <div className="text-muted-foreground inline-flex items-center gap-1 px-2 pt-0.5 text-[0.6875rem]">
                             <Languages className="size-3" />
                             {translated ? (
                                 <button type="button" className="hover:underline" onClick={() => setOriginal(!original)}>

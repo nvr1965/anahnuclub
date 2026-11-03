@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Language;
 use App\Models\Page;
 use App\Models\Setting;
+use App\Support\Skins;
 use App\Support\Html;
 use App\Translation\Translator;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +42,7 @@ class PageController extends AdminController
                 'sort' => $edit->sort ?? 0,
             ] : null,
             'donate_links' => Setting::donateLinks(all: true),
+            'skins' => ['default' => Skins::default(), 'enabled' => Skins::enabled()],
             'can_translate' => app(Translator::class)->name() !== 'null',
         ]);
     }
@@ -90,6 +92,20 @@ class PageController extends AdminController
         ]);
         $links = array_map(fn ($l) => ['label' => trim($l['label']), 'url' => trim($l['url']), 'on' => (bool) ($l['on'] ?? true)], $data['donate_links']);
         Setting::put('donate_links', json_encode(array_values($links), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        return back();
+    }
+
+    /** Which interface styles members may pick, and the one guests and new members get. */
+    public function skins(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'default' => ['required', 'string', Rule::in(Skins::ALL)],
+            'enabled' => ['present', 'array'],
+            'enabled.*' => ['string', Rule::in(Skins::ALL)],
+        ]);
+        Setting::put('skin_default', $data['default']);
+        Setting::put('skins_enabled', json_encode(array_values(array_unique([...$data['enabled'], $data['default']]))));
 
         return back();
     }

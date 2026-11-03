@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: u
         if (!this.state.error) return this.props.children;
 
         return (
-            <div className="flex min-h-screen items-center justify-center bg-[#f0f2f5] p-4 text-slate-900 dark:bg-neutral-950 dark:text-neutral-100">
+            <div className="bg-page flex min-h-screen items-center justify-center p-4 text-slate-900 dark:text-neutral-100">
                 <div className="w-full max-w-md space-y-3 rounded-lg bg-white p-6 text-center shadow-sm dark:bg-neutral-900">
                     <p className="text-lg font-semibold">Something went wrong on this page.</p>
                     <p className="text-muted-foreground font-mono text-xs break-words">{this.state.error.message}</p>

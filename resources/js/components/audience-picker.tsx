@@ -143,7 +143,7 @@ export function AudiencePicker({
                         </p>
                         <input
                             autoFocus
-                            className="focus:border-brand mb-2 w-full rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-[15px] outline-none dark:border-neutral-700 dark:bg-neutral-800"
+                            className="focus:border-brand mb-2 w-full rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-800"
                             placeholder={t('Search friends')}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}

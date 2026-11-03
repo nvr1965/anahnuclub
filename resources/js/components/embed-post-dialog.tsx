@@ -40,7 +40,9 @@ export function EmbedPostDialog({ open, onClose, postId, src }: { open: boolean;
                     <DialogTitle className="text-center text-lg">{t('Embed post')}</DialogTitle>
                 </div>
                 <div className="space-y-3 p-4">
-                    <DialogDescription className="text-foreground text-[15px]">{t('Copy and paste this code into your site.')}</DialogDescription>
+                    <DialogDescription className="text-foreground text-[0.9375rem]">
+                        {t('Copy and paste this code into your site.')}
+                    </DialogDescription>
                     <input
                         readOnly
                         dir="ltr"

@@ -29,7 +29,10 @@ export function MomentTray({ tray }: { tray: Tray }) {
     const refresh = () => router.reload({ only: ['moments'] });
 
     return (
-        <section aria-label={t('Moments')} className="moment-tray rounded-lg bg-white px-2 py-3 shadow-sm dark:bg-neutral-900">
+        <section
+            aria-label={t('Moments')}
+            className="moment-tray flat:rounded-none flat:shadow-none stream:border-b stream:border-slate-200 dark:stream:border-neutral-800 rounded-lg bg-white px-2 py-3 shadow-sm dark:bg-neutral-900"
+        >
             <div className="flex snap-x gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
                 <div className="flex w-[72px] shrink-0 snap-start flex-col items-center gap-1.5">
                     <div className="relative">

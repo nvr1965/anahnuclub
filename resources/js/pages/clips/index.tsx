@@ -252,7 +252,7 @@ function ClipSlide({
                         <div
                             dir="auto"
                             onClick={() => setOpen(!open)}
-                            className={`text-[15px] leading-snug drop-shadow [&_a]:underline ${open ? 'max-h-48 overflow-y-auto' : 'line-clamp-2'}`}
+                            className={`text-[0.9375rem] leading-snug drop-shadow [&_a]:underline ${open ? 'max-h-48 overflow-y-auto' : 'line-clamp-2'}`}
                             dangerouslySetInnerHTML={{ __html: body }}
                         />
                     )}

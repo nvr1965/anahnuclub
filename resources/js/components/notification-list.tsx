@@ -89,7 +89,7 @@ function Badge({ n }: { n: ClubNotification }) {
     const face = n.reaction && n.reaction !== 'like' && kind?.reacted ? REACTIONS.find((r) => r.type === n.reaction) : null;
     if (face)
         return (
-            <span className="absolute -end-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-white text-[20px] leading-none ring-2 ring-white dark:bg-neutral-900 dark:ring-neutral-900">
+            <span className="absolute -end-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-white text-[1.25rem] leading-none ring-2 ring-white dark:bg-neutral-900 dark:ring-neutral-900">
                 {face.emoji}
             </span>
         );
@@ -131,7 +131,7 @@ function Row({ n }: { n: ClubNotification }) {
                     <UserAvatar person={n.actor} className="size-14" />
                     <Badge n={n} />
                 </span>
-                <span className="min-w-0 flex-1 text-[15px] leading-[1.3]">
+                <span className="min-w-0 flex-1 text-[0.9375rem] leading-[1.3]">
                     <span className={`line-clamp-3 ${n.read ? 'text-muted-foreground' : 'text-slate-900 dark:text-white'}`}>
                         {fill(t(text), { name: name(n.actor), names })}
                         {n.excerpt && (
@@ -141,7 +141,7 @@ function Row({ n }: { n: ClubNotification }) {
                             </>
                         )}
                     </span>
-                    <span className={`mt-0.5 block text-[13px] ${n.read ? 'text-muted-foreground' : 'text-brand font-semibold'}`}>
+                    <span className={`mt-0.5 block text-[0.8125rem] ${n.read ? 'text-muted-foreground' : 'text-brand font-semibold'}`}>
                         {shortAgo(n.created_at, locale)}
                     </span>
                 </span>
@@ -178,25 +178,25 @@ export function NotificationList({ notifications, compact = false }: { notificat
                         type="button"
                         aria-pressed={unreadOnly === tab.on}
                         onClick={() => setUnreadOnly(tab.on)}
-                        className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[15px] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                        className="aria-pressed:bg-brand-soft aria-pressed:text-brand dark:aria-pressed:bg-brand/20 rounded-full px-3 py-1.5 text-[0.9375rem] font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
                     >
                         {tab.label}
                     </button>
                 ))}
             </div>
             {sections.length === 0 && (
-                <p className="text-muted-foreground px-3 py-8 text-center text-[15px]">
+                <p className="text-muted-foreground px-3 py-8 text-center text-[0.9375rem]">
                     {unreadOnly ? t('You have no unread notifications.') : t('No notifications yet.')}
                 </p>
             )}
             {sections.map((section, i) => (
                 <section key={section.title}>
                     <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                        <h3 className="text-[17px] font-semibold">{section.title}</h3>
+                        <h3 className="text-[1.0625rem] font-semibold">{section.title}</h3>
                         {compact && i === 0 && (
                             <Link
                                 href={route('notifications.index')}
-                                className="text-brand rounded-md px-2 py-1 text-[15px] hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                className="text-brand rounded-md px-2 py-1 text-[0.9375rem] hover:bg-slate-100 dark:hover:bg-neutral-800"
                             >
                                 {t('View all')}
                             </Link>

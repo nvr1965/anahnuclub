@@ -33,7 +33,7 @@ export function PostComposer({
     onCancel?: () => void;
 }) {
     const t = useT();
-    const { auth } = usePage<SharedData>().props;
+    const { auth, skin } = usePage<SharedData>().props;
     const [open, setOpen] = useState(!!initialBody);
     const [preparing, setPreparing] = useState(false);
     const [shooting, setShooting] = useState(false);
@@ -191,7 +191,7 @@ export function PostComposer({
     const tool =
         'text-muted-foreground inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800';
     const photoButton = (
-        <div className="flex">
+        <div className="flex flex-wrap">
             <button type="button" onClick={() => picker.current?.click()} className={tool} title={t('Photo/video')} aria-label={t('Photo/video')}>
                 <ImagePlus className="size-5 text-green-600" /> <span className={open ? 'hidden sm:inline' : ''}>{t('Photo/video')}</span>
             </button>
@@ -213,7 +213,18 @@ export function PostComposer({
     );
 
     return (
-        <form onSubmit={submit} className="rounded-lg bg-white px-4 py-3 shadow-sm dark:bg-neutral-900">
+        <form
+            onSubmit={submit}
+            className={
+                skin === 'stream'
+                    ? 'bg-white px-4 py-3 dark:bg-black'
+                    : skin === 'showcase'
+                      ? 'bg-white px-4 py-3 sm:rounded-lg sm:border sm:border-slate-200 dark:bg-black sm:dark:border-neutral-800'
+                      : skin === 'forum'
+                        ? 'bg-white px-4 py-3 sm:rounded-2xl sm:border sm:border-slate-200 dark:bg-neutral-900 sm:dark:border-neutral-800'
+                        : 'rounded-lg bg-white px-4 py-3 shadow-sm dark:bg-neutral-900'
+            }
+        >
             <input ref={picker} type="file" accept="image/*,video/*" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             <input
                 ref={nativeCamera}
@@ -251,7 +262,7 @@ export function PostComposer({
                         dir="auto"
                         autoFocus
                         rows={form.data.images.length ? 2 : 4}
-                        className="flex-1 resize-none rounded-xl bg-slate-100 px-4 py-2.5 text-[15px] outline-none dark:bg-neutral-800"
+                        className="flex-1 resize-none rounded-xl bg-slate-100 px-4 py-2.5 text-[0.9375rem] outline-none dark:bg-neutral-800"
                         placeholder={t("What's on your mind, :name?", { name: firstName })}
                         value={form.data.body}
                         onChange={(e) => form.setData('body', e.target.value)}
@@ -259,8 +270,9 @@ export function PostComposer({
                 ) : (
                     <button
                         type="button"
+                        data-composer-open
                         onClick={() => setOpen(true)}
-                        className="text-muted-foreground flex-1 rounded-full bg-slate-100 px-4 py-2.5 text-start text-[15px] hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                        className="text-muted-foreground flex-1 rounded-full bg-slate-100 px-4 py-2.5 text-start text-[0.9375rem] hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                     >
                         {t("What's on your mind, :name?", { name: firstName })}
                     </button>
