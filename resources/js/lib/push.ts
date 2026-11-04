@@ -91,6 +91,8 @@ export interface PushReport {
     version?: string | null;
     /** The test reached this device's service worker within a few seconds. */
     arrived?: boolean;
+    /** The member's last pushes before this test: kind, the push service's answer (or error), time. */
+    recent?: { kind: string; result: string; at: string }[];
     /** The device could show a notification made right here: '' when it could, otherwise the browser's error. */
     local?: string;
 }
@@ -132,7 +134,7 @@ export async function testPush(): Promise<PushReport> {
     const version = await workerVersion((await registration()).active);
     const arrival = testArrives(10000);
     const response = await fetch(route('push.test'), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf() } });
-    const { devices } = (await response.json()) as { devices: PushReport['devices'] };
+    const { devices, recent } = (await response.json()) as { devices: PushReport['devices']; recent: PushReport['recent'] };
     const arrived = await arrival;
     let local = '';
     try {
@@ -140,7 +142,7 @@ export async function testPush(): Promise<PushReport> {
     } catch (error) {
         local = error instanceof Error ? error.message : String(error);
     }
-    return { state, devices, version, arrived, local };
+    return { state, devices, version, arrived, local, recent };
 }
 
 export async function disablePush(): Promise<PushState> {

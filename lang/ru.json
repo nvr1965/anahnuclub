@@ -802,5 +802,6 @@
     "reached this phone": "до телефона дошло",
     "did not reach this phone": "до телефона не дошло",
     "cannot show: :error": "показать не может: :error",
-    "can show": "показать может"
+    "can show": "показать может",
+    "Earlier: :list": "Ранее: :list"
 }

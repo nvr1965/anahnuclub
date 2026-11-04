@@ -19,6 +19,14 @@ class SendWebPush implements ShouldQueue
 
     public function handle(): void
     {
-        WebPush::toUsers($this->userIds, $this->payload, $this->ttl);
+        try {
+            WebPush::toUsers($this->userIds, $this->payload, $this->ttl);
+        } catch (\Throwable $e) {
+            // Never breaks the message or call it belongs to; the members' "Check notifications" shows it.
+            report($e);
+            foreach ($this->userIds as $id) {
+                WebPush::journal($id, json_encode($this->payload), 'error: '.mb_substr($e->getMessage(), 0, 120));
+            }
+        }
     }
 }

@@ -802,5 +802,6 @@
     "reached this phone": "reached this phone",
     "did not reach this phone": "did not reach this phone",
     "cannot show: :error": "cannot show: :error",
-    "can show": "can show"
+    "can show": "can show",
+    "Earlier: :list": "Earlier: :list"
 }

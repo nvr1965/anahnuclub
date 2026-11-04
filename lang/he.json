@@ -802,5 +802,6 @@
     "reached this phone": "הגיע לטלפון",
     "did not reach this phone": "לא הגיע לטלפון",
     "cannot show: :error": "לא יכול להציג: :error",
-    "can show": "יכול להציג"
+    "can show": "יכול להציג",
+    "Earlier: :list": "קודם: :list"
 }

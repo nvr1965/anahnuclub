@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react';
 
 const DISMISSED = 'club-push-dismissed';
 
+/** Kinds of earlier pushes in the "Check notifications" report. */
+const ICONS: Record<string, string> = { call: '📞', 'missed-call': '☎️✕', message: '💬' };
+
 function dismissedRecently() {
     try {
         return Date.now() - Number(localStorage.getItem(DISMISSED) || 0) < 7 * 24 * 3600 * 1000;
@@ -34,7 +37,7 @@ export function PushPrompt() {
 
     // "Check notifications" from the chats menu: a test to every device of the member, and what came of it.
     useEffect(() => {
-        const describe = ({ state, devices, version, arrived, local }: PushReport) => {
+        const describe = ({ state, devices, version, arrived, local, recent = [] }: PushReport) => {
             if (state === 'ios-install')
                 return t(
                     'To get notifications on iPhone, add the club to the Home Screen: Share, then "Add to Home Screen", and open it from there.',
@@ -52,6 +55,18 @@ export function PushPrompt() {
                     },
                 ),
                 refused.length ? t('Refused: :list', { list: refused.join(', ') }) : '',
+                recent.length
+                    ? t('Earlier: :list', {
+                          list: recent
+                              .filter((r) => r.kind !== 'test')
+                              .slice(0, 5)
+                              .map(
+                                  (r) =>
+                                      `${ICONS[r.kind] ?? r.kind} ${new Date(r.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} → ${r.result}`,
+                              )
+                              .join('; '),
+                      })
+                    : '',
                 `[${version ?? t('old version')} · ${arrived ? t('reached this phone') : t('did not reach this phone')} · ${local ? t('cannot show: :error', { error: local }) : t('can show')}]`,
             ]
                 .filter(Boolean)

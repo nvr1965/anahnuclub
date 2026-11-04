@@ -196,6 +196,12 @@ class WebPushTest extends TestCase
 
         $this->postJson("/calls/{$id}/end")->assertOk();
         $this->assertSame(['call', 'call', 'missed-call'], $kinds());
+
+        // "Check notifications" on Dana's phone lists what was sent to it, newest first.
+        $this->actingAs($dana)->postJson('/push/test')->assertOk()
+            ->assertJsonPath('recent.0.kind', 'missed-call')
+            ->assertJsonPath('recent.0.result', '201')
+            ->assertJsonPath('recent.2.kind', 'call');
     }
 
     public function test_check_notifications_sends_a_test_and_reports_each_device()

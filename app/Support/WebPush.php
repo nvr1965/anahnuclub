@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\PushSubscription;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -59,9 +60,11 @@ class WebPush
                 ->post($subscription->endpoint);
         } catch (\Throwable $e) {
             Log::warning('Web push failed: '.$e->getMessage());
+            self::journal($subscription->user_id, $payload, 'error: '.mb_substr($e->getMessage(), 0, 120));
 
             return 0;
         }
+        self::journal($subscription->user_id, $payload, (string) $response->status());
         // Unsubscribed, expired or a broken record: no use trying again.
         if (in_array($response->status(), [400, 403, 404, 410], true)) {
             $subscription->delete();
@@ -70,6 +73,25 @@ class WebPush
         }
 
         return $response->status();
+    }
+
+    /**
+     * The member's last pushes (kind, push service's answer, time), shown by "Check notifications",
+     * so a call that did not ring can be told apart: never sent, refused, or sent and lost on the phone.
+     */
+    public static function journal(int $userId, string $payload, string $result): void
+    {
+        $kind = json_decode($payload, true)['kind'] ?? '?';
+        $key = 'push-journal:'.$userId;
+        $entries = Cache::get($key, []);
+        array_unshift($entries, ['kind' => $kind, 'result' => $result, 'at' => now()->toIso8601String()]);
+        Cache::put($key, array_slice($entries, 0, 8), now()->addDay());
+    }
+
+    /** @return list<array{kind: string, result: string, at: string}> */
+    public static function recent(int $userId): array
+    {
+        return Cache::get('push-journal:'.$userId, []);
     }
 
     /** The message encrypted for one device (RFC 8291), with the aes128gcm header in front. */

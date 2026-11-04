@@ -66,12 +66,14 @@ class PushController extends Controller
             'url' => route('messages.index', [], false),
             'tag' => 'test',
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // What went out before this test (a call, a message), read first so the test does not crowd it out.
+        $recent = WebPush::recent($request->user()->id);
         $devices = PushSubscription::where('user_id', $request->user()->id)->get()->map(fn (PushSubscription $s) => [
             'service' => parse_url($s->endpoint, PHP_URL_HOST),
             'status' => WebPush::send($s, $payload, 300),
         ]);
 
-        return response()->json(['devices' => $devices->values()]);
+        return response()->json(['devices' => $devices->values(), 'recent' => $recent]);
     }
 
     public function destroy(Request $request): Response
