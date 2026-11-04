@@ -175,6 +175,10 @@ class PostController extends Controller
         // Search engines read the post in the language of the page (?lang=he), when it is translated.
         $body = Html::clean($post->cachedTranslation('body', app()->getLocale()) ?? $post->body);
         $title = $post->cachedTranslation('title', app()->getLocale()) ?? $post->title;
+        // News our sites post through /api/autopost are not the member's own words: no "Name:" before them.
+        $autopost = $post->user && $post->user->email === config('services.autopost.user')
+            && (string) $post->group_id === (string) (config('services.autopost.group') ?: '');
+        $plain = $post->isOfficial() || $autopost;
         $author = $post->isOfficial() ? 'anahnu.club' : ($post->user?->name ?? 'anahnu.club');
         preg_match('~<img[^>]+src=["\']([^"\']+)~i', $body, $image);
         // Links are not words: a post that is only a YouTube link is named by the clip, not its address.
@@ -189,7 +193,7 @@ class PostController extends Controller
             // Facebook's card shows only the title, so a post without one is named by its own words:
             // "Author: the beginning of the text" (the club's own posts by the text alone); a post with
             // no words of its own by the title of its link or video.
-            'title' => $title ?: self::cardTitle($author, mb_strimwidth($words, 0, $post->isOfficial() ? 110 : 80, '…') ?: (string) $linkTitle, $post->isOfficial()),
+            'title' => $title ?: self::cardTitle($author, mb_strimwidth($words, 0, $plain ? 110 : 80, '…') ?: (string) $linkTitle, $plain),
             'description' => mb_strimwidth($words, 0, 200, '…') ?: ($post->linkPreview?->description ?: SiteMeta::slogan()),
             // The post's own picture, large enough for Facebook's big card; else that of its video or link;
             // else the club's invitation.
