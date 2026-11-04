@@ -157,7 +157,9 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('calls/{call}', [CallController::class, 'show'])->middleware('throttle:300,1')->name('calls.show');
     Route::post('calls/{call}/signal', [CallController::class, 'signal'])->middleware('throttle:300,1')->name('calls.signal');
     Route::post('calls/{call}/accept', [CallController::class, 'accept'])->name('calls.accept');
-    Route::post('calls/{call}/decline', [CallController::class, 'decline'])->name('calls.decline');
+    // Also from the "Decline" button on the call's notification, sent by the service worker, which has no session token.
+    Route::post('calls/{call}/decline', [CallController::class, 'decline'])
+        ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)->name('calls.decline');
     Route::post('calls/{call}/end', [CallController::class, 'end'])->name('calls.end');
     Route::post('messages/{conversation}/decline', [MessageController::class, 'decline'])->name('messages.decline');
     Route::post('people/{user}/message-block', [BlockController::class, 'blockMessages'])->name('blocks.messages.store');

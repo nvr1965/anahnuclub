@@ -153,7 +153,7 @@ class WebPushTest extends TestCase
         Http::assertSent(function (Request $request) use ($device) {
             $payload = json_decode($this->decrypt($request->body(), $device), true);
 
-            return $payload['kind'] === 'call' && $payload['body'] === 'Входящий видеозвонок' && $request->header('TTL')[0] === '45';
+            return $payload['kind'] === 'call' && $payload['title'] === '📞 Входящий видеозвонок' && $payload['body'] === 'Анна' && $payload['actions']['answer'] === 'Ответить' && $request->header('TTL')[0] === '45';
         });
     }
 

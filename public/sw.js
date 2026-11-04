@@ -63,7 +63,7 @@ function pageNotData(response) {
 // With the club open and in front of the member, the page just updates at once instead.
 // Which version of this file the phone runs: "Check notifications" asks, to spot a phone on an old one.
 // Keep in step with SW_VERSION in resources/js/lib/install-app.ts.
-const PUSH_VERSION = 'push-4';
+const PUSH_VERSION = 'push-5';
 self.addEventListener('message', (event) => {
     if (event.data !== 'push-version') return;
     const answer = { type: 'push-version', version: PUSH_VERSION };
@@ -91,8 +91,10 @@ self.addEventListener('push', (event) => {
                 tag: data.tag,
                 renotify: Boolean(data.tag),
                 requireInteraction: data.kind === 'call',
-                vibrate: data.kind === 'call' ? [400, 200, 400, 200, 400] : [200],
-                data: { url: data.url || '/messages' },
+                vibrate: data.kind === 'call' ? [800, 400, 800, 400, 800, 400, 800] : [200],
+                // A call gets "Answer" and "Decline" buttons right on the notification.
+                actions: data.actions ? Object.entries(data.actions).map(([action, title]) => ({ action, title })) : [],
+                data: { url: data.url || '/messages', decline: data.decline },
             });
         }),
     );
@@ -101,6 +103,15 @@ self.addEventListener('push', (event) => {
 // Tapping a notification opens that chat, in the club's window if one is open.
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    // "Decline" on a call: the caller hears it is declined, and nothing opens.
+    if (event.action === 'decline' && event.notification.data?.decline) {
+        event.waitUntil(
+            fetch(event.notification.data.decline, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json' } }).catch(
+                () => undefined,
+            ),
+        );
+        return;
+    }
     const url = new URL(event.notification.data?.url || '/messages', self.location.origin).href;
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {

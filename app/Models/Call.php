@@ -108,8 +108,11 @@ class Call extends Model
         $ringing = $this->status === 'ringing';
         Background::now(new SendWebPush([$callee->id], [
             'kind' => $ringing ? 'call' : 'missed-call',
-            'title' => $caller->name,
-            'body' => __($ringing ? ($this->video ? 'Incoming video call' : 'Incoming audio call') : 'Missed call', [], $locale),
+            // What it is first, so a glance at the locked screen tells a call from a message.
+            'title' => ($ringing ? '📞 ' : '').__($ringing ? ($this->video ? 'Incoming video call' : 'Incoming audio call') : 'Missed call', [], $locale),
+            'body' => $caller->name,
+            'actions' => $ringing ? ['answer' => __('Answer', [], $locale), 'decline' => __('Decline', [], $locale)] : [],
+            'decline' => $ringing ? route('calls.decline', $this, false) : null,
             'url' => route('messages.show', $this->conversation_id, false),
             'tag' => 'call-'.$this->id,
             'icon' => $caller->avatar,
