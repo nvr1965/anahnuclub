@@ -61,3 +61,28 @@ export async function promptInstall() {
     await event.prompt();
     return (await event.userChoice).outcome === 'accepted';
 }
+
+/** Where the club is open, to show the right steps when the browser gives no install prompt. */
+export function installPlatform(): 'ios' | 'android' | 'desktop' {
+    if (isIos()) return 'ios';
+    if (/android/i.test(navigator.userAgent)) return 'android';
+    return 'desktop';
+}
+
+const HELP_EVENT = 'club:install-help';
+
+/** Opens the steps for adding the club to the home screen (the dialog lives in the top bar). */
+export function openInstallHelp() {
+    window.dispatchEvent(new Event(HELP_EVENT));
+}
+
+export function onInstallHelp(open: () => void) {
+    window.addEventListener(HELP_EVENT, open);
+    return () => window.removeEventListener(HELP_EVENT, open);
+}
+
+/** The menu item's action: the browser's own install prompt when it offers one, otherwise the steps by hand. */
+export function installApp() {
+    if (canPrompt()) promptInstall();
+    else openInstallHelp();
+}

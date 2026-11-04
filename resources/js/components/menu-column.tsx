@@ -1,14 +1,30 @@
+import { useInstallOffered } from '@/components/install-app';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
+import { installApp } from '@/lib/install-app';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, Clapperboard, Contact, Film, House, Images, MessageCircle, Settings, Shield, UserRound, Users } from 'lucide-react';
+import {
+    CalendarDays,
+    Clapperboard,
+    Contact,
+    Film,
+    House,
+    Images,
+    MessageCircle,
+    Settings,
+    Shield,
+    Smartphone,
+    UserRound,
+    Users,
+} from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
     const t = useT();
     const { auth } = usePage<SharedData>().props;
+    const installOffered = useInstallOffered();
     const row = 'flex items-center gap-3 rounded-lg px-2 py-2 text-[0.9375rem] font-medium hover:bg-black/5 dark:hover:bg-white/10';
 
     return (
@@ -95,6 +111,14 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                     </span>
                     {t('Administration')}
                 </Link>
+            )}
+            {installOffered && (
+                <button type="button" onClick={installApp} className={`${row} w-full text-start`}>
+                    <span className="bg-brand-soft text-brand dark:bg-brand/20 flex size-9 items-center justify-center rounded-full">
+                        <Smartphone className="size-5" />
+                    </span>
+                    {t('Install the app')}
+                </button>
             )}
 
             {groups && groups.length > 0 && (

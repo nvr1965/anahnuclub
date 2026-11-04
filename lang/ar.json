@@ -272,7 +272,6 @@
     "If you did not create an account, no further action is required.": "إذا لم تنشئ حسابًا، فلا داعي لأي إجراء.",
     "If you did not request a password reset, no further action is required.": "إذا لم تطلب إعادة تعيين كلمة المرور، فلا داعي لأي إجراء.",
     "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "إذا واجهت مشكلة في النقر على زر \":actionText\"، فانسخ الرابط أدناه\nوالصقه في متصفحك:",
-    "In Safari, tap Share and then “Add to Home Screen”.": "في Safari، اضغط على \"مشاركة\" ثم \"إضافة إلى الشاشة الرئيسية\".",
     "In footer": "في التذييل",
     "Incoming audio call": "مكالمة صوتية واردة",
     "Incoming video call": "مكالمة فيديو واردة",
@@ -802,5 +801,15 @@
     "reached this phone": "وصل إلى الهاتف",
     "did not reach this phone": "لم يصل إلى الهاتف",
     "cannot show: :error": "لا يمكن العرض: :error",
-    "can show": "يمكن العرض"
+    "can show": "يمكن العرض",
+    "Open the club in Safari.": "افتح النادي في Safari.",
+    "Tap Share at the bottom of the screen.": "اضغط على \"مشاركة\" أسفل الشاشة.",
+    "Choose “Add to Home Screen”, then “Add”.": "اختر \"إضافة إلى الشاشة الرئيسية\" ثم \"إضافة\".",
+    "Open the browser menu ⋮.": "افتح قائمة المتصفح ⋮.",
+    "Choose “Install app” or “Add to Home screen”.": "اختر \"تثبيت التطبيق\" أو \"إضافة إلى الشاشة الرئيسية\".",
+    "Confirm: the club icon appears on the home screen.": "أكّد: ستظهر أيقونة النادي على الشاشة الرئيسية.",
+    "Chrome or Edge: click the install icon at the end of the address bar, or open the browser menu and choose “Install”.": "Chrome أو Edge: انقر على أيقونة التثبيت في نهاية شريط العنوان، أو افتح قائمة المتصفح واختر \"تثبيت\".",
+    "Safari on Mac: File menu, then “Add to Dock”.": "Safari على Mac: قائمة \"ملف\" ثم \"إضافة إلى Dock\".",
+    "Firefox cannot install sites as apps: open the club in Chrome or Edge.": "لا يثبّت Firefox المواقع كتطبيقات: افتح النادي في Chrome أو Edge.",
+    "The club will open from its own icon, in a window of its own, and can send notifications.": "سيفتح النادي من أيقونته الخاصة، في نافذة مستقلة، ويمكنه إرسال الإشعارات."
 }
