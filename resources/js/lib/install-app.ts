@@ -15,7 +15,7 @@ const listeners = new Set<() => void>();
  * worker's address, so a new release is fetched afresh even where a server or phone kept the old
  * file, which left phones without notifications.
  */
-export const SW_VERSION = 'push-4';
+export const SW_VERSION = 'push-5';
 export const SW_URL = `/sw.js?v=${SW_VERSION}`;
 
 export function setUpInstall() {
