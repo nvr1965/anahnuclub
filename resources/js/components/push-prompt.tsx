@@ -34,7 +34,7 @@ export function PushPrompt() {
 
     // "Check notifications" from the chats menu: a test to every device of the member, and what came of it.
     useEffect(() => {
-        const describe = ({ state, devices }: PushReport) => {
+        const describe = ({ state, devices, version, arrived, local }: PushReport) => {
             if (state === 'ios-install')
                 return t(
                     'To get notifications on iPhone, add the club to the Home Screen: Share, then "Add to Home Screen", and open it from there.',
@@ -52,6 +52,7 @@ export function PushPrompt() {
                     },
                 ),
                 refused.length ? t('Refused: :list', { list: refused.join(', ') }) : '',
+                `[${version ?? t('old version')} · ${arrived ? t('reached this phone') : t('did not reach this phone')} · ${local ? t('cannot show: :error', { error: local }) : t('can show')}]`,
             ]
                 .filter(Boolean)
                 .join(' ');

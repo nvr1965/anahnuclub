@@ -797,5 +797,10 @@
     "This browser cannot show notifications.": "הדפדפן הזה לא יכול להציג התראות.",
     "no answer": "אין תשובה",
     "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "התראת בדיקה נשלחה ל-:count מתוך :total מכשירים. אם היא לא מופיעה תוך דקה, ההתראות לדפדפן או לאפליקציה כבויות בהגדרות הטלפון, או שחיסכון בסוללה מעכב אותן.",
-    "Refused: :list": "נדחה: :list"
+    "Refused: :list": "נדחה: :list",
+    "old version": "גרסה ישנה",
+    "reached this phone": "הגיע לטלפון",
+    "did not reach this phone": "לא הגיע לטלפון",
+    "cannot show: :error": "לא יכול להציג: :error",
+    "can show": "יכול להציג"
 }

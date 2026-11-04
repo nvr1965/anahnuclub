@@ -64,15 +64,62 @@ export interface PushReport {
     state: PushState;
     /** Each of the member's devices and what its push service answered (201 = taken). */
     devices: { service: string; status: number }[];
+    /** The service worker's version on this device, null when it does not answer (an old one). */
+    version?: string | null;
+    /** The test reached this device's service worker within a few seconds. */
+    arrived?: boolean;
+    /** The device could show a notification made right here: '' when it could, otherwise the browser's error. */
+    local?: string;
 }
 
-/** "Check notifications": signs this device up if needed and sends a test to all the member's devices. */
+function workerVersion(): Promise<string | null> {
+    return new Promise((resolve) => {
+        const worker = navigator.serviceWorker.controller;
+        if (!worker) return resolve(null);
+        const timer = window.setTimeout(() => done(null), 2000);
+        const onMessage = (event: MessageEvent) => event.data?.type === 'push-version' && done(event.data.version);
+        function done(version: string | null) {
+            window.clearTimeout(timer);
+            navigator.serviceWorker.removeEventListener('message', onMessage);
+            resolve(version);
+        }
+        navigator.serviceWorker.addEventListener('message', onMessage);
+        worker.postMessage('push-version');
+    });
+}
+
+function testArrives(ms: number): Promise<boolean> {
+    return new Promise((resolve) => {
+        const timer = window.setTimeout(() => done(false), ms);
+        const onPush = (event: Event) => (event as CustomEvent).detail?.kind === 'test' && done(true);
+        function done(arrived: boolean) {
+            window.clearTimeout(timer);
+            window.removeEventListener('club:push', onPush);
+            resolve(arrived);
+        }
+        window.addEventListener('club:push', onPush);
+    });
+}
+
+/**
+ * "Check notifications": signs this device up if needed, sends a test to all the member's devices,
+ * and finds where it stops: at the push service, on the way to this phone, or when the phone shows it.
+ */
 export async function testPush(): Promise<PushReport> {
     const state = await enablePush();
     if (state !== 'on') return { state, devices: [] };
+    const version = await workerVersion();
+    const arrival = testArrives(10000);
     const response = await fetch(route('push.test'), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf() } });
     const { devices } = (await response.json()) as { devices: PushReport['devices'] };
-    return { state, devices };
+    const arrived = await arrival;
+    let local = '';
+    try {
+        await (await registration()).showNotification('Anahnu Club', { body: 'OK', tag: 'local-test', icon: '/icons/icon-192.png' });
+    } catch (error) {
+        local = error instanceof Error ? error.message : String(error);
+    }
+    return { state, devices, version, arrived, local };
 }
 
 export async function disablePush(): Promise<PushState> {

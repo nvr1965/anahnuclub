@@ -797,5 +797,10 @@
     "This browser cannot show notifications.": "هذا المتصفح لا يستطيع عرض الإشعارات.",
     "no answer": "لا رد",
     "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "أُرسل إشعار تجريبي إلى :count من :total أجهزة. إذا لم يظهر خلال دقيقة، فالإشعارات لهذا المتصفح أو التطبيق مطفأة في إعدادات الهاتف، أو أن توفير البطارية يؤخرها.",
-    "Refused: :list": "مرفوض: :list"
+    "Refused: :list": "مرفوض: :list",
+    "old version": "إصدار قديم",
+    "reached this phone": "وصل إلى الهاتف",
+    "did not reach this phone": "لم يصل إلى الهاتف",
+    "cannot show: :error": "لا يمكن العرض: :error",
+    "can show": "يمكن العرض"
 }
