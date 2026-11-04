@@ -1,4 +1,4 @@
-import { isInstalled, isIos } from './install-app';
+import { isInstalled, isIos, SW_URL, SW_VERSION } from './install-app';
 
 /**
  * Notifications on this device (Web Push). The browser keeps one connection to its push service
@@ -14,8 +14,31 @@ function supported() {
     return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+/** The service worker, brought up to this release's version first (it then controls the page). */
 async function registration() {
-    return (await navigator.serviceWorker.getRegistration()) ?? navigator.serviceWorker.register('/sw.js');
+    const current = await navigator.serviceWorker.getRegistration();
+    if (current?.active && (await workerVersion(current.active)) === SW_VERSION) return current;
+    const reg = await navigator.serviceWorker.register(SW_URL);
+    await activated(reg);
+    return reg;
+}
+
+/** Waits (up to 15 seconds) until the newly fetched worker takes over from the old one. */
+function activated(reg: ServiceWorkerRegistration): Promise<void> {
+    const worker = reg.installing ?? reg.waiting;
+    if (!worker) return Promise.resolve();
+    return new Promise((resolve) => {
+        const timer = window.setTimeout(resolve, 15000);
+        const check = () => {
+            if (worker.state === 'activated' || worker.state === 'redundant') {
+                window.clearTimeout(timer);
+                worker.removeEventListener('statechange', check);
+                resolve();
+            }
+        };
+        worker.addEventListener('statechange', check);
+        check();
+    });
 }
 
 export async function pushState(): Promise<PushState> {
@@ -72,19 +95,17 @@ export interface PushReport {
     local?: string;
 }
 
-function workerVersion(): Promise<string | null> {
+/** Asks a service worker its version; null from an old one, which does not answer. */
+function workerVersion(worker: ServiceWorker | null | undefined): Promise<string | null> {
     return new Promise((resolve) => {
-        const worker = navigator.serviceWorker.controller;
         if (!worker) return resolve(null);
-        const timer = window.setTimeout(() => done(null), 2000);
-        const onMessage = (event: MessageEvent) => event.data?.type === 'push-version' && done(event.data.version);
-        function done(version: string | null) {
+        const channel = new MessageChannel();
+        const timer = window.setTimeout(() => resolve(null), 1500);
+        channel.port1.onmessage = (event) => {
             window.clearTimeout(timer);
-            navigator.serviceWorker.removeEventListener('message', onMessage);
-            resolve(version);
-        }
-        navigator.serviceWorker.addEventListener('message', onMessage);
-        worker.postMessage('push-version');
+            resolve(event.data?.version ?? null);
+        };
+        worker.postMessage('push-version', [channel.port2]);
     });
 }
 
@@ -108,7 +129,7 @@ function testArrives(ms: number): Promise<boolean> {
 export async function testPush(): Promise<PushReport> {
     const state = await enablePush();
     if (state !== 'on') return { state, devices: [] };
-    const version = await workerVersion();
+    const version = await workerVersion((await registration()).active);
     const arrival = testArrives(10000);
     const response = await fetch(route('push.test'), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf() } });
     const { devices } = (await response.json()) as { devices: PushReport['devices'] };
@@ -151,6 +172,7 @@ export async function syncPush(signedIn: boolean) {
 /** The service worker passes on each push while the club is open: "club:push" lets the pages react at once. */
 export function listenForPush() {
     if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.startMessages();
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data?.type === 'push') window.dispatchEvent(new CustomEvent('club:push', { detail: event.data.data }));
     });

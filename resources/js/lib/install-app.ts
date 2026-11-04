@@ -10,9 +10,17 @@ interface InstallPromptEvent extends Event {
 let deferred: InstallPromptEvent | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * The service worker's version, kept in step with PUSH_VERSION in public/sw.js. It goes into the
+ * worker's address, so a new release is fetched afresh even where a server or phone kept the old
+ * file, which left phones without notifications.
+ */
+export const SW_VERSION = 'push-4';
+export const SW_URL = `/sw.js?v=${SW_VERSION}`;
+
 export function setUpInstall() {
     if ('serviceWorker' in navigator && import.meta.env.PROD) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
+        window.addEventListener('load', () => navigator.serviceWorker.register(SW_URL).catch(() => undefined));
     }
     window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
