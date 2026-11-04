@@ -272,7 +272,6 @@
     "If you did not create an account, no further action is required.": "אם לא נרשמתם, אין צורך לעשות דבר.",
     "If you did not request a password reset, no further action is required.": "אם לא ביקשתם לאפס את הסיסמה, אין צורך לעשות דבר.",
     "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "אם הכפתור \":actionText\" לא עובד, העתיקו את הכתובת שלמטה\nלדפדפן:",
-    "In Safari, tap Share and then “Add to Home Screen”.": "ב-Safari הקישו על \"שיתוף\" ואז על \"הוספה למסך הבית\".",
     "In footer": "בכותרת התחתונה",
     "Incoming audio call": "שיחה קולית נכנסת",
     "Incoming video call": "שיחת וידאו נכנסת",
@@ -802,5 +801,15 @@
     "reached this phone": "הגיע לטלפון",
     "did not reach this phone": "לא הגיע לטלפון",
     "cannot show: :error": "לא יכול להציג: :error",
-    "can show": "יכול להציג"
+    "can show": "יכול להציג",
+    "Open the club in Safari.": "פתחו את המועדון ב-Safari.",
+    "Tap Share at the bottom of the screen.": "הקישו על \"שיתוף\" בתחתית המסך.",
+    "Choose “Add to Home Screen”, then “Add”.": "בחרו \"הוספה למסך הבית\" ואז \"הוספה\".",
+    "Open the browser menu ⋮.": "פתחו את תפריט הדפדפן ⋮.",
+    "Choose “Install app” or “Add to Home screen”.": "בחרו \"התקנת אפליקציה\" או \"הוספה למסך הבית\".",
+    "Confirm: the club icon appears on the home screen.": "אשרו: סמל המועדון יופיע במסך הבית.",
+    "Chrome or Edge: click the install icon at the end of the address bar, or open the browser menu and choose “Install”.": "Chrome או Edge: לחצו על סמל ההתקנה בסוף שורת הכתובת, או פתחו את תפריט הדפדפן ובחרו \"התקנה\".",
+    "Safari on Mac: File menu, then “Add to Dock”.": "Safari ב-Mac: תפריט \"קובץ\" ואז \"הוספה ל-Dock\".",
+    "Firefox cannot install sites as apps: open the club in Chrome or Edge.": "Firefox לא מתקין אתרים כאפליקציות: פתחו את המועדון ב-Chrome או ב-Edge.",
+    "The club will open from its own icon, in a window of its own, and can send notifications.": "המועדון ייפתח מהסמל שלו, בחלון משלו, ויוכל לשלוח התראות."
 }

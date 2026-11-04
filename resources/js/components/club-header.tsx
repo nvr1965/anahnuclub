@@ -1,3 +1,4 @@
+import { InstallAppHelp } from '@/components/install-app';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { MessengerMenu } from '@/components/messenger-menu';
 import { NotificationBell } from '@/components/notification-bell';
@@ -252,6 +253,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                     {tiles}
                 </nav>
             )}
+            <InstallAppHelp />
         </header>
     );
 }

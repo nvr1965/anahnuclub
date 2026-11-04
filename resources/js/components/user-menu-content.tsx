@@ -1,14 +1,14 @@
+import { useInstallOffered } from '@/components/install-app';
 import { LanguageSubmenu } from '@/components/language-switcher';
 import { SkinSubmenu } from '@/components/skin-picker';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { useT } from '@/lib/i18n';
-import { canPrompt, isInstalled, isIos, onInstallChange, promptInstall } from '@/lib/install-app';
+import { installApp } from '@/lib/install-app';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
 import { CalendarDays, Clapperboard, Film, Images, LogOut, Settings, Shield, Smartphone, UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 interface UserMenuContentProps {
     user: User;
@@ -80,16 +80,13 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
     );
 }
 
-/** Puts the club on the home screen: the browser's own prompt, or on iPhone the steps in Safari. */
+/** Puts the club on the home screen: the browser's own prompt, or the steps for this phone or computer. */
 function InstallAppItem() {
     const t = useT();
-    const [, refresh] = useState(0);
-    useEffect(() => onInstallChange(() => refresh((n) => n + 1)), []);
-
-    if (isInstalled() || (!canPrompt() && !isIos())) return null;
+    if (!useInstallOffered()) return null;
 
     return (
-        <DropdownMenuItem onSelect={() => (canPrompt() ? promptInstall() : window.alert(t('In Safari, tap Share and then “Add to Home Screen”.')))}>
+        <DropdownMenuItem onSelect={installApp}>
             <Smartphone className="me-2" />
             {t('Install the app')}
         </DropdownMenuItem>
