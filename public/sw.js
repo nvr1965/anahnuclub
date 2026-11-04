@@ -61,6 +61,12 @@ function pageNotData(response) {
 
 // Notifications (Web Push): a new message or an incoming call wakes the phone even with the site closed.
 // With the club open and in front of the member, the page just updates at once instead.
+// Which version of this file the phone runs: "Check notifications" asks, to spot a phone on an old one.
+const PUSH_VERSION = 'push-3';
+self.addEventListener('message', (event) => {
+    if (event.data === 'push-version') event.source?.postMessage({ type: 'push-version', version: PUSH_VERSION });
+});
+
 self.addEventListener('push', (event) => {
     let data = {};
     try {

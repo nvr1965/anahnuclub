@@ -797,5 +797,10 @@
     "This browser cannot show notifications.": "Этот браузер не умеет показывать уведомления.",
     "no answer": "нет ответа",
     "Test notification sent to :count of :total devices. If it does not appear within a minute, notifications for this browser or app are turned off in the phone settings, or battery saving holds them.": "Тестовое уведомление отправлено на :count из :total устройств. Если оно не появится в течение минуты, уведомления для этого браузера или приложения выключены в настройках телефона, или их задерживает экономия батареи.",
-    "Refused: :list": "Отказ: :list"
+    "Refused: :list": "Отказ: :list",
+    "old version": "старая версия",
+    "reached this phone": "до телефона дошло",
+    "did not reach this phone": "до телефона не дошло",
+    "cannot show: :error": "показать не может: :error",
+    "can show": "показать может"
 }
