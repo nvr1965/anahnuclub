@@ -214,4 +214,22 @@ class WebPushTest extends TestCase
             ->assertJsonPath('devices.0.service', 'push.example');
         Http::assertSent(fn (Request $request) => json_decode($this->decrypt($request->body(), $device), true)['kind'] === 'test');
     }
+
+    public function test_on_a_host_with_a_cron_queue_the_push_still_goes_out_at_once()
+    {
+        // As on shared hosting without FPM: background work waits for cron, a phone call cannot.
+        config(['queue.default' => 'database']);
+        Http::fake(['push.example/*' => Http::response('', 201)]);
+        $anna = User::factory()->create();
+        $dana = User::factory()->create();
+        DB::table('friendships')->insert(['user_id' => $anna->id, 'friend_id' => $dana->id, 'accepted' => true]);
+        $conversation = Conversation::between($anna, $dana);
+        $device = $this->device();
+        $this->actingAs($dana)->postJson('/push/subscriptions', ['endpoint' => 'https://push.example/dana', 'keys' => ['p256dh' => $device['p256dh'], 'auth' => $device['auth']]]);
+
+        $this->actingAs($anna)->postJson("/messages/{$conversation->id}", ['body' => 'Привет'])->assertCreated();
+
+        Http::assertSentCount(1);
+        $this->assertFalse(DB::table('jobs')->where('payload', 'like', '%SendWebPush%')->exists());
+    }
 }

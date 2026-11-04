@@ -106,7 +106,7 @@ class Call extends Model
         }
         $locale = $callee->ui_locale ?: $callee->locale;
         $ringing = $this->status === 'ringing';
-        Background::run(new SendWebPush([$callee->id], [
+        Background::now(new SendWebPush([$callee->id], [
             'kind' => $ringing ? 'call' : 'missed-call',
             'title' => $caller->name,
             'body' => __($ringing ? ($this->video ? 'Incoming video call' : 'Incoming audio call') : 'Missed call', [], $locale),

@@ -166,7 +166,7 @@ class MessageController extends Controller
             Background::run(new TranslateContent($message, $locales));
         }
         // The others' phones ring even with the site closed.
-        Background::run(new SendWebPush($others->pluck('id')->all(), [
+        Background::now(new SendWebPush($others->pluck('id')->all(), [
             'kind' => 'message',
             'title' => $user->name,
             'body' => mb_strimwidth($body !== '' ? $body : '📎 '.collect($request->file('files', []))->map->getClientOriginalName()->implode(', '), 0, 180, '…'),
