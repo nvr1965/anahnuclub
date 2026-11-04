@@ -48,6 +48,20 @@ class PostPageTest extends TestCase
         $this->get("/posts/{$official->id}")->assertSee('<meta property="og:title" content="Новости клуба">', false);
     }
 
+    public function test_autoposted_news_is_named_by_its_text_without_the_member_name()
+    {
+        $nick = User::factory()->create(['name' => 'Николай', 'email' => 'news@example.com']);
+        $group = Group::create(['name' => 'Новости', 'slug' => 'news', 'owner_id' => $nick->id, 'published' => true]);
+        config(['services.autopost.user' => 'news@example.com', 'services.autopost.group' => $group->id]);
+
+        $news = Post::create(['user_id' => $nick->id, 'group_id' => $group->id, 'body' => '<p>Выборы в США</p>']);
+        $this->get("/posts/{$news->id}")->assertSee('<meta property="og:title" content="Выборы в США">', false);
+
+        // His own posts outside the news group keep his name.
+        $own = Post::create(['user_id' => $nick->id, 'body' => '<p>Доброе утро</p>']);
+        $this->get("/posts/{$own->id}")->assertSee('<meta property="og:title" content="Николай: Доброе утро">', false);
+    }
+
     public function test_a_post_that_is_only_a_youtube_link_is_named_by_the_clip()
     {
         Http::fake(['www.youtube.com/oembed*' => Http::response(['title' => 'Песни у костра'])]);
