@@ -8,6 +8,7 @@ use App\Translation\ContentTranslator;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Returns translations of posts and comments the page could not show translated yet.
@@ -41,15 +42,23 @@ class TranslationController extends Controller
             if (! $model || $hidden) {
                 continue;
             }
-            $onDemand = config('services.translation.on_demand') || in_array($item['type'], ['message', 'moment'], true);
+            $onDemand = config('services.translation.on_demand') || in_array($item['type'], ['message', 'moment'], true)
+                || TranslationPayload::translatedOnOpen($model, $locale);
             if (! $onDemand && ! TranslationPayload::isFresh($model)) {
                 continue;
             }
+            // The page asks again every few seconds; after a failure (services down or out of today's limit)
+            // only stored translations are read for a while, so the asking does not hammer the services.
+            $failedKey = 'translate-on-open-failed.'.$item['type'].'.'.$item['id'].'.'.$locale;
+            $onDemand = $onDemand && ! Cache::has($failedKey);
             $fields = [];
             foreach ($model->translatableFields() as $field) {
                 $text = $onDemand
                     ? $translator->translate($model, $field, $locale)
                     : ($translator->needsTranslation($model, $field, $locale) ? $model->cachedTranslation($field, $locale) : null);
+                if ($onDemand && $translator->lastFailed) {
+                    Cache::put($failedKey, true, now()->addMinutes(15));
+                }
                 if ($text !== null && ! TranslationPayload::same($text, (string) $model->getAttribute($field))) {
                     $fields[$field] = $field === 'title' || $field === 'name' ? $text : Html::clean($text);
                 }
