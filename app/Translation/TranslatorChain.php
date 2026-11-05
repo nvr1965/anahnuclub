@@ -141,7 +141,13 @@ class TranslatorChain implements Translator
 
         foreach ($this->entries as $entry) {
             $provider = $entry['on'] ? $this->provider($entry['id']) : null;
-            if (! $provider || ($entry['daily_chars'] > 0 && $this->usedToday($entry['id']) + $chars > $entry['daily_chars'])) {
+            if (! $provider) {
+                continue;
+            }
+            if ($entry['daily_chars'] > 0 && $this->usedToday($entry['id']) + $chars > $entry['daily_chars']) {
+                // Said in the error, so the log shows that the limits ran out and not only the last failure.
+                $errors[] = $entry['id'].': today\'s limit used ('.$this->usedToday($entry['id']).' of '.$entry['daily_chars'].')';
+
                 continue;
             }
             if (! $provider->supports($targetLocale)) {

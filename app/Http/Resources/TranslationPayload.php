@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Support\Html;
 use App\Translation\ContentTranslator;
+use App\Translation\TranslationTargets;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -36,7 +37,8 @@ class TranslationPayload
         // Old content is shown as written; only content just published waits for its translation
         // (being made right after publishing), unless translating while the reader waits is turned on
         // (always for private messages: they were translated only into the language the reader had then).
-        $pending = $pending && ($onDemand || config('services.translation.on_demand') || self::isFresh($model));
+        $pending = $pending && ($onDemand || config('services.translation.on_demand') || self::isFresh($model)
+            || self::translatedOnOpen($model, $locale));
 
         if (! $pending && $fields === []) {
             return null;
@@ -59,4 +61,14 @@ class TranslationPayload
     }
 
     public const FRESH_MINUTES = 10;
+
+    /**
+     * A recent post in a language that is not translated ahead of time (no member reads in it):
+     * it is translated when someone opens it in that language.
+     */
+    public static function translatedOnOpen(Model $model, string $locale): bool
+    {
+        return ! TranslationTargets::isEager($locale)
+            && ($model->getAttribute('created_at')?->gt(now()->subDays(TranslationTargets::ON_OPEN_DAYS)) ?? false);
+    }
 }

@@ -15,6 +15,9 @@ class ContentTranslator
     /** Characters sent to the provider by this instance, to keep within a provider's quota. */
     public int $charsSent = 0;
 
+    /** Whether the last translate() call reached no service (all failed, or all out of today's limit). */
+    public bool $lastFailed = false;
+
     public function __construct(private Translator $translator) {}
 
     public function enabled(): bool
@@ -45,6 +48,8 @@ class ContentTranslator
 
     public function translate(Model $model, string $field, string $locale): ?string
     {
+        $this->lastFailed = false;
+
         if (! $this->needsTranslation($model, $field, $locale)) {
             return null;
         }
@@ -60,6 +65,7 @@ class ContentTranslator
             $translated = $this->translator->translate($text, $locale, $this->sourceLocale($model, $field));
         } catch (Throwable $e) {
             Log::warning('Content translation failed', ['model' => $model::class, 'id' => $model->getKey(), 'error' => $e->getMessage()]);
+            $this->lastFailed = true;
 
             return null;
         }
