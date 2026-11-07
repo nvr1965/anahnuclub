@@ -84,3 +84,7 @@ listenForPush();
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Safari on iPhone ignores user-scalable=no in the viewport tag; its own pinch gesture events are stopped here,
+// so the feed cannot be zoomed or knocked sideways with two fingers.
+document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });

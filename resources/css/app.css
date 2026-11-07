@@ -286,6 +286,16 @@
         @apply border-border;
     }
 
+    /* Phones: the page does not pinch-zoom or slide sideways; it only scrolls up and down.
+       "clip" (not "hidden") keeps sticky headers working. */
+    html,
+    body {
+        overflow-x: clip;
+        touch-action: pan-x pan-y;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
     body {
         @apply bg-background text-foreground;
         /* Members paste long links into posts and profiles; they wrap instead of running off the card. */
