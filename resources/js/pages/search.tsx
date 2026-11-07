@@ -80,7 +80,8 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
     return (
         <AppLayout sidebar={sidebar}>
             <Head title={q ? `${q} · ${t('Search')}` : t('Search')} />
-            <div className="space-y-4">
+            {/* Stream's column runs edge to edge between two lines, so the page keeps its own margin inside them. */}
+            <div className={`space-y-4 ${skin === 'stream' ? 'p-3' : ''}`}>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
@@ -100,7 +101,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                 </form>
 
                 {q.length > 1 && (
-                    <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+                    <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
                         {(['all', ...Object.keys(labels)] as (Type | 'all')[]).map((key) => (
                             <button
                                 key={key}
