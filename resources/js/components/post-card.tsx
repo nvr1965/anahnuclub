@@ -3,6 +3,7 @@ import { EmbedPostDialog } from '@/components/embed-post-dialog';
 import { ExternalEmbed } from '@/components/external-embed';
 import { LinkPreview } from '@/components/link-preview';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
+import { TagFriendsPicker, TagTextarea, type TaggedFriend, WithFriends } from '@/components/post-tags';
 import { ReactionButton, ReactionFaces } from '@/components/reactions';
 import { ShareMenu } from '@/components/share-menu';
 import { SharedPostView } from '@/components/shared-post';
@@ -15,7 +16,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type PinPlace, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Code, Ellipsis, Eye, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2 } from 'lucide-react';
+import { Code, Ellipsis, Eye, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -52,7 +53,9 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const [replyTo, setReplyTo] = useState<{ thread: number; id: number } | null>(null);
     const [expanded, setExpanded] = useState<number[]>([]);
     const [editing, setEditing] = useState(false);
-    const edit = useForm({ body: post.editable_text ?? '' });
+    const edit = useForm({ body: post.editable_text ?? '', tagged_ids: post.with.map((f) => f.id) });
+    const [tagged, setTagged] = useState<TaggedFriend[]>(post.with);
+    const [tagging, setTagging] = useState(false);
     const [choosingAudience, setChoosingAudience] = useState(false);
     const [embedding, setEmbedding] = useState(false);
     const audienceLabels = useAudienceLabels();
@@ -71,6 +74,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     };
     const pins = Object.entries(post.pins ?? {}) as [PinPlace, boolean][];
     const pin = (place: PinPlace) => router.post(route('posts.pin', { post: post.id, place }), {}, { preserveScroll: true });
+
+    const untag = () => router.delete(route('posts.untag', post.id), { preserveScroll: true });
 
     const remove = () => {
         if (window.confirm(t('Delete this post?'))) router.delete(route('posts.destroy', post.id), { preserveScroll: true });
@@ -252,6 +257,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                                 </Link>
                             </>
                         )}
+                        <WithFriends people={post.with} />
                     </div>
                     <div className="text-muted-foreground mt-0.5 text-[0.8125rem]" title={post.created_at ?? ''}>
                         {post.pinned && (
@@ -304,7 +310,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     />
                 )}
                 {post.embeddable && <EmbedPostDialog open={embedding} onClose={() => setEmbedding(false)} postId={post.id} src={post.embed_url} />}
-                {(post.can_delete || post.editable_text !== null || canChangeAudience || post.embeddable || pins.length > 0) && (
+                {(post.can_delete ||
+                    post.editable_text !== null ||
+                    canChangeAudience ||
+                    post.embeddable ||
+                    pins.length > 0 ||
+                    (post.tagged_me && !mine)) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             className="text-muted-foreground -me-2 self-start rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
@@ -334,6 +345,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                                     <Code className="size-4" /> {t('Embed')}
                                 </DropdownMenuItem>
                             )}
+                            {post.tagged_me && !mine && (
+                                <DropdownMenuItem onSelect={untag}>
+                                    <UserMinus className="size-4" /> {t('Remove tag')}
+                                </DropdownMenuItem>
+                            )}
                             {post.can_delete && (
                                 <DropdownMenuItem onSelect={remove} className="text-red-600">
                                     <Trash2 className="size-4" /> {t('Delete')}
@@ -348,18 +364,46 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 <div className={`${pad} pb-2 ${stream ? 'pt-1' : 'pt-3'}`}>
                     {editing ? (
                         <form onSubmit={saveEdit} className="space-y-2">
-                            <textarea
+                            <TagTextarea
                                 dir="auto"
                                 autoFocus
                                 rows={5}
                                 className="w-full resize-y rounded-xl bg-slate-100 px-4 py-2.5 text-[0.9375rem] outline-none dark:bg-neutral-800"
                                 value={edit.data.body}
-                                onChange={(e) => edit.setData('body', e.target.value)}
+                                onChange={(body) => edit.setData('body', body)}
                             />
-                            <div className="flex justify-end gap-2">
+                            <TagFriendsPicker
+                                open={tagging}
+                                onClose={() => setTagging(false)}
+                                value={tagged}
+                                onDone={(friends) => {
+                                    setTagged(friends);
+                                    edit.setData(
+                                        'tagged_ids',
+                                        friends.map((f) => f.id),
+                                    );
+                                    setTagging(false);
+                                }}
+                            />
+                            <div className="flex flex-wrap items-center justify-end gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setEditing(false)}
+                                    onClick={() => setTagging(true)}
+                                    className="text-muted-foreground me-auto inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-start text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                >
+                                    <UserPlus className="size-4 shrink-0 text-sky-600" />
+                                    {tagged.length > 0 ? <WithFriends people={tagged} linked={false} /> : t('Tag friends')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => (
+                                        setEditing(false),
+                                        setTagged(post.with),
+                                        edit.setData(
+                                            'tagged_ids',
+                                            post.with.map((f) => f.id),
+                                        )
+                                    )}
                                     className="text-muted-foreground rounded-md px-4 py-1.5 text-sm font-semibold hover:bg-slate-100"
                                 >
                                     {t('Cancel')}

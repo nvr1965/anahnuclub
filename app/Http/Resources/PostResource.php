@@ -7,6 +7,7 @@ use App\Models\Like;
 use App\Models\Post;
 use App\Support\Embed;
 use App\Support\Html;
+use App\Support\PostTags;
 use App\Translation\ContentTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,7 +31,8 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'title' => $this->title,
-            'body' => Html::clean($this->body),
+            // Hashtags as links, also in posts written before they were made links.
+            'body' => PostTags::link(Html::clean($this->body)),
             'created_at' => $this->created_at?->toIso8601String(),
             // A club post names nobody to readers; its author still sees themself, to edit it.
             'author' => $official && ! $mine ? null : AuthorResource::make($this->whenLoaded('user')),
@@ -38,6 +40,12 @@ class PostResource extends JsonResource
             'group' => $this->whenLoaded('group', fn () => $this->group?->only('id', 'name', 'slug')),
             // Put on a friend's profile: "Anna ▸ Boris".
             'wall' => $this->whenLoaded('wallUser', fn () => $this->wallUser?->only('id', 'name'), null),
+            // Friends tagged beside the author's name: "Anna — with Boris and Vera".
+            'with' => $this->relationLoaded('taggedUsers')
+                ? $this->taggedUsers->filter(fn ($u) => $u->pivot->kind === 'with')->unique('id')->map(fn ($u) => $u->only('id', 'name'))->values()->all()
+                : [],
+            // The reader is tagged or named in it, and may take the tag off.
+            'tagged_me' => $request->user() && $this->relationLoaded('taggedUsers') && $this->taggedUsers->contains('id', $request->user()->id),
             // The post shared; null inside it when it was deleted or this reader may not read it.
             'shared' => $share ? ['post' => $this->relationLoaded('sharedPost') && $this->sharedPost ? self::sharedCard($this->sharedPost, $request) : null] : null,
             // Whether the reader may share it inside the club (its original, for a share).
@@ -78,7 +86,7 @@ class PostResource extends JsonResource
             'embed_url' => route('embed.post', $this->id),
             'event' => $this->whenLoaded('event', fn () => $this->event ? EventController::card($this->event) : null),
             'editable_text' => $request->user()?->id === $this->user_id && in_array($this->type, ['status', 'photo', 'video', 'share'], true) && $this->legacy_source === null
-                ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)
+                ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', PostTags::editable($this->body)))), ENT_QUOTES | ENT_HTML5)
                 : null,
         ];
     }
@@ -106,7 +114,7 @@ class PostResource extends JsonResource
             'id' => $post->id,
             'type' => $post->type,
             'title' => $post->title,
-            'body' => Html::clean($post->body),
+            'body' => PostTags::link(Html::clean($post->body)),
             'created_at' => $post->created_at?->toIso8601String(),
             'author' => $official ? null : ($post->user ? AuthorResource::make($post->user)->resolve($request) : null),
             'official' => $official,

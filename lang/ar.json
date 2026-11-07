@@ -932,5 +932,18 @@
     "Who sent it: :url": "من أرسل: :url",
     "Times today: :times": "أوقات اليوم: :times",
     "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net": "عنوان RSS، قناة تيليغرام https://t.me/s/… أو panet.com / bokra.net",
-    "Group: :name": "المجموعة: :name"
+    "Group: :name": "المجموعة: :name",
+    "Tag friends": "الإشارة إلى أصدقاء",
+    "Who are you with?": "مع من أنت؟",
+    "with": "مع",
+    "and": "و",
+    ":count others": ":count آخرين",
+    "Remove tag": "إزالة الإشارة",
+    "Posts with this hashtag": "منشورات بهذا الوسم",
+    "Popular hashtags": "الوسوم الرائجة",
+    "Posts with :tag": "منشورات مع :tag",
+    ":name tagged you in a post": "أشار :name إليك في منشور",
+    ":names tagged you in a post": "أشار :names إليك في منشور",
+    ":name mentioned you in a post": "ذكرك :name في منشور",
+    ":names mentioned you in a post": "ذكرك :names في منشور"
 }

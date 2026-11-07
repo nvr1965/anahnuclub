@@ -15,6 +15,7 @@ use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\GroupInviteController;
 use App\Http\Controllers\GroupRoleController;
+use App\Http\Controllers\HashtagController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
@@ -67,6 +68,8 @@ Route::post('translations', TranslationController::class)->middleware('throttle:
 Route::get('posts', [FeedController::class, 'archive'])->name('posts.archive');
 Route::get('posts/page/{page}', [FeedController::class, 'archive'])->whereNumber('page')->name('posts.archive.page');
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
+// Every post with a #hashtag; guests see the public ones.
+Route::get('hashtag/{tag}', [HashtagController::class, 'show'])->where('tag', '[^/]+')->name('hashtags.show');
 // A public post for other sites to show in an <iframe>.
 Route::get('embed/posts/{post}', [EmbedController::class, 'post'])->whereNumber('post')->name('embed.post');
 
@@ -114,6 +117,8 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('posts/{post}/tag', [PostController::class, 'untag'])->name('posts.untag');
+    Route::get('hashtags/suggest', [HashtagController::class, 'suggest'])->name('hashtags.suggest');
     Route::post('posts/{post}/pin/{place}', [PostController::class, 'pin'])->whereIn('place', ['feed', 'profile', 'group'])->name('posts.pin');
 
     Route::get('people', [PeopleController::class, 'index'])->name('people.index');

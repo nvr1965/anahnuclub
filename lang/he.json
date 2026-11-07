@@ -932,5 +932,18 @@
     "Who sent it: :url": "מי שלח: :url",
     "Times today: :times": "שעות היום: :times",
     "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net": "כתובת RSS, ערוץ טלגרם https://t.me/s/… או panet.com / bokra.net",
-    "Group: :name": "קבוצה: :name"
+    "Group: :name": "קבוצה: :name",
+    "Tag friends": "תיוג חברים",
+    "Who are you with?": "עם מי את/ה?",
+    "with": "עם",
+    "and": "וגם",
+    ":count others": "עוד :count",
+    "Remove tag": "הסרת תיוג",
+    "Posts with this hashtag": "פוסטים עם התגית הזו",
+    "Popular hashtags": "תגיות פופולריות",
+    "Posts with :tag": "פוסטים עם :tag",
+    ":name tagged you in a post": ":name תייג/ה אותך בפוסט",
+    ":names tagged you in a post": ":names תייגו אותך בפוסט",
+    ":name mentioned you in a post": ":name הזכיר/ה אותך בפוסט",
+    ":names mentioned you in a post": ":names הזכירו אותך בפוסט"
 }

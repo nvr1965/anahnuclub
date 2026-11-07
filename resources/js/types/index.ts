@@ -94,6 +94,10 @@ export interface Post extends Translatable {
     group: { id: number; name: string; slug: string } | null;
     /** Put on a friend's profile: shown as "Author ▸ Friend". */
     wall: { id: number; name: string } | null;
+    /** Friends tagged beside the author's name: "Anna — with Boris and Vera". */
+    with: { id: number; name: string }[];
+    /** The reader is tagged or named in the post and may take the tag off. */
+    tagged_me: boolean;
     /** A share: the post it carries, null inside when that post was deleted or is closed to the reader. */
     shared: { post: SharedPost | null } | null;
     /** Whether the reader may share it inside the club: to their feed, a group or a friend's profile. */

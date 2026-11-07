@@ -18,12 +18,15 @@ use App\Support\Embed;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Support\LinkPreviewFetcher;
+use App\Support\PostTags;
 use App\Support\SiteMeta;
 use App\Translation\LanguageGuesser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -46,6 +49,7 @@ class PostController extends Controller
             'video_width' => ['nullable', 'integer', 'min:1', 'max:8000'],
             'video_height' => ['nullable', 'integer', 'min:1', 'max:8000'],
             'video_duration' => ['nullable', 'numeric', 'min:0', 'max:'.(Video::CLIP_SECONDS + 1), 'required_if_accepted:clip'],
+            ...self::tagRules(),
             ...self::audienceRules(),
         ]);
         $clip = ($data['clip'] ?? false) && $request->hasFile('video');
@@ -58,9 +62,13 @@ class PostController extends Controller
         $file = $request->file('video');
         abort_if($text === '' && ! $images && ! $file, 422);
 
-        if ($data['group_id'] ?? null) {
-            abort_unless(Group::find($data['group_id'])->members()->whereKey($request->user()->id)->exists(), 403);
+        $group = ($data['group_id'] ?? null) ? Group::find($data['group_id']) : null;
+        if ($group) {
+            abort_unless($group->members()->whereKey($request->user()->id)->exists(), 403);
         }
+        // Friends tagged "with" the author, and those named with @ in the text.
+        $taggable = self::taggable($request->user(), $group, $text, $data['tagged_ids'] ?? []);
+        [$html, $mentioned] = self::markUp($text, $taggable);
 
         // A clip attached here (often straight from the camera) also goes to the member's videos.
         $video = null;
@@ -85,7 +93,7 @@ class PostController extends Controller
             'group_id' => $data['group_id'] ?? null,
             'type' => $text === '' ? ($video ? 'video' : 'photo') : 'status',
             'video_id' => $video?->id,
-            'body' => Html::fromPlainText($text),
+            'body' => $html,
             'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
         ]);
         // The author closed the link card while writing: the link stays in the text only.
@@ -100,6 +108,7 @@ class PostController extends Controller
         if ($images) {
             AlbumController::savePhotos($images, Album::timelineOf($request->user()), $request->user(), $post);
         }
+        self::tagPeople($post, $request->user(), $taggable, $data['tagged_ids'] ?? [], $mentioned);
 
         // Translated right after the response is sent, so readers get it within seconds.
         Background::run(new TranslateContent($post));
@@ -140,13 +149,15 @@ class PostController extends Controller
         }
 
         $text = trim((string) ($data['body'] ?? ''));
+        $taggable = self::taggable($me, $group, $text, []);
+        [$html, $mentioned] = self::markUp($text, $taggable);
         $share = Post::create([
             'user_id' => $me->id,
             'group_id' => $group?->id,
             'wall_user_id' => $wall?->id,
             'shared_post_id' => $original->id,
             'type' => 'share',
-            'body' => Html::fromPlainText($text),
+            'body' => $html,
             'locale' => LanguageGuesser::guess($text) ?? $me->locale,
         ]);
         // The shared post shows as itself, not as a card of its address typed in the words.
@@ -154,6 +165,7 @@ class PostController extends Controller
         if (! $group) {
             $this->applyAudience($request, $share, $data);
         }
+        self::tagPeople($share, $me, $taggable, [], $mentioned);
 
         $url = route('posts.show', $share);
         if ($wall) {
@@ -198,6 +210,92 @@ class PostController extends Controller
     {
         abort_unless($post->user_id === $request->user()->id && $post->group_id === null, 403);
         $this->applyAudience($request, $post, $request->validate(self::audienceRules()));
+
+        return back();
+    }
+
+    private static function tagRules(): array
+    {
+        return [
+            'tagged_ids' => ['nullable', 'array', 'max:'.PostTags::MAX_PEOPLE],
+            'tagged_ids.*' => ['integer'],
+        ];
+    }
+
+    /**
+     * The friends the author may tag in a post: not blocked either way and, in a private group, its members
+     * (no one else could open the post). Asked of the database only when someone is tagged or named.
+     *
+     * @return Collection<int, User>
+     */
+    private static function taggable(User $author, ?Group $group, string $text, array $ids): Collection
+    {
+        if (! str_contains($text, '@') && $ids === []) {
+            return collect();
+        }
+
+        return User::query()
+            ->whereIn('id', $author->friendIds())
+            ->where('blocked', false)
+            ->whereNotIn('id', $author->hiddenUserIds())
+            ->when($group?->is_private, fn ($q) => $q->whereHas('groups', fn ($g) => $g->whereKey($group->id)->where('group_user.approved', true)))
+            ->get(['id', 'name']);
+    }
+
+    /**
+     * The text as the post's HTML, with its hashtags and the @names of friends as links, and the friends named.
+     *
+     * @param  Collection<int, User>  $taggable
+     * @return array{string, Collection<int, User>}
+     */
+    private static function markUp(string $text, Collection $taggable): array
+    {
+        $mentioned = PostTags::mentioned($text, $taggable)->take(PostTags::MAX_PEOPLE);
+
+        return [PostTags::link(Html::fromPlainText($text), $mentioned), $mentioned];
+    }
+
+    /**
+     * Tags the friends picked "with" the author ($withIds; null keeps those tagged before) and those named in
+     * the text. Each one newly tagged hears of it, once.
+     *
+     * @param  Collection<int, User>  $taggable
+     * @param  Collection<int, User>  $mentioned
+     */
+    private static function tagPeople(Post $post, User $author, Collection $taggable, ?array $withIds, Collection $mentioned): void
+    {
+        $current = DB::table('post_user_tags')->where('post_id', $post->id)->get(['user_id', 'kind']);
+        $with = $withIds === null
+            ? $current->where('kind', 'with')->pluck('user_id')
+            : $taggable->pluck('id')->intersect(array_map('intval', $withIds))->take(PostTags::MAX_PEOPLE);
+        $want = $with->map(fn ($id) => "$id:with")->merge($mentioned->map(fn (User $u) => "{$u->id}:mention"))->unique()->values();
+        $have = $current->map(fn ($row) => "{$row->user_id}:{$row->kind}");
+
+        foreach ($have->diff($want) as $gone) {
+            [$id, $kind] = explode(':', $gone);
+            DB::table('post_user_tags')->where('post_id', $post->id)->where('user_id', $id)->where('kind', $kind)->delete();
+        }
+        $new = $want->diff($have)->map(fn ($tag) => explode(':', $tag));
+        if ($new->isEmpty()) {
+            return;
+        }
+        DB::table('post_user_tags')->insertOrIgnore($new->map(fn ($tag) => [
+            'post_id' => $post->id, 'user_id' => (int) $tag[0], 'kind' => $tag[1], 'created_at' => now(), 'updated_at' => now(),
+        ])->all());
+
+        // One notice each: "tagged you" when picked "with", else "mentioned you".
+        $url = route('posts.show', $post);
+        $people = User::whereIn('id', $new->pluck(0))->get()->keyBy('id');
+        $new->groupBy(0)->each(function ($tags, $id) use ($people, $author, $url, $post) {
+            $kind = $tags->contains(fn ($tag) => $tag[1] === 'with') ? 'post_tagged' : 'post_mentioned';
+            ClubActivity::send($people->get($id), $kind, $author, $url, 'post:'.$post->id, $post->body);
+        });
+    }
+
+    /** A member tagged in a post takes their tag off: the post leaves their profile. */
+    public function untag(Request $request, Post $post): RedirectResponse
+    {
+        DB::table('post_user_tags')->where('post_id', $post->id)->where('user_id', $request->user()->id)->delete();
 
         return back();
     }
@@ -378,9 +476,15 @@ class PostController extends Controller
     public function update(Request $request, Post $post): RedirectResponse
     {
         abort_unless($post->user_id === $request->user()->id && in_array($post->type, ['status', 'photo', 'video', 'share'], true) && $post->legacy_source === null, 403);
-        $body = Embed::unwrap((string) $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000']])['body']);
+        $data = $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000'], ...self::tagRules()]);
+        $body = Embed::unwrap((string) $data['body']);
+        // Without tagged_ids the friends tagged "with" stay as they were; the @names follow the new text.
+        $with = $request->has('tagged_ids') ? ($data['tagged_ids'] ?? []) : null;
+        $taggable = self::taggable($request->user(), $post->group, $body, $with ?? []);
+        [$html, $mentioned] = self::markUp($body, $taggable);
 
-        $post->update(['body' => Html::fromPlainText($body), 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
+        $post->update(['body' => $html, 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
+        self::tagPeople($post, $request->user(), $taggable, $with, $mentioned);
         Background::run(new TranslateContent($post));
         // Then Yandex and Bing hear of it, in the languages it was translated into.
         Background::run(new SubmitToIndexNow($post));

@@ -932,5 +932,18 @@
     "Who sent it: :url": "Who sent it: :url",
     "Times today: :times": "Times today: :times",
     "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net": "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net",
-    "Group: :name": "Group: :name"
+    "Group: :name": "Group: :name",
+    "Tag friends": "Tag friends",
+    "Who are you with?": "Who are you with?",
+    "with": "with",
+    "and": "and",
+    ":count others": ":count others",
+    "Remove tag": "Remove tag",
+    "Posts with this hashtag": "Posts with this hashtag",
+    "Popular hashtags": "Popular hashtags",
+    "Posts with :tag": "Posts with :tag",
+    ":name tagged you in a post": ":name tagged you in a post",
+    ":names tagged you in a post": ":names tagged you in a post",
+    ":name mentioned you in a post": ":name mentioned you in a post",
+    ":names mentioned you in a post": ":names mentioned you in a post"
 }
