@@ -37,7 +37,7 @@ class PostController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'body' => ['required_without_all:images,video', 'nullable', 'string', 'max:20000'],
+            'body' => ['required_without_all:images,video,feeling,life_event,place', 'nullable', 'string', 'max:20000'],
             'group_id' => ['nullable', 'integer', 'exists:groups,id'],
             'images' => ['nullable', 'array', 'max:'.AlbumController::MAX_PHOTOS],
             'images.*' => ['image', 'max:15360'],
@@ -50,8 +50,10 @@ class PostController extends Controller
             'video_height' => ['nullable', 'integer', 'min:1', 'max:8000'],
             'video_duration' => ['nullable', 'numeric', 'min:0', 'max:'.(Video::CLIP_SECONDS + 1), 'required_if_accepted:clip'],
             ...self::tagRules(),
+            ...self::extrasRules(),
             ...self::audienceRules(),
         ]);
+        $extras = self::extras($data);
         $clip = ($data['clip'] ?? false) && $request->hasFile('video');
         if ($clip && $request->file('video')->getSize() > 50 * 1024 * 1024) {
             throw ValidationException::withMessages(['video' => __('A clip can be up to 50 MB.')]);
@@ -60,7 +62,7 @@ class PostController extends Controller
         $text = Embed::unwrap((string) ($data['body'] ?? ''));
         $images = $request->file('images', []);
         $file = $request->file('video');
-        abort_if($text === '' && ! $images && ! $file, 422);
+        abort_if($text === '' && ! $images && ! $file && array_filter($extras) === [], 422);
 
         $group = ($data['group_id'] ?? null) ? Group::find($data['group_id']) : null;
         if ($group) {
@@ -91,10 +93,11 @@ class PostController extends Controller
         $post = Post::create([
             'user_id' => $request->user()->id,
             'group_id' => $data['group_id'] ?? null,
-            'type' => $text === '' ? ($video ? 'video' : 'photo') : 'status',
+            'type' => $text === '' && ($video || $images) ? ($video ? 'video' : 'photo') : 'status',
             'video_id' => $video?->id,
             'body' => $html,
             'locale' => LanguageGuesser::guess($text) ?? $request->user()->locale,
+            ...$extras,
         ]);
         // The author closed the link card while writing: the link stays in the text only.
         if ($data['no_link_preview'] ?? false) {
@@ -212,6 +215,28 @@ class PostController extends Controller
         $this->applyAudience($request, $post, $request->validate(self::audienceRules()));
 
         return back();
+    }
+
+    /** "Add to your post": a feeling, a place, a life event. */
+    private static function extrasRules(): array
+    {
+        return [
+            'feeling' => ['nullable', 'in:'.implode(',', Post::FEELINGS)],
+            'place' => ['nullable', 'string', 'max:150'],
+            'life_event' => ['nullable', 'in:'.implode(',', Post::LIFE_EVENTS)],
+        ];
+    }
+
+    /** @return array{feeling: ?string, place: ?string, life_event: ?string} */
+    private static function extras(array $data): array
+    {
+        $place = trim(preg_replace('/\s+/u', ' ', (string) ($data['place'] ?? '')) ?? '');
+
+        return [
+            'feeling' => $data['feeling'] ?? null,
+            'place' => $place !== '' ? $place : null,
+            'life_event' => $data['life_event'] ?? null,
+        ];
     }
 
     private static function tagRules(): array
@@ -476,7 +501,7 @@ class PostController extends Controller
     public function update(Request $request, Post $post): RedirectResponse
     {
         abort_unless($post->user_id === $request->user()->id && in_array($post->type, ['status', 'photo', 'video', 'share'], true) && $post->legacy_source === null, 403);
-        $data = $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000'], ...self::tagRules()]);
+        $data = $request->validate(['body' => [$post->type === 'status' && ! $post->feeling && ! $post->place && ! $post->life_event ? 'required' : 'nullable', 'string', 'max:20000'], ...self::tagRules()]);
         $body = Embed::unwrap((string) $data['body']);
         // Without tagged_ids the friends tagged "with" stay as they were; the @names follow the new text.
         $with = $request->has('tagged_ids') ? ($data['tagged_ids'] ?? []) : null;

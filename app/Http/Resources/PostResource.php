@@ -44,6 +44,10 @@ class PostResource extends JsonResource
             'with' => $this->relationLoaded('taggedUsers')
                 ? $this->taggedUsers->filter(fn ($u) => $u->pivot->kind === 'with')->unique('id')->map(fn ($u) => $u->only('id', 'name'))->values()->all()
                 : [],
+            // "Add to your post": how the author feels, where they are, a life event.
+            'feeling' => $this->feeling,
+            'place' => $this->place,
+            'life_event' => $this->life_event,
             // The reader is tagged or named in it, and may take the tag off.
             'tagged_me' => $request->user() && $this->relationLoaded('taggedUsers') && $this->taggedUsers->contains('id', $request->user()->id),
             // The post shared; null inside it when it was deleted or this reader may not read it.

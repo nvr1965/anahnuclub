@@ -2,6 +2,7 @@ import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/au
 import { EmbedPostDialog } from '@/components/embed-post-dialog';
 import { ExternalEmbed } from '@/components/external-embed';
 import { LinkPreview } from '@/components/link-preview';
+import { LifeEventCard, PostContext } from '@/components/post-extras';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { TagFriendsPicker, TagTextarea, type TaggedFriend, WithFriends } from '@/components/post-tags';
 import { ReactionButton, ReactionFaces } from '@/components/reactions';
@@ -257,7 +258,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                                 </Link>
                             </>
                         )}
-                        <WithFriends people={post.with} />
+                        <PostContext feeling={post.feeling} people={post.with} place={post.place} />
                     </div>
                     <div className="text-muted-foreground mt-0.5 text-[0.8125rem]" title={post.created_at ?? ''}>
                         {post.pinned && (
@@ -360,6 +361,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                 )}
             </header>
 
+            {post.life_event && (
+                <div className={`${pad} pt-3`}>
+                    <LifeEventCard event={post.life_event} />
+                </div>
+            )}
             {(editing || hasText) && (
                 <div className={`${pad} pb-2 ${stream ? 'pt-1' : 'pt-3'}`}>
                     {editing ? (
@@ -409,7 +415,10 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                                     {t('Cancel')}
                                 </button>
                                 <button
-                                    disabled={edit.processing || (post.type === 'status' && !edit.data.body.trim())}
+                                    disabled={
+                                        edit.processing ||
+                                        (post.type === 'status' && !post.feeling && !post.place && !post.life_event && !edit.data.body.trim())
+                                    }
                                     className="bg-brand hover:bg-brand-dark rounded-md px-5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                                 >
                                     {t('Save')}

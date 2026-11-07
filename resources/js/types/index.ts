@@ -96,6 +96,10 @@ export interface Post extends Translatable {
     wall: { id: number; name: string } | null;
     /** Friends tagged beside the author's name: "Anna — with Boris and Vera". */
     with: { id: number; name: string }[];
+    /** "Add to your post": how the author feels, where they are, a life event (keys of lib/post-extras). */
+    feeling: string | null;
+    place: string | null;
+    life_event: string | null;
     /** The reader is tagged or named in the post and may take the tag off. */
     tagged_me: boolean;
     /** A share: the post it carries, null inside when that post was deleted or is closed to the reader. */

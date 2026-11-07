@@ -303,7 +303,18 @@ export function TagFriendsPicker({
  * " — with Anna", " — with Anna and Boris", " — with Anna and 3 others": the friends tagged, beside the
  * author's name. With $linked the names open the profiles; in the composer they are plain.
  */
-export function WithFriends({ people, linked = true, onClick }: { people: TaggedFriend[]; linked?: boolean; onClick?: () => void }) {
+export function WithFriends({
+    people,
+    linked = true,
+    onClick,
+    dash = true,
+}: {
+    people: TaggedFriend[];
+    linked?: boolean;
+    onClick?: () => void;
+    /** The " — " before it; left out where something else comes first. */
+    dash?: boolean;
+}) {
     const t = useT();
     if (people.length === 0) return null;
     const name = (friend: TaggedFriend) =>
@@ -319,7 +330,7 @@ export function WithFriends({ people, linked = true, onClick }: { people: Tagged
     const rest = people.slice(1);
     const text = (
         <>
-            {' — '}
+            {dash && ' — '}
             {t('with')} {name(people[0])}
             {rest.length === 1 && (
                 <>

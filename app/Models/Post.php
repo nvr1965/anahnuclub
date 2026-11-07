@@ -21,9 +21,20 @@ class Post extends Model
 
     protected array $translatable = ['title', 'body'];
 
-    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'shared_post_id', 'wall_user_id', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'shared_post_id', 'wall_user_id', 'feeling', 'place', 'life_event', 'created_at', 'updated_at'];
 
     public const AUDIENCES = ['public', 'friends', 'except', 'specific', 'only_me'];
+
+    /** How the author feels, picked under "Feeling": "Anna — feeling happy". The page draws the face and words. */
+    public const FEELINGS = [
+        'happy', 'loved', 'blessed', 'grateful', 'excited', 'relaxed', 'proud', 'hopeful', 'in_love', 'festive',
+        'thoughtful', 'tired', 'sad', 'sick', 'angry', 'nostalgic',
+    ];
+
+    /** Life events, shown as a card above the words: "New job", "Aliyah"… */
+    public const LIFE_EVENTS = [
+        'new_job', 'graduated', 'moved', 'aliyah', 'engaged', 'married', 'baby', 'travel', 'retired', 'anniversary',
+    ];
 
     /** Where a post can be pinned, and the column that keeps when it was pinned there. */
     public const PIN_PLACES = ['feed' => 'pinned_at', 'profile' => 'profile_pinned_at', 'group' => 'group_pinned_at'];
