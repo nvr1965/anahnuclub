@@ -62,6 +62,39 @@ final class TextSearch
         });
     }
 
+    /**
+     * Puts first the rows where every term is in one of these columns (a group's name, a post's text), so a row
+     * found only through a comment or a translation comes after them.
+     *
+     * @param  list<string>  $columns
+     * @param  list<string>  $terms
+     */
+    public static function orderByColumns(Builder $query, array $columns, array $terms): Builder
+    {
+        $grammar = $query->getQuery()->getGrammar();
+        $pgsql = $query->getConnection()->getDriverName() === 'pgsql';
+        $all = [];
+        $bindings = [];
+        foreach ($terms as $term) {
+            $any = [];
+            foreach ($columns as $column) {
+                $wrapped = $grammar->wrap($query->qualifyColumn($column));
+                if ($pgsql) {
+                    $any[] = "$wrapped ~ ?";
+                    $bindings[] = self::regex($term);
+                } else {
+                    foreach (self::spellings($term) as $spelling) {
+                        $any[] = "$wrapped like ?";
+                        $bindings[] = '%'.addcslashes($spelling, '%_\\').'%';
+                    }
+                }
+            }
+            $all[] = '('.implode(' or ', $any).')';
+        }
+
+        return $all ? $query->orderByRaw('case when '.implode(' and ', $all).' then 0 else 1 end', $bindings) : $query;
+    }
+
     /** Whether the text holds every term, as the database search would decide it. */
     public static function matches(string $text, array $terms): bool
     {

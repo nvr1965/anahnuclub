@@ -96,8 +96,9 @@ class SearchController extends Controller
             ->where('blocked', false)
             ->listedFor($viewer)
             ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->hiddenUserIds()))
-            // Location can be hidden from some viewers, so only the open "about" text is searched.
-            ->where($match(['name', 'username', 'about']))
+            // People and groups are found by their names: a word somewhere in an "about" or a description
+            // brought in pages of unrelated (often spam) accounts and groups.
+            ->where($match(['name', 'username']))
             ->latestSeen()->orderBy('id');
 
         $posts = FeedController::postQuery($request)
@@ -105,13 +106,19 @@ class SearchController extends Controller
             ->where($match(['title', 'body'], function (Builder $any, string $term) use ($translated) {
                 $translated($any, $term);
                 $any->orWhereHas('comments', fn (Builder $c) => TextSearch::orColumn($c, 'body', $term));
-            }));
+            }))
+            // Posts with the words in their own text come before those found through a comment or a translation.
+            ->reorder();
+        TextSearch::orderByColumns($posts, ['title', 'body'], $terms)->latest()->orderByDesc('id');
 
         $groups = Group::query()
             ->where('published', true)
             ->where(fn (Builder $w) => $w->where('is_private', false)->orWhereIn('id', $myGroups))
             ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->blockedGroupIds()))
-            ->where($match(['name', 'description'], $translated))
+            ->where($match(['name'], fn (Builder $any, string $term) => $any->orWhereHas(
+                'contentTranslations',
+                fn (Builder $t) => $t->where('field', 'name')->where(fn (Builder $w) => TextSearch::orColumn($w, 'text', $term))
+            )))
             ->withCount('members')
             ->orderByDesc('members_count');
 
