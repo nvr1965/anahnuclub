@@ -1,4 +1,5 @@
 import { UserAvatar } from '@/components/user-avatar';
+import { UserBadge } from '@/components/user-badge';
 import { type Person } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type ReactNode } from 'react';
@@ -28,6 +29,7 @@ export function PersonCard({ person, children }: { person: Person; children: Rea
                 <Link href={route('people.show', person.id)} dir="auto" className="block truncate text-[0.9375rem] font-semibold hover:underline">
                     {person.name}
                 </Link>
+                {person.badge && <UserBadge badge={person.badge} size="xs" />}
                 {children}
             </div>
         </div>

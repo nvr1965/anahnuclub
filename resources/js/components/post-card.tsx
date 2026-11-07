@@ -10,6 +10,7 @@ import { TranslatedText } from '@/components/translated-text';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
+import { UserBadge } from '@/components/user-badge';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type PinPlace, type Post, type SharedData } from '@/types';
@@ -135,9 +136,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             <div className="min-w-0">
                 <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[0.9375rem] dark:bg-neutral-800">
                     {comment.author ? (
-                        <Link href={route('people.show', comment.author.id)} className="block text-[0.8125rem] font-semibold hover:underline">
-                            {comment.author.name}
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-x-1.5">
+                            <Link href={route('people.show', comment.author.id)} className="text-[0.8125rem] font-semibold hover:underline">
+                                {comment.author.name}
+                            </Link>
+                            <UserBadge badge={comment.author.badge} size="xs" />
+                        </div>
                     ) : (
                         <div className="text-[0.8125rem] font-semibold">{t('Former member')}</div>
                     )}
@@ -216,9 +220,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         {post.official ? (
                             <span className="font-semibold">anahnu.club</span>
                         ) : post.author ? (
-                            <Link href={route('people.show', post.author.id)} className="font-semibold hover:underline">
-                                {post.author.name}
-                            </Link>
+                            <>
+                                <Link href={route('people.show', post.author.id)} className="font-semibold hover:underline">
+                                    {post.author.name}
+                                </Link>{' '}
+                                <UserBadge badge={post.author.badge} size="xs" />
+                            </>
                         ) : (
                             <span className="font-semibold">{t('Former member')}</span>
                         )}

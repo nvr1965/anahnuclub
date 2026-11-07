@@ -6,6 +6,7 @@ use App\Models\Comment;
 use App\Models\LoginLog;
 use App\Models\Moment;
 use App\Models\Post;
+use App\Support\Badges;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
@@ -35,3 +36,5 @@ Schedule::command('posts:link-previews --days=2')->hourly()->withoutOverlapping(
 Schedule::command('model:prune', ['--model' => [LoginLog::class]])->daily();
 // Moments leave their authors' archive a few days after they disappear; their files go with them.
 Schedule::command('model:prune', ['--model' => [Moment::class]])->hourly()->name('prune-moments')->withoutOverlapping(10);
+// Days since joining count towards a level: once a night every member's level is counted again.
+Schedule::call(fn () => Badges::refreshAll())->dailyAt('03:30')->name('badge-levels')->withoutOverlapping(30);

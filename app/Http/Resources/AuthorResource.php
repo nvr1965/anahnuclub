@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
+use App\Support\Badges;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\User */
+/** @mixin User */
 class AuthorResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -14,6 +16,7 @@ class AuthorResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'avatar' => $this->avatar,
+            'badge' => Badges::primary($this->resource),
         ];
     }
 }

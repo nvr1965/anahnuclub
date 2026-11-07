@@ -6,6 +6,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Language;
 use App\Models\Photo;
 use App\Models\User;
+use App\Support\Badges;
 use App\Support\ImageStore;
 use App\Translation\ContentTranslator;
 use Illuminate\Database\Eloquent\Builder;
@@ -113,6 +114,9 @@ class PeopleController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'username' => $user->username,
+                // Beside the name: the level, then the special badges given by the club.
+                'level' => Badges::LEVELS[$user->level] ?? 'member',
+                'badges' => Badges::special($user),
                 'avatar' => $user->avatar,
                 'cover' => $user->cover,
                 'status' => $user->status,
@@ -226,6 +230,6 @@ class PeopleController extends Controller
     /** A member as shown in friend lists and suggestions. */
     public static function card(User $user): array
     {
-        return ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar, 'online' => $user->isOnline()];
+        return ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar, 'online' => $user->isOnline(), 'badge' => Badges::primary($user)];
     }
 }

@@ -1,6 +1,8 @@
 import { ActionButton, AdminSearch, Badge, card, type Page, Pager, send } from '@/components/admin-ui';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
+import { UserBadge } from '@/components/user-badge';
 import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
@@ -20,6 +22,8 @@ interface Row {
     is_super: boolean;
     rules_accepted_at: string | null;
     posts_count: number;
+    level: string;
+    badges: string[];
     created_at: string | null;
     last_seen_at: string | null;
 }
@@ -35,6 +39,8 @@ export default function AdminUsers({
     users,
     q,
     filter,
+    badge,
+    special_badges,
     unverified,
     banned,
     banned_count,
@@ -42,6 +48,8 @@ export default function AdminUsers({
     users: Page<Row>;
     q: string;
     filter: string | null;
+    badge: string | null;
+    special_badges: string[];
     unverified: number;
     banned: Banned[] | null;
     banned_count: number;
@@ -77,7 +85,10 @@ export default function AdminUsers({
     };
 
     return (
-        <AdminLayout title={t('Users')} actions={<AdminSearch value={q} routeName="admin.users.index" params={{ filter: filter ?? undefined }} />}>
+        <AdminLayout
+            title={t('Users')}
+            actions={<AdminSearch value={q} routeName="admin.users.index" params={{ filter: filter ?? undefined, badge: badge ?? undefined }} />}
+        >
             <div className="mb-3 flex flex-wrap gap-2">
                 {filters.map((f) => (
                     <Link
@@ -89,6 +100,17 @@ export default function AdminUsers({
                     </Link>
                 ))}
             </div>
+            {badge && (
+                <div className="mb-3 flex items-center gap-2 text-sm">
+                    <UserBadge badge={badge} />
+                    <Link
+                        href={route('admin.users.index', { q: q || undefined, filter: filter ?? undefined })}
+                        className="text-brand hover:underline"
+                    >
+                        {t('Show everyone')}
+                    </Link>
+                </div>
+            )}
             {selectable.length > 0 && (
                 <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
                     <label className="flex items-center gap-2">
@@ -171,6 +193,10 @@ export default function AdminUsers({
                                         )}
                                         {user.blocked && <Badge tone="red">{t('Blocked')}</Badge>}
                                         {!user.verified && <Badge>{t('Email not confirmed')}</Badge>}
+                                        <UserBadge badge={user.level} size="xs" />
+                                        {user.badges.map((b) => (
+                                            <UserBadge key={b} badge={b} size="xs" />
+                                        ))}
                                     </div>
                                     <div className="text-muted-foreground truncate text-xs">
                                         {user.username && <>@{user.username} · </>}
@@ -205,6 +231,23 @@ export default function AdminUsers({
                                         >
                                             {t('Logins')}
                                         </Link>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger className="text-brand hover:bg-brand-soft rounded-md px-2.5 py-1 text-xs font-medium">
+                                                {t('Badges')}
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {special_badges.map((b) => (
+                                                    <DropdownMenuCheckboxItem
+                                                        key={b}
+                                                        checked={user.badges.includes(b)}
+                                                        onSelect={(e) => e.preventDefault()}
+                                                        onCheckedChange={(on) => send('put', route('admin.users.badge', user.id), { badge: b, on })}
+                                                    >
+                                                        <UserBadge badge={b} size="xs" />
+                                                    </DropdownMenuCheckboxItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                         <ActionButton onClick={() => send('patch', route('admin.users.update', user.id), { blocked: !user.blocked })}>
                                             {user.blocked ? t('Unblock') : t('Block')}
                                         </ActionButton>

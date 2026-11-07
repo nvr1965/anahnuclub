@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Comment;
 use App\Models\User;
+use App\Support\Badges;
 use App\Support\BannedEmails;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +20,7 @@ class UserController extends AdminController
     {
         $q = trim((string) $request->query('q'));
         $filter = $request->query('filter');
+        $badge = $request->query('badge');
 
         $users = User::query()
             ->when($q !== '', fn (Builder $b) => $b->where(fn (Builder $w) => $w
@@ -28,6 +31,8 @@ class UserController extends AdminController
             ->when($filter === 'admins', fn (Builder $b) => $b->where('is_admin', true))
             ->when($filter === 'unverified', fn (Builder $b) => $b->whereNull('email_verified_at'))
             ->when($filter === 'banned', fn (Builder $b) => $b->whereRaw('1 = 0'))
+            ->when(in_array($badge, Badges::SPECIAL, true), fn (Builder $b) => $b->whereJsonContains('badges', $badge))
+            ->when(in_array($badge, Badges::LEVELS, true), fn (Builder $b) => $b->where('level', array_search($badge, Badges::LEVELS, true)))
             ->withCount(['posts'])
             ->latest('id')
             ->paginate(30)->withQueryString()
@@ -42,6 +47,8 @@ class UserController extends AdminController
                 'is_admin' => $u->is_admin,
                 'is_super' => $u->isSuperAdmin(),
                 'posts_count' => $u->posts_count,
+                'level' => Badges::LEVELS[$u->level] ?? 'member',
+                'badges' => Badges::special($u),
                 'created_at' => $u->created_at?->toIso8601String(),
                 'last_seen_at' => $u->last_seen_at?->toIso8601String(),
                 'rules_accepted_at' => $u->rules_accepted_at?->toIso8601String(),
@@ -51,6 +58,8 @@ class UserController extends AdminController
             'users' => $users,
             'q' => $q,
             'filter' => $filter,
+            'badge' => $badge,
+            'special_badges' => Badges::SPECIAL,
             'unverified' => User::whereNull('email_verified_at')->count(),
             'banned' => $filter === 'banned'
                 ? DB::table('banned_emails')->when($q !== '', fn ($b) => $b->where('email', $this->like(), $this->pattern($q)))->latest('id')->limit(500)->get(['id', 'email', 'name', 'created_at'])
@@ -110,6 +119,18 @@ class UserController extends AdminController
         abort_if($user->isSuperAdmin(), 422, 'The main administrator keeps their access.');
 
         $user->forceFill($data)->save();
+
+        return back();
+    }
+
+    /** Gives or takes one of the special badges, such as "Club author" or "Beta tester". */
+    public function badge(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'badge' => ['required', Rule::in(Badges::SPECIAL)],
+            'on' => ['required', 'boolean'],
+        ]);
+        Badges::set($user, $data['badge'], $data['on'], $request->user());
 
         return back();
     }
