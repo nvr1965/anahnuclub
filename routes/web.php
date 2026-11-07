@@ -107,6 +107,9 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
 
     Route::post('posts', [PostController::class, 'store'])->name('posts.store');
     Route::get('share', ShareController::class)->name('share');
+    // Sharing a post inside the club: to one's own feed, a group, or a friend's profile.
+    Route::post('posts/{post}/share', [PostController::class, 'share'])->middleware('throttle:30,1')->name('posts.share');
+    Route::get('share/groups', [PostController::class, 'shareTargets'])->name('posts.share.groups');
     Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->name('links.preview');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');

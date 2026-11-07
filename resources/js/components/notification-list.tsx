@@ -4,7 +4,7 @@ import { useT } from '@/lib/i18n';
 import { shortAgo } from '@/lib/relative-time';
 import { type Person, type Reaction, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarCheck, Crown, MessageCircle, Shield, ShieldCheck, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
+import { CalendarCheck, Crown, MessageCircle, PenLine, Share2, Shield, ShieldCheck, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
 import { Fragment, type ReactNode, useState } from 'react';
 
 export interface ClubNotification {
@@ -74,6 +74,8 @@ const kinds: Record<string, { one: string; many?: string; reacted?: [string, str
     group_offer_owner: { one: ':name offers to hand a group over to you', icon: <Crown />, color: 'bg-amber-500' },
     group_invite: { one: ':name invites you to join a group', many: ':names invite you to join a group', icon: <UserPlus />, color: 'bg-indigo-500' },
     group_offer_accepted: { one: ':name accepted your offer in a group', icon: <UserCheck />, color: 'bg-indigo-500' },
+    post_shared: { one: ':name shared your post', many: ':names shared your post', icon: <Share2 />, color: 'bg-brand' },
+    wall_post: { one: ':name wrote on your profile', many: ':names wrote on your profile', icon: <PenLine />, color: 'bg-sky-500' },
 };
 
 /** Puts bold names into a translated sentence in place of its :placeholders. */

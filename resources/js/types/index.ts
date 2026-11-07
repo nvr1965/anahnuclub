@@ -90,6 +90,12 @@ export interface Post extends Translatable {
     /** A post of the main administrator, shown as the club's, with comments closed. */
     official: boolean;
     group: { id: number; name: string; slug: string } | null;
+    /** Put on a friend's profile: shown as "Author ▸ Friend". */
+    wall: { id: number; name: string } | null;
+    /** A share: the post it carries, null inside when that post was deleted or is closed to the reader. */
+    shared: { post: SharedPost | null } | null;
+    /** Whether the reader may share it inside the club: to their feed, a group or a friend's profile. */
+    can_share: boolean;
     likes_count: number;
     liked: boolean;
     my_reaction: Reaction | null;
@@ -111,6 +117,24 @@ export interface Post extends Translatable {
     embed: EmbedCard | null;
     embeddable: boolean;
     embed_url: string;
+}
+
+/** The post inside a share, as Facebook shows it. */
+export interface SharedPost extends Translatable {
+    type: string;
+    title: string | null;
+    body: string;
+    created_at: string | null;
+    author: Author | null;
+    official: boolean;
+    group: { id: number; name: string; slug: string } | null;
+    url: string;
+    audience: Audience;
+    photos: PhotoItem[];
+    video: VideoItem | null;
+    event: EventItem | null;
+    link: LinkCard | null;
+    embed: EmbedCard | null;
 }
 
 export type Reaction = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';

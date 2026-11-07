@@ -20,7 +20,7 @@ class Post extends Model
 
     protected array $translatable = ['title', 'body'];
 
-    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'shared_post_id', 'wall_user_id', 'created_at', 'updated_at'];
 
     public const AUDIENCES = ['public', 'friends', 'except', 'specific', 'only_me'];
 
@@ -89,6 +89,39 @@ class Post extends Model
         return $this->belongsTo(Group::class);
     }
 
+    /** The post this one shares (a repost), null when it is not a share or the post was deleted. */
+    public function sharedPost(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'shared_post_id');
+    }
+
+    /** The friend on whose profile the post was put. */
+    public function wallUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'wall_user_id');
+    }
+
+    /**
+     * The post a share of this one carries: the original, never a share of a share, as on Facebook.
+     */
+    public function shareRoot(): self
+    {
+        return $this->shared_post_id && $this->sharedPost ? $this->sharedPost : $this;
+    }
+
+    /**
+     * Whether $user may share the post inside the club: it is not in a private or hidden group, and
+     * everyone may read it, or it is the member's own.
+     */
+    public function canBeSharedBy(?User $user): bool
+    {
+        if (! $user || ($this->group_id && (! $this->group || $this->group->is_private || ! $this->group->published))) {
+            return false;
+        }
+
+        return ($this->audience ?? 'public') === 'public' || $this->user_id === $user->id;
+    }
+
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class)->oldest();
@@ -129,7 +162,11 @@ class Post extends Model
             $friends = $viewer->friendIds();
             $named = fn ($sub) => $sub->selectRaw('1')->from('post_audience')->whereColumn('post_audience.post_id', 'posts.id')->where('post_audience.user_id', $viewer->id);
             $q->orWhere('posts.user_id', $viewer->id)
+                // What friends put on the viewer's profile, the viewer always sees.
+                ->orWhere('posts.wall_user_id', $viewer->id)
                 ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'friends')->whereIn('posts.user_id', $friends))
+                // A post on a friend's profile is also read by that friend's friends, as on Facebook.
+                ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'friends')->whereIn('posts.wall_user_id', $friends))
                 ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'except')->whereIn('posts.user_id', $friends)->whereNotExists($named))
                 ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'specific')->whereExists($named));
         });

@@ -821,5 +821,20 @@
     "Pin to your profile": "Pin to your profile",
     "Unpin from your profile": "Unpin from your profile",
     "Pin in the group": "Pin in the group",
-    "Unpin from the group": "Unpin from the group"
+    "Unpin from the group": "Unpin from the group",
+    "Share to Feed": "Share to Feed",
+    "Share to a group": "Share to a group",
+    "Share on a friend's profile": "Share on a friend's profile",
+    "You aren't in any groups yet.": "You aren't in any groups yet.",
+    "Write something to :name…": "Write something to :name…",
+    "Say something about this…": "Say something about this…",
+    "Could not share the post. Please try again.": "Could not share the post. Please try again.",
+    "Share now": "Share now",
+    "shared a post": "shared a post",
+    "This content isn't available right now": "This content isn't available right now",
+    "The post was deleted or its author changed who can see it.": "The post was deleted or its author changed who can see it.",
+    ":name shared your post": ":name shared your post",
+    ":names shared your post": ":names shared your post",
+    ":name wrote on your profile": ":name wrote on your profile",
+    ":names wrote on your profile": ":names wrote on your profile"
 }

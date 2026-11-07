@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 export function PostList({ posts, full = false }: { posts: Paginated<Post> | { data: Post[]; links?: undefined }; full?: boolean }) {
     const t = useT();
     const { locale, skin } = usePage<SharedData>().props;
-    const items = useMemo(() => posts.data.flatMap((post) => [post, ...post.comments]), [posts]);
+    const items = useMemo(() => posts.data.flatMap((post) => [post, ...(post.shared?.post ? [post.shared.post] : []), ...post.comments]), [posts]);
     const translated = useAutoTranslate(items, locale);
 
     return (

@@ -821,5 +821,20 @@
     "Pin to your profile": "הצמדה לפרופיל שלך",
     "Unpin from your profile": "ביטול ההצמדה בפרופיל",
     "Pin in the group": "הצמדה בקבוצה",
-    "Unpin from the group": "ביטול ההצמדה בקבוצה"
+    "Unpin from the group": "ביטול ההצמדה בקבוצה",
+    "Share to Feed": "שיתוף בפיד",
+    "Share to a group": "שיתוף בקבוצה",
+    "Share on a friend's profile": "שיתוף בפרופיל של חבר",
+    "You aren't in any groups yet.": "עדיין לא הצטרפת לאף קבוצה.",
+    "Write something to :name…": "כתבו משהו ל:name…",
+    "Say something about this…": "כתבו משהו על זה…",
+    "Could not share the post. Please try again.": "לא ניתן היה לשתף את הפוסט. נסו שוב.",
+    "Share now": "שיתוף עכשיו",
+    "shared a post": "שיתף/ה פוסט",
+    "This content isn't available right now": "התוכן הזה אינו זמין כרגע",
+    "The post was deleted or its author changed who can see it.": "הפוסט נמחק או שהכותב שינה את מי שיכול לראות אותו.",
+    ":name shared your post": ":name שיתף/ה את הפוסט שלך",
+    ":names shared your post": ":names שיתפו את הפוסט שלך",
+    ":name wrote on your profile": ":name כתב/ה בפרופיל שלך",
+    ":names wrote on your profile": ":names כתבו בפרופיל שלך"
 }

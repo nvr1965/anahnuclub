@@ -5,6 +5,7 @@ import { LinkPreview } from '@/components/link-preview';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { ReactionButton, ReactionFaces } from '@/components/reactions';
 import { ShareMenu } from '@/components/share-menu';
+import { SharedPostView } from '@/components/shared-post';
 import { TranslatedText } from '@/components/translated-text';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -83,6 +84,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             .replace(/\s+/g, ' ')
             .trim()
             .slice(0, 120);
+    // What the share window shows of the post being shared: its original's words, for a share.
+    const sharePreview = (() => {
+        const source = post.shared?.post ?? post;
+        const text = (source.title ?? source.body.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+        return text.slice(0, 200) || source.link?.title || '';
+    })();
     const action = forum
         ? 'inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold transition hover:bg-slate-200 dark:bg-neutral-800 dark:hover:bg-neutral-700'
         : 'inline-flex items-center justify-center gap-2 rounded-md py-1.5 text-[0.9375rem] font-semibold transition hover:bg-slate-100 max-sm:flex-col max-sm:gap-0.5 max-sm:text-xs dark:hover:bg-neutral-800';
@@ -215,6 +222,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         ) : (
                             <span className="font-semibold">{t('Former member')}</span>
                         )}
+                        {post.shared && !post.wall && !post.group && <span className="text-muted-foreground"> {t('shared a post')}</span>}
                         {post.group && (
                             <>
                                 <span className="text-muted-foreground">
@@ -223,6 +231,17 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                                 </span>
                                 <Link href={route('groups.show', post.group.slug)} className="font-semibold hover:underline">
                                     {post.group.name}
+                                </Link>
+                            </>
+                        )}
+                        {post.wall && (
+                            <>
+                                <span className="text-muted-foreground">
+                                    {' '}
+                                    <span className="inline-block rtl:-scale-x-100">▸</span>{' '}
+                                </span>
+                                <Link href={route('people.show', post.wall.id)} className="font-semibold hover:underline">
+                                    {post.wall.name}
                                 </Link>
                             </>
                         )}
@@ -357,6 +376,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     )}
                 </div>
             )}
+            {post.shared && (
+                <div className={`mt-2 ${stream ? 'ms-[4.125rem] me-4' : 'mx-4'}`}>
+                    <SharedPostView post={post.shared.post} translated={translated} />
+                </div>
+            )}
             {post.photos.length > 0 && (
                 <div className={`mt-2 ${media}`}>
                     <PostPhotos photos={post.photos} />
@@ -424,7 +448,12 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         <MessageCircle className="size-5" /> {forum ? post.comments.length : showcase ? null : t('Comment')}
                     </button>
                 )}
-                <ShareMenu url={post.url} title={plainTitle} className={`${action} text-muted-foreground outline-none`} />
+                <ShareMenu
+                    url={post.url}
+                    title={plainTitle}
+                    className={`${action} text-muted-foreground outline-none`}
+                    post={post.can_share ? { id: post.shared?.post?.id ?? post.id, preview: sharePreview } : undefined}
+                />
             </div>
 
             {/* In the feed comments stay folded behind their count, as on Facebook; a post's own page shows them. */}

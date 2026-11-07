@@ -133,7 +133,12 @@ class FeedController extends Controller
         return Post::query()
             ->select('posts.*')
             ->with([
-                'user', 'group', 'photos', 'video', 'event', 'linkPreview',
+                'user', 'group', 'photos', 'video', 'event', 'linkPreview', 'wallUser',
+                // A shared post, only when this reader may read it themself; else the share says it is gone.
+                'sharedPost' => fn ($q) => $q->visibleTo($viewer)
+                    ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where('is_private', false)))
+                    ->when($hidden->isNotEmpty(), fn (Builder $q) => $q->where(fn (Builder $q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)))
+                    ->with(['user', 'group', 'photos', 'video', 'event', 'linkPreview', 'contentTranslations' => fn ($q) => $q->where('locale', $locale)]),
                 'comments' => fn ($q) => $q->where(fn ($q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)),
                 'comments.user',
                 'contentTranslations' => fn ($q) => $q->where('locale', $locale),
@@ -145,6 +150,7 @@ class FeedController extends Controller
             ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)))
             // People blocked either way, and groups the reader blocked, are never shown.
             ->when($hidden->isNotEmpty(), fn (Builder $q) => $q->where(fn (Builder $q) => $q->whereNull('user_id')->orWhereNotIn('user_id', $hidden)))
+            ->when($hidden->isNotEmpty(), fn (Builder $q) => $q->where(fn (Builder $q) => $q->whereNull('wall_user_id')->orWhereNotIn('wall_user_id', $hidden)))
             ->when($viewer && $viewer->blockedGroupIds()->isNotEmpty(), fn (Builder $q) => $q->where(
                 fn (Builder $q) => $q->whereNull('group_id')->orWhereNotIn('group_id', $viewer->blockedGroupIds())
             ))
