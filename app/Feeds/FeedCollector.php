@@ -7,14 +7,17 @@ use App\Models\FeedSource;
 use App\Moderation\ContentScanner;
 
 /**
- * Takes the new items of a source into the queue: each news item once (by its link, and by its title
+ * Takes the new items of a source into the queue (at most three newest a run): each news item once (by its link, and by its title
  * among the last two days, so the same story from two papers is taken once), only fresh ones,
  * and without the words the author's curator keeps out.
  */
 class FeedCollector
 {
     /** Older news is not news any more. */
-    public const MAX_AGE_HOURS = 24;
+    public const MAX_AGE_HOURS = 12;
+
+    /** New items taken from one source per run, the newest: the queue holds a choice, not the whole site. */
+    public const PER_RUN = 3;
 
     public const SAME_TITLE_HOURS = 48;
 
@@ -42,8 +45,12 @@ class FeedCollector
         $stopWords = $channel->stopWords();
         $scanner = new ContentScanner;
         $added = 0;
+        usort($items, fn ($a, $b) => ($b['published_at']?->getTimestamp() ?? PHP_INT_MAX) <=> ($a['published_at']?->getTimestamp() ?? PHP_INT_MAX));
 
         foreach ($items as $item) {
+            if ($added >= self::PER_RUN) {
+                break;
+            }
             if ($item['published_at'] && ($item['published_at']->lt(now()->subHours(self::MAX_AGE_HOURS)) || $item['published_at']->gt(now()->addHour()))) {
                 continue;
             }
@@ -74,7 +81,8 @@ class FeedCollector
                 'summary' => $item['summary'],
                 'image' => $item['image'],
                 'published_at' => $item['published_at'],
-                'status' => $reason ? 'skipped' : ($channel->auto_approve && $source->trusted ? 'approved' : 'new'),
+                // Straight to the author's queue, unless its curator wants to look at everything first.
+                'status' => $reason ? 'skipped' : ($channel->auto_approve ? 'approved' : 'new'),
                 'reason' => $reason,
             ]);
             $added += $reason ? 0 : 1;

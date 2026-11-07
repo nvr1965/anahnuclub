@@ -30,7 +30,7 @@ class FeedController extends AdminController
     public function index(Request $request): Response
     {
         $tab = in_array($request->query('tab'), ['queue', 'authors', 'sources'], true) ? $request->query('tab') : 'queue';
-        $status = in_array($request->query('status'), FeedItem::STATUSES, true) ? $request->query('status') : 'new';
+        $status = in_array($request->query('status'), FeedItem::STATUSES, true) ? $request->query('status') : 'approved';
         $channelId = $request->integer('author') ?: null;
         $today = now()->tz(config('feeds.timezone'))->setTime(config('feeds.window')[0], 0)->utc();
 
@@ -88,6 +88,8 @@ class FeedController extends AdminController
                 ]),
             'items' => $tab !== 'queue' ? null : FeedItem::with(['source:id,name', 'channel.user:id,name'])
                 ->where('status', $status)
+                // News that simply was not posted in time is gone from the page.
+                ->when($status === 'skipped', fn ($q) => $q->where(fn ($q) => $q->whereNull('reason')->orWhere('reason', '!=', 'stale')))
                 ->when($channelId, fn ($q) => $q->where('feed_channel_id', $channelId))
                 ->when($status === 'posted', fn ($q) => $q->latest('posted_at'), fn ($q) => $q->latest('id'))
                 ->paginate(50)->withQueryString()

@@ -19,6 +19,7 @@ class FeedPublisher
 {
     public function publishNext(): ?FeedItem
     {
+        self::expire();
         if (self::paused()) {
             return null;
         }
@@ -29,9 +30,6 @@ class FeedPublisher
             return null;
         }
 
-        FeedItem::whereIn('status', ['new', 'approved'])->whereNotNull('feed_source_id')
-            ->where('created_at', '<', now()->subHours(config('feeds.stale_hours')))
-            ->update(['status' => 'skipped', 'reason' => 'stale']);
 
         // Between two posts of the site a pause of a different length each time, so they do not tick like a clock.
         $lastItem = FeedItem::whereNotNull('posted_at')->latest('posted_at')->first(['id', 'posted_at']);
@@ -69,16 +67,7 @@ class FeedPublisher
             return null;
         }
 
-        // The source used least today first, so one paper does not fill an author's day; then the newest.
-        $usedToday = FeedItem::where('feed_channel_id', $channel->id)->where('posted_at', '>=', $dayStart)
-            ->selectRaw('feed_source_id, count(*) as n')->groupBy('feed_source_id')->pluck('n', 'feed_source_id');
-        $item = FeedItem::where('feed_channel_id', $channel->id)->where('status', 'approved')->with('source')
-            ->latest('id')->limit(50)->get()
-            ->sortBy([
-                fn ($a, $b) => ($usedToday[$a->feed_source_id] ?? 0) <=> ($usedToday[$b->feed_source_id] ?? 0),
-                fn ($a, $b) => ($b->published_at ?? $b->created_at) <=> ($a->published_at ?? $a->created_at),
-            ])->first();
-
+        $item = self::choose($channel, $dayStart);
         return $item ? $this->publish($item) : null;
     }
 
@@ -104,6 +93,48 @@ class FeedPublisher
         $item->update(['status' => 'posted', 'post_id' => $post->id, 'posted_at' => now()]);
 
         return $item;
+    }
+
+    /**
+     * The author's main news of the moment among its queue: what the curator added by hand first; then a source
+     * not yet used today (so one paper does not fill the author's day); then by points: a picture, a real
+     * excerpt, a source marked as checked, and freshness (a point less for each three hours of age).
+     */
+    public static function choose(FeedChannel $channel, Carbon $dayStart): ?FeedItem
+    {
+        $usedToday = FeedItem::where('feed_channel_id', $channel->id)->where('posted_at', '>=', $dayStart)
+            ->selectRaw('feed_source_id, count(*) as n')->groupBy('feed_source_id')->pluck('n', 'feed_source_id');
+
+        return FeedItem::where('feed_channel_id', $channel->id)->where('status', 'approved')->with('source')
+            ->latest('id')->limit(100)->get()
+            ->sortBy([
+                fn ($a, $b) => ($a->feed_source_id !== null) <=> ($b->feed_source_id !== null),
+                fn ($a, $b) => ($usedToday[$a->feed_source_id] ?? 0) <=> ($usedToday[$b->feed_source_id] ?? 0),
+                fn ($a, $b) => self::points($b) <=> self::points($a),
+            ])->first();
+    }
+
+    public static function points(FeedItem $item): float
+    {
+        $age = ($item->published_at ?? $item->created_at)->diffInMinutes(now()) / 60;
+
+        return ($item->image ? 2 : 0)
+            + (mb_strlen((string) $item->summary) >= 100 ? 1 : 0)
+            + ($item->source?->trusted ? 1 : 0)
+            - max(0, $age) / 3;
+    }
+
+    /**
+     * News not posted within its hours leaves the queue (what the curator added by hand stays until posted),
+     * and after two days is deleted; it is kept so long only so the same story is not taken again.
+     */
+    public static function expire(): void
+    {
+        $old = now()->subHours(config('feeds.stale_hours'));
+        FeedItem::whereIn('status', ['new', 'approved'])->whereNotNull('feed_source_id')
+            ->where(fn ($q) => $q->where('published_at', '<', $old)->orWhere(fn ($q) => $q->whereNull('published_at')->where('created_at', '<', $old)))
+            ->update(['status' => 'skipped', 'reason' => 'stale']);
+        FeedItem::where('status', 'skipped')->where('created_at', '<', now()->subDays(2))->delete();
     }
 
     /** The author's number of posts today: half of it on a day the members write a lot themselves. */
