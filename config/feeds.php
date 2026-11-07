@@ -15,6 +15,8 @@ return [
     'busy_members' => 30,
     // Approved or waiting news older than this is dropped from the queue (jokes and curators' items stay).
     'stale_hours' => 36,
+    // Where the letters about friend requests and group invitations to club authors go.
+    'inbox' => env('FEEDS_INBOX', 'club@anahnu.club'),
     // Sources read per run of feeds:fetch (every 20 minutes), the longest unread first.
     'sources_per_run' => 10,
 ];

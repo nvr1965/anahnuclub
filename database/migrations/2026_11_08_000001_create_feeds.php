@@ -17,6 +17,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('topic')->nullable();
+            // Posts a day: a number between daily_min and daily_limit, chosen afresh each day (both the same when daily_min is empty).
+            $table->unsignedSmallInteger('daily_min')->nullable();
             $table->unsignedSmallInteger('daily_limit')->default(2);
             // Words that keep a news item out, one per line.
             $table->text('stop_words')->nullable();

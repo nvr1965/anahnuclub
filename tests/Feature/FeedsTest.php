@@ -7,15 +7,19 @@ use App\Feeds\FeedPublisher;
 use App\Feeds\FeedReader;
 use App\Models\FeedChannel;
 use App\Models\FeedItem;
+use App\Http\Controllers\FriendController;
 use App\Models\FeedSource;
+use App\Models\Group;
 use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\ClubAuthorInvited;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -172,16 +176,44 @@ class FeedsTest extends TestCase
         $this->assertSame(1, Post::count());
     }
 
-    public function test_club_authors_take_no_friend_requests_or_messages_and_are_not_suggested()
+    public function test_requests_to_a_club_author_go_to_the_club_inbox_and_its_curator_answers()
     {
+        Notification::fake();
         $channel = $this->author();
-        $anna = User::factory()->create();
+        $author = $channel->user;
+        $anna = User::factory()->create(['name' => 'Анна']);
+        $admin = User::factory()->create(['is_admin' => true]);
 
-        $this->actingAs($anna)->post("/people/{$channel->user_id}/friend")->assertStatus(422);
-        $this->assertFalse($anna->canMessage($channel->user));
-        $this->actingAs($anna)->get("/people/{$channel->user_id}")->assertInertia(fn ($page) => $page
-            ->where('profile.friendship', null)->where('profile.can_message', false));
-        $this->assertNotContains($channel->user_id, \App\Http\Controllers\FriendController::suggestionsFor($anna, 60)->pluck('id')->all());
+        // Asked to be friends: a letter to club@anahnu.club; messages stay shut, and it is not suggested.
+        $this->actingAs($anna)->post("/people/{$author->id}/friend")->assertRedirect();
+        Notification::assertSentOnDemand(ClubAuthorInvited::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === 'club@anahnu.club' && $n->from->is($anna) && ! $n->group);
+        $this->assertFalse($anna->canMessage($author));
+        $this->assertNotContains($author->id, FriendController::suggestionsFor(User::factory()->create(), 60)->pluck('id')->all());
+
+        // Invited into a group.
+        $group = Group::create(['owner_id' => $anna->id, 'name' => 'Север', 'slug' => 'sever']);
+        $group->members()->attach($anna->id, ['role' => 'owner', 'approved' => true]);
+        $this->actingAs($anna)->post("/groups/{$group->slug}/invite", ['user_ids' => [$author->id]])->assertRedirect();
+        Notification::assertSentOnDemand(ClubAuthorInvited::class, fn ($n) => $n->group?->is($group));
+
+        // The curator sees both on the admin page and accepts them.
+        $this->actingAs($admin)->get('/admin/feeds?tab=authors')->assertInertia(fn ($page) => $page
+            ->where('channels.0.requests.0.name', 'Анна')->where('channels.0.invitations.0.group', 'Север'));
+        $this->post("/admin/feeds/authors/{$channel->id}/friends/{$anna->id}", ['accept' => true]);
+        $this->post("/admin/feeds/authors/{$channel->id}/invitations/{$group->invitations()->first()->id}", ['accept' => true]);
+
+        $this->assertSame('friends', $anna->friendshipWith($author));
+        $this->assertTrue($group->members()->whereKey($author->id)->exists());
+    }
+
+    public function test_a_range_of_posts_a_day_gives_a_steady_number_each_day()
+    {
+        $channel = $this->author(['daily_min' => 1, 'daily_limit' => 2]);
+        $days = collect(range(1, 30))->map(fn ($d) => $channel->limitFor('2026-12-'.str_pad($d, 2, '0', STR_PAD_LEFT)));
+
+        $this->assertSame([1, 2], $days->unique()->sort()->values()->all());
+        $this->assertSame($channel->limitFor('2026-12-05'), $channel->limitFor('2026-12-05'));
+        $this->assertSame(3, $this->author(['daily_limit' => 3])->limitFor('2026-12-05'));
     }
 
     public function test_the_admin_approves_skips_and_adds_items_by_hand()
@@ -214,6 +246,9 @@ class FeedsTest extends TestCase
         $this->assertSame($count, FeedChannel::count());
         $farik = User::where('email', 'farik@authors.anahnu.club')->first();
         $this->assertSame('Фарик', $farik->name);
+        // Each author's name and profile line are in its own language.
+        $this->assertSame('علي', User::where('email', 'ali@authors.anahnu.club')->value('name'));
+        $this->assertStringContainsString('Autor bei AnahnuClub', User::where('email', 'dietrich@authors.anahnu.club')->value('about'));
         $this->assertStringContainsString('автор AnahnuClub', $farik->about);
         $this->assertContains('club-author', \App\Support\Badges::special($farik->fresh()));
         $this->assertGreaterThan(0, $farik->feedChannel()->first()->sources()->count());

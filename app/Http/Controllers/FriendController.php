@@ -7,6 +7,7 @@ use App\Models\FeedChannel;
 use App\Models\FriendList;
 use App\Models\User;
 use App\Notifications\ClubActivity;
+use App\Notifications\ClubAuthorInvited;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -309,13 +310,17 @@ class FriendController extends Controller
     public function store(Request $request, User $user): RedirectResponse
     {
         $me = $request->user();
-        abort_if($me->is($user) || $user->blocked || $me->isBlockedWith($user) || $user->isClubAuthor(), 422);
+        abort_if($me->is($user) || $user->blocked || $me->isBlockedWith($user), 422);
 
         $url = route('people.show', $me);
         switch ($me->friendshipWith($user)) {
             case 'none':
                 DB::table('friendships')->insert(['user_id' => $me->id, 'friend_id' => $user->id, 'accepted' => false, 'created_at' => now(), 'updated_at' => now()]);
                 ClubActivity::send($user, 'friend_request', $me, route('friends.index'), 'user:'.$user->id);
+                // Nobody signs in as a club author: its curator gets a letter and answers on the admin page.
+                if ($user->isClubAuthor()) {
+                    ClubAuthorInvited::send($user, $me);
+                }
                 break;
             case 'received':
                 DB::table('friendships')->where('user_id', $user->id)->where('friend_id', $me->id)->update(['accepted' => true, 'updated_at' => now()]);

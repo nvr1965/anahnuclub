@@ -918,5 +918,16 @@
     "Untrust": "إلغاء الوثوق",
     "Waiting": "بالانتظار",
     "Week: :posts posts, :likes likes, :comments comments": "الأسبوع: :posts منشورات، :likes إعجابات، :comments تعليقات",
-    "not read yet": "لم يُقرأ بعد"
+    "not read yet": "لم يُقرأ بعد",
+    "Posts a day, from": "منشورات يوميًا: من",
+    "to": "إلى",
+    ":name wants to be friends": ":name يريد الصداقة",
+    ":name invites to the group": ":name يدعو إلى المجموعة",
+    ":author: :name invites to the group “:group”": ":author: :name يدعو إلى المجموعة «:group»",
+    ":author: friend request from :name": ":author: طلب صداقة من :name",
+    ":name invited the club author :author into the group “:group”.": ":name دعا كاتب النادي :author إلى المجموعة «:group».",
+    ":name asked the club author :author to be friends.": ":name أرسل طلب صداقة إلى كاتب النادي :author.",
+    "Accept or decline it on the admin page \"Feed filling\", the Authors tab.": "يمكن القبول أو الرفض في صفحة الإدارة «ملء الخلاصة»، تبويب «الكتّاب».",
+    "Open the requests": "فتح الطلبات",
+    "Who sent it: :url": "من أرسل: :url"
 }

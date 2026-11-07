@@ -918,5 +918,16 @@
     "Untrust": "הסר מהימנות",
     "Waiting": "ממתינים",
     "Week: :posts posts, :likes likes, :comments comments": "השבוע: :posts פוסטים, :likes לייקים, :comments תגובות",
-    "not read yet": "טרם נקרא"
+    "not read yet": "טרם נקרא",
+    "Posts a day, from": "פוסטים ביום: מ-",
+    "to": "עד",
+    ":name wants to be friends": ":name רוצה להיות חברים",
+    ":name invites to the group": ":name מזמין/ה לקבוצה",
+    ":author: :name invites to the group “:group”": ":author: :name מזמין/ה לקבוצה „:group”",
+    ":author: friend request from :name": ":author: בקשת חברות מ-:name",
+    ":name invited the club author :author into the group “:group”.": ":name הזמין/ה את כותב/ת המועדון :author לקבוצה „:group”.",
+    ":name asked the club author :author to be friends.": ":name שלח/ה בקשת חברות לכותב/ת המועדון :author.",
+    "Accept or decline it on the admin page \"Feed filling\", the Authors tab.": "אפשר לאשר או לדחות בדף הניהול „מילוי הפיד”, בלשונית „כותבים”.",
+    "Open the requests": "פתיחת הבקשות",
+    "Who sent it: :url": "מי שלח: :url"
 }

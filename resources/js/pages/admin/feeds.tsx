@@ -12,6 +12,7 @@ interface Channel {
     id: number;
     user: { id: number; name: string; username: string | null } | null;
     topic: string | null;
+    daily_min: number | null;
     daily_limit: number;
     stop_words: string | null;
     auto_approve: boolean;
@@ -22,6 +23,8 @@ interface Channel {
     posts_week: number;
     likes_week: number;
     comments_week: number;
+    requests: { id: number; name: string }[];
+    invitations: { id: number; group: string; slug: string; from: string | null }[];
 }
 
 interface Source {
@@ -305,8 +308,11 @@ function Authors({ channels }: { channels: Channel[] }) {
                         {c.auto_approve && <Badge tone="green">{t('Auto-approve')}</Badge>}
                     </div>
                     <div className="text-muted-foreground text-xs">
-                        {t('Today :done of :limit', { done: c.posted_today, limit: c.daily_limit })} · {t(':count waiting', { count: c.waiting })} ·{' '}
-                        {t(':count approved', { count: c.approved })} ·{' '}
+                        {t('Today :done of :limit', {
+                            done: c.posted_today,
+                            limit: c.daily_min !== null && c.daily_min < c.daily_limit ? `${c.daily_min}–${c.daily_limit}` : c.daily_limit,
+                        })}{' '}
+                        · {t(':count waiting', { count: c.waiting })} · {t(':count approved', { count: c.approved })} ·{' '}
                         {t('Week: :posts posts, :likes likes, :comments comments', {
                             posts: c.posts_week,
                             likes: c.likes_week,
@@ -315,7 +321,18 @@ function Authors({ channels }: { channels: Channel[] }) {
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm">
                         <label className="flex items-center gap-1">
-                            {t('Posts a day')}
+                            {t('Posts a day, from')}
+                            <input
+                                type="number"
+                                min={0}
+                                max={50}
+                                defaultValue={c.daily_min ?? c.daily_limit}
+                                className={`${input} w-16`}
+                                onBlur={(e) =>
+                                    Number(e.target.value) !== (c.daily_min ?? c.daily_limit) && update(c, { daily_min: Number(e.target.value) })
+                                }
+                            />
+                            {t('to')}
                             <input
                                 type="number"
                                 min={0}
@@ -339,6 +356,45 @@ function Authors({ channels }: { channels: Channel[] }) {
                             {t('Pause')}
                         </label>
                     </div>
+                    {(c.requests.length > 0 || c.invitations.length > 0) && (
+                        <div className="bg-brand-soft space-y-1 rounded-md p-2 text-sm">
+                            {c.requests.map((r) => (
+                                <div key={`f${r.id}`} className="flex flex-wrap items-center gap-2">
+                                    <span dir="auto">{t(':name wants to be friends', { name: r.name })}</span>
+                                    <ActionButton onClick={() => send('post', route('admin.feeds.authors.friend', [c.id, r.id]), { accept: true })}>
+                                        {t('Accept')}
+                                    </ActionButton>
+                                    <ActionButton
+                                        danger
+                                        onClick={() => send('post', route('admin.feeds.authors.friend', [c.id, r.id]), { accept: false })}
+                                    >
+                                        {t('Decline')}
+                                    </ActionButton>
+                                </div>
+                            ))}
+                            {c.invitations.map((i) => (
+                                <div key={`g${i.id}`} className="flex flex-wrap items-center gap-2">
+                                    <span dir="auto">
+                                        {t(':name invites to the group', { name: i.from ?? '—' })}{' '}
+                                        <Link href={route('groups.show', i.slug)} className="font-medium hover:underline">
+                                            {i.group}
+                                        </Link>
+                                    </span>
+                                    <ActionButton
+                                        onClick={() => send('post', route('admin.feeds.authors.invitation', [c.id, i.id]), { accept: true })}
+                                    >
+                                        {t('Accept')}
+                                    </ActionButton>
+                                    <ActionButton
+                                        danger
+                                        onClick={() => send('post', route('admin.feeds.authors.invitation', [c.id, i.id]), { accept: false })}
+                                    >
+                                        {t('Decline')}
+                                    </ActionButton>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <textarea
                         className={`${input} block w-full`}
                         rows={2}

@@ -260,6 +260,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('feeds', [Admin\FeedController::class, 'index'])->name('feeds.index');
     Route::patch('feeds/pause', [Admin\FeedController::class, 'pause'])->name('feeds.pause');
     Route::patch('feeds/authors/{channel}', [Admin\FeedController::class, 'updateChannel'])->name('feeds.authors.update');
+    Route::post('feeds/authors/{channel}/friends/{user}', [Admin\FeedController::class, 'answerFriend'])->name('feeds.authors.friend');
+    Route::post('feeds/authors/{channel}/invitations/{invitation}', [Admin\FeedController::class, 'answerInvitation'])->name('feeds.authors.invitation');
     Route::post('feeds/sources', [Admin\FeedController::class, 'storeSource'])->name('feeds.sources.store');
     Route::patch('feeds/sources/{source}', [Admin\FeedController::class, 'updateSource'])->name('feeds.sources.update');
     Route::delete('feeds/sources/{source}', [Admin\FeedController::class, 'destroySource'])->name('feeds.sources.destroy');

@@ -38,6 +38,7 @@ class FeedPublisher
             return null;
         }
 
+        $day = $local->toDateString();
         $dayStart = $local->copy()->setTime($from, 0)->utc();
         $passed = min(1, $local->copy()->setTime($from, 0)->diffInMinutes($local) / (($to - $from) * 60));
         $factor = self::membersAreBusy() ? 0.5 : 1;
@@ -47,8 +48,8 @@ class FeedPublisher
         $channel = FeedChannel::query()->where('paused', false)->with('user')
             ->whereHas('items', fn ($q) => $q->where('status', 'approved'))
             ->get()
-            ->filter(function (FeedChannel $c) use ($posted, $passed, $factor) {
-                $limit = max(1, (int) round($c->daily_limit * $factor));
+            ->filter(function (FeedChannel $c) use ($posted, $passed, $factor, $day) {
+                $limit = max(1, (int) round($c->limitFor($day) * $factor));
                 $done = (int) ($posted[$c->id]->n ?? 0);
                 $last = $posted[$c->id]->last ?? null;
 
@@ -59,7 +60,7 @@ class FeedPublisher
                     && (! $last || Carbon::parse($last)->lte(now()->subMinutes(config('feeds.author_gap'))));
             })
             ->shuffle()
-            ->sortBy(fn (FeedChannel $c) => ($posted[$c->id]->n ?? 0) / max(1, $c->daily_limit))
+            ->sortBy(fn (FeedChannel $c) => ($posted[$c->id]->n ?? 0) / max(1, $c->limitFor($day)))
             ->first();
         if (! $channel) {
             return null;

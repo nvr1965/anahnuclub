@@ -918,5 +918,16 @@
     "Untrust": "Не доверять",
     "Waiting": "Ждут",
     "Week: :posts posts, :likes likes, :comments comments": "За неделю: постов :posts, лайков :likes, комментариев :comments",
-    "not read yet": "ещё не читался"
+    "not read yet": "ещё не читался",
+    "Posts a day, from": "Постов в день: от",
+    "to": "до",
+    ":name wants to be friends": ":name хочет дружить",
+    ":name invites to the group": ":name приглашает в группу",
+    ":author: :name invites to the group “:group”": ":author: :name приглашает в группу «:group»",
+    ":author: friend request from :name": ":author: заявка в друзья от :name",
+    ":name invited the club author :author into the group “:group”.": ":name пригласил(а) автора клуба :author в группу «:group».",
+    ":name asked the club author :author to be friends.": ":name предложил(а) дружбу автору клуба :author.",
+    "Accept or decline it on the admin page \"Feed filling\", the Authors tab.": "Принять или отклонить можно в админке: «Наполнение ленты», вкладка «Авторы».",
+    "Open the requests": "Открыть заявки",
+    "Who sent it: :url": "Кто прислал: :url"
 }

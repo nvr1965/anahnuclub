@@ -299,7 +299,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         if ($this->is($other)) {
             return true;
         }
-        // Nobody reads a club author's messages; its curator answers in the comments.
+        // Nobody signs in as a club author to read messages; its curator answers in the comments.
         if ($other->isClubAuthor() || $this->isClubAuthor()) {
             return false;
         }

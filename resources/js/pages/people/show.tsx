@@ -554,9 +554,6 @@ function FriendButton({ profile }: { profile: Profile }) {
                     </button>
                 </>
             );
-        case null:
-            // Club authors take no friend requests.
-            return null;
         default:
             return (
                 <button type="button" className={primary} onClick={add}>

@@ -64,7 +64,6 @@ class PeopleController extends Controller
                 $row = $ties->first(fn ($t) => $t->user_id === $u->id || $t->friend_id === $u->id);
 
                 return self::card($u) + ['friendship' => match (true) {
-                    $u->isClubAuthor() => null,
                     $row === null => 'none',
                     (bool) $row->accepted => 'friends',
                     $row->user_id === $viewer->id => 'sent',
@@ -138,8 +137,7 @@ class PeopleController extends Controller
                 'posts_count' => $user->posts()->visibleTo($viewer)->count(),
                 'is_me' => $me,
                 'locale' => $me ? $user->locale : null,
-                // Club authors (accounts the club runs) take no friend requests.
-                'friendship' => $me || $user->isClubAuthor() ? null : $viewer->friendshipWith($user),
+                'friendship' => $me ? null : $viewer->friendshipWith($user),
                 'blocked_by_me' => $blockedByMe,
                 'messages_blocked_by_me' => ! $me && $viewer->hasMessengerBlocked($user),
                 // Shut when they take messages from friends only, or the messenger is blocked either way.
