@@ -183,6 +183,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                                 onChange={(e) => setQ(e.target.value)}
                                 placeholder={t('Search')}
                                 aria-label={t('Search anahnu.club')}
+                                data-search-box
                                 className="w-full min-w-0 bg-transparent text-sm outline-none sm:w-36 lg:w-48"
                             />
                         </form>
@@ -200,6 +201,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                             onChange={(e) => setQ(e.target.value)}
                             placeholder={t('Search anahnu.club')}
                             aria-label={t('Search anahnu.club')}
+                            data-search-box
                             className="w-full min-w-0 bg-transparent text-[0.9375rem] outline-none"
                         />
                         <Search className="text-muted-foreground size-5 shrink-0" />

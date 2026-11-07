@@ -5,7 +5,7 @@ import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
-import { type FormEventHandler, type ReactNode, useState } from 'react';
+import { type FormEventHandler, type ReactNode, useEffect, useState } from 'react';
 
 type Props = {
     children: ReactNode;
@@ -86,10 +86,14 @@ function ClubFrame({ children, left, right, full, wide }: Props) {
     );
 }
 
-/** A search box for the end column of Stream and Forum. */
+/** A search box for the end column of Stream and Showcase. */
 function SearchBox({ className }: { className: string }) {
     const t = useT();
-    const [q, setQ] = useState('');
+    const { url } = usePage();
+    // On the search page the box keeps the words being searched for.
+    const current = url.startsWith('/search') ? (new URLSearchParams(url.split('?')[1] ?? '').get('q') ?? '') : '';
+    const [q, setQ] = useState(current);
+    useEffect(() => setQ(current), [current]);
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         if (q.trim()) router.get(route('search'), { q: q.trim() });
@@ -103,6 +107,7 @@ function SearchBox({ className }: { className: string }) {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t('Search')}
                 aria-label={t('Search anahnu.club')}
+                data-search-box
                 className="w-full min-w-0 bg-transparent text-[0.9375rem] outline-none"
             />
         </form>
@@ -146,6 +151,7 @@ function ShowcaseFrame({ children, right, full }: Props) {
                 <div className="mx-auto flex max-w-[935px] justify-center gap-16 md:py-6">
                     <main className="w-full max-w-[470px] min-w-0 max-sm:pb-20">{children}</main>
                     <aside className="hidden w-[320px] shrink-0 space-y-4 pt-2 xl:block">
+                        <SearchBox className="focus-within:border-brand rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-900" />
                         {auth.user && (
                             <div className="flex items-center gap-3 px-2">
                                 <img src={auth.user.avatar ?? '/images/logo-mark.png'} alt="" className="size-11 rounded-full object-cover" />

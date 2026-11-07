@@ -5,10 +5,10 @@ import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { VideoGrid } from '@/components/video-grid';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { type EventItem, type Person, type Post, type Sidebar, type VideoItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { type EventItem, type Person, type Post, type SharedData, type Sidebar, type VideoItem } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FileText, Lock, Search } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
 type Type = 'people' | 'posts' | 'groups' | 'videos' | 'events' | 'pages';
 
@@ -36,7 +36,18 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
     const posts = Array.isArray(raw.posts) ? raw.posts : raw.posts.data;
     const results = { ...raw, posts };
     const t = useT();
+    const { skin } = usePage<SharedData>().props;
     const [query, setQuery] = useState(q);
+    useEffect(() => setQuery(q), [q]);
+    // Opened from the menu (no query yet): the cursor goes straight into whichever search box this style shows.
+    useEffect(() => {
+        if (q) return;
+        const box = [...document.querySelectorAll<HTMLInputElement>('input[data-search-box]')].find((el) => el.getClientRects().length > 0);
+        box?.focus();
+    }, [q]);
+    // This page's own box shows only where the style has no other one on screen: Stream has none in its side columns
+    // between lg and xl, Showcase has none between md and xl; the other styles keep theirs in the top bar from sm.
+    const ownBox = skin === 'stream' ? 'sm:hidden lg:flex xl:hidden' : skin === 'showcase' ? 'sm:hidden md:flex xl:hidden' : 'sm:hidden';
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
     const labels: Record<Type, string> = {
         people: t('People'),
@@ -76,7 +87,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                         e.preventDefault();
                         if (query.trim()) router.get(route('search'), { q: query.trim(), ...(type === 'all' ? {} : { type }) });
                     }}
-                    className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-sm sm:hidden dark:bg-neutral-900"
+                    className={`flex items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-sm dark:bg-neutral-900 ${ownBox}`}
                 >
                     <Search className="text-muted-foreground size-4 shrink-0" />
                     <input
@@ -84,7 +95,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={t('Search anahnu.club')}
-                        autoFocus={!q}
+                        data-search-box
                         className="w-full bg-transparent text-[0.9375rem] outline-none"
                     />
                 </form>

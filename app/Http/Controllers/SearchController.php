@@ -8,10 +8,10 @@ use App\Models\Group;
 use App\Models\Page;
 use App\Models\User;
 use App\Models\Video;
+use App\Support\TextSearch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,9 +32,9 @@ class SearchController extends Controller
         $more = false;
 
         if (mb_strlen($q) >= 2) {
-            $like = '%'.addcslashes($q, '%_\\').'%';
-            $queries = $this->queries($request, $like);
-            $pages = $this->pages($q);
+            $terms = TextSearch::terms($q);
+            $queries = $this->queries($request, $terms);
+            $pages = $this->pages($terms);
 
             foreach ($queries as $key => [$query, $map]) {
                 $counts[$key] = (clone $query)->count();
@@ -65,45 +65,64 @@ class SearchController extends Controller
         ]);
     }
 
-    /** @return array<string, array{Builder, callable(Collection): mixed}> */
-    private function queries(Request $request, string $like): array
+    /**
+     * Every word of the query must turn up in one of the fields (any case, anywhere in the text), so "новости израиля"
+     * finds "Новости Израиля" and "Израиль: главные новости" alike.
+     *
+     * @param  list<string>  $terms
+     * @return array<string, array{Builder, callable(Collection): mixed}>
+     */
+    private function queries(Request $request, array $terms): array
     {
-        $op = DB::getDriverName() === 'pgsql' ? 'ilike' : 'like';
         $viewer = $request->user();
         $myGroups = $viewer?->groups()->pluck('groups.id') ?? collect();
-        $translated = fn (Builder $t) => $t->where('text', $op, $like);
+        $match = function (array $columns, ?callable $more = null) use ($terms) {
+            return function (Builder $w) use ($columns, $more, $terms) {
+                foreach ($terms as $term) {
+                    $w->where(function (Builder $any) use ($columns, $more, $term) {
+                        foreach ($columns as $column) {
+                            TextSearch::orColumn($any, $column, $term);
+                        }
+                        if ($more) {
+                            $more($any, $term);
+                        }
+                    });
+                }
+            };
+        };
+        $translated = fn (Builder $any, string $term) => $any->orWhereHas('contentTranslations', fn (Builder $t) => TextSearch::orColumn($t, 'text', $term));
 
         $people = User::query()
             ->where('blocked', false)
             ->listedFor($viewer)
             ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->hiddenUserIds()))
-            ->where(fn (Builder $w) => $w->where('name', $op, $like)->orWhere('username', $op, $like)
-                // Location can be hidden from some viewers, so only the open "about" text is searched.
-                ->orWhere('about', $op, $like))
+            // Location can be hidden from some viewers, so only the open "about" text is searched.
+            ->where($match(['name', 'username', 'about']))
             ->latestSeen()->orderBy('id');
 
         $posts = FeedController::postQuery($request)
             ->whereDoesntHave('group', fn (Builder $g) => $g->where('is_private', true)->whereNotIn('id', $myGroups))
-            ->where(fn (Builder $w) => $w->where('title', $op, $like)->orWhere('body', $op, $like)
-                ->orWhereHas('contentTranslations', $translated)
-                ->orWhereHas('comments', fn (Builder $c) => $c->where('body', $op, $like)));
+            ->where($match(['title', 'body'], function (Builder $any, string $term) use ($translated) {
+                $translated($any, $term);
+                $any->orWhereHas('comments', fn (Builder $c) => TextSearch::orColumn($c, 'body', $term));
+            }));
 
         $groups = Group::query()
             ->where('published', true)
             ->where(fn (Builder $w) => $w->where('is_private', false)->orWhereIn('id', $myGroups))
             ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->blockedGroupIds()))
-            ->where(fn (Builder $w) => $w->where('name', $op, $like)->orWhere('description', $op, $like)->orWhereHas('contentTranslations', $translated))
+            ->where($match(['name', 'description'], $translated))
             ->withCount('members')
             ->orderByDesc('members_count');
 
         $videos = VideoController::visible($request)
             ->with('user')
-            ->where(fn (Builder $w) => $w->where('title', $op, $like)->orWhere('description', $op, $like)->orWhereHas('contentTranslations', $translated))
+            ->where($match(['title', 'description'], $translated))
             ->latest();
 
         $events = EventController::visible($request)
             ->withCount(['attendees as going_count' => fn ($a) => $a->where('event_user.status', 'going')])
-            ->where(fn (Builder $w) => $w->where('title', $op, $like)->orWhere('description', $op, $like)->orWhere('location', $op, $like)->orWhereHas('contentTranslations', $translated))
+            ->where($match(['title', 'description', 'location'], $translated))
             ->orderByDesc('starts_at');
 
         return [
@@ -116,12 +135,13 @@ class SearchController extends Controller
     }
 
     /** Site pages are few, and their text sits in JSON per language, so they are matched here. */
-    private function pages(string $q): Collection
+    /** @param  list<string>  $terms */
+    private function pages(array $terms): Collection
     {
         $locale = app()->getLocale();
 
         return Page::query()->where('published', true)->orderBy('sort')->get()
-            ->filter(fn (Page $p) => collect($p->content ?? [])->contains(fn ($c) => mb_stripos(($c['title'] ?? '').' '.strip_tags($c['body'] ?? ''), $q) !== false))
+            ->filter(fn (Page $p) => collect($p->content ?? [])->contains(fn ($c) => TextSearch::matches(($c['title'] ?? '').' '.strip_tags($c['body'] ?? ''), $terms)))
             ->map(fn (Page $p) => ['slug' => $p->slug, 'title' => $p->in($locale)['title']]);
     }
 }
