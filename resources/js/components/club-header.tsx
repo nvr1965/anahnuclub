@@ -1,3 +1,4 @@
+import { CreateMenu } from '@/components/create-menu';
 import { InstallAppHelp } from '@/components/install-app';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { MessengerMenu } from '@/components/messenger-menu';
@@ -10,7 +11,7 @@ import { useT } from '@/lib/i18n';
 import { onFreshNews } from '@/lib/push';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, House, type LucideIcon, MessageCircle, Search, UserRound, Users } from 'lucide-react';
+import { Bell, House, type LucideIcon, MessageCircle, Plus, Search, UserRound, Users } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
 /** Tile colours, written out in full so Tailwind keeps them: soft when idle, filled when the section is open. */
@@ -219,6 +220,13 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                                 <Badge count={counts?.notifications ?? 0} className="-end-1 -top-1" />
                             </NotificationBell>
                         </>
+                    )}
+                    {auth.user && (
+                        <CreateMenu
+                            className={`flex size-9 shrink-0 items-center justify-center rounded-full outline-none sm:size-10 ${blue ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700'}`}
+                        >
+                            <Plus className="size-5 sm:size-6" strokeWidth={2.5} />
+                        </CreateMenu>
                     )}
                     <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 text-slate-900 max-sm:px-2.5 dark:bg-neutral-800 dark:text-neutral-100 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block" />
                     {auth.user ? (

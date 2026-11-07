@@ -39,7 +39,7 @@ class MomentController extends Controller
     public static function tray(User $viewer): array
     {
         $moments = Moment::query()->active()->visibleTo($viewer)
-            ->select('moments.id', 'moments.user_id', 'moments.created_at')
+            ->select('moments.id', 'moments.user_id', 'moments.created_at', 'moments.kind', 'moments.path', 'moments.thumb_path', 'moments.text', 'moments.background')
             ->addSelect(['seen' => DB::table('moment_views')->selectRaw('1')
                 ->whereColumn('moment_views.moment_id', 'moments.id')->where('moment_views.user_id', $viewer->id)->limit(1)])
             ->latest()->limit(600)->get();
@@ -49,6 +49,8 @@ class MomentController extends Controller
             'count' => $own->count(),
             'unseen' => (int) $userId !== $viewer->id && $own->contains(fn ($m) => ! $m->seen),
             'latest' => $own->max('created_at'),
+            // The card in the strip shows the newest moment, as Facebook does.
+            'cover' => $own->first(),
         ])->sortByDesc(fn ($p) => [$p['user_id'] === $viewer->id, $p['unseen'], $p['latest']->getTimestamp()])->take(self::TRAY)->values();
 
         $users = User::whereIn('id', $people->pluck('user_id'))->get()->keyBy('id');
@@ -58,6 +60,12 @@ class MomentController extends Controller
                 'user' => PeopleController::card($users[$p['user_id']]),
                 'count' => $p['count'],
                 'unseen' => $p['unseen'],
+                'cover' => [
+                    'kind' => $p['cover']->kind,
+                    'thumb' => $p['cover']->thumbUrl(),
+                    'text' => $p['cover']->text ? mb_strimwidth($p['cover']->text, 0, 120, '…') : null,
+                    'background' => $p['cover']->background,
+                ],
             ])->values()->all(),
             'lists' => FriendList::where('user_id', $viewer->id)->orderBy('name')->get(['id', 'name'])->toArray(),
             'mine' => $people->firstWhere('user_id', $viewer->id)['count'] ?? 0,

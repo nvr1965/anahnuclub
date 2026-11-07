@@ -4,6 +4,7 @@ import { ExternalEmbed } from '@/components/external-embed';
 import { LinkPreview } from '@/components/link-preview';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
+import { useCreateRequest } from '@/lib/create';
 import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame, videoInfo } from '@/lib/shrink-image';
 import { type Audience, type EmbedCard, type LinkCard, type SharedData } from '@/types';
@@ -103,6 +104,15 @@ export function PostComposer({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [typedUrl, dismissed]);
     const firstName = auth.user?.name.split(' ')[0] ?? '';
+    const box = useRef<HTMLFormElement>(null);
+    // "Post" and "Clip" in the "+" menu of the top bar, on the feed (not in a group).
+    useCreateRequest('post', () => {
+        if (groupId) return;
+        setOpen(true);
+        box.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => box.current?.querySelector('textarea')?.focus(), 50);
+    });
+    useCreateRequest('clip', () => !groupId && (cameraAvailable() ? setClipping(true) : clipPicker.current?.click()));
     const previews = useMemo(() => form.data.images.map((file) => URL.createObjectURL(file)), [form.data.images]);
 
     const videoPreview = useMemo(() => (form.data.video ? URL.createObjectURL(form.data.video) : null), [form.data.video]);
@@ -214,6 +224,7 @@ export function PostComposer({
 
     return (
         <form
+            ref={box}
             onSubmit={submit}
             className={
                 skin === 'stream'

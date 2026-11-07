@@ -317,6 +317,18 @@ class PostController extends Controller
         return back();
     }
 
+    /** Pins the post at the top of the feed, the author's profile or its group, or takes the pin off. */
+    public function pin(Request $request, Post $post, string $place): RedirectResponse
+    {
+        abort_unless(array_key_exists($place, Post::PIN_PLACES) && $post->canPin($request->user(), $place), 403);
+        $column = Post::PIN_PLACES[$place];
+        // Saved quietly: a pin is not an edit, the post keeps its date and is not translated again.
+        $post->timestamps = false;
+        $post->forceFill([$column => $post->$column ? null : now()])->saveQuietly();
+
+        return back();
+    }
+
     public function destroy(Request $request, Post $post): RedirectResponse
     {
         abort_unless($post->user_id === $request->user()->id || $request->user()->is_admin || $post->group?->canModerate($request->user()), 403);

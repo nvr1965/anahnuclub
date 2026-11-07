@@ -1,3 +1,4 @@
+import { CreateMenu } from '@/components/create-menu';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
@@ -5,7 +6,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, Ellipsis, Film, House, type LucideIcon, Menu, MessageCircle, PenLine, Search, UserRound, Users } from 'lucide-react';
+import { Bell, Ellipsis, Film, House, type LucideIcon, Menu, MessageCircle, PenLine, Plus, Search, UserRound, Users } from 'lucide-react';
 import { useEffect } from 'react';
 
 /**
@@ -82,6 +83,12 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
                     </Link>
                 );
             })}
+            {auth.user && (
+                <CreateMenu className={`${row} outline-none`} align="start">
+                    <Plus className={`shrink-0 ${wide ? 'size-7' : 'size-6'}`} />
+                    <span className={name}>{t('Create')}</span>
+                </CreateMenu>
+            )}
             {wide && auth.user && (
                 <button
                     type="button"

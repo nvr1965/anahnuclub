@@ -11,9 +11,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
-import { type Comment, type Post, type SharedData } from '@/types';
+import { type Comment, type PinPlace, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Code, Ellipsis, Eye, MessageCircle, Pencil, SendHorizontal, Trash2 } from 'lucide-react';
+import { Code, Ellipsis, Eye, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -61,6 +61,14 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
         e.preventDefault();
         edit.patch(route('posts.update', post.id), { preserveScroll: true, onSuccess: () => setEditing(false) });
     };
+
+    const pinLabels: Record<PinPlace, [string, string]> = {
+        feed: [t('Pin to the top of the feed'), t('Unpin from the feed')],
+        profile: [t('Pin to your profile'), t('Unpin from your profile')],
+        group: [t('Pin in the group'), t('Unpin from the group')],
+    };
+    const pins = Object.entries(post.pins ?? {}) as [PinPlace, boolean][];
+    const pin = (place: PinPlace) => router.post(route('posts.pin', { post: post.id, place }), {}, { preserveScroll: true });
 
     const remove = () => {
         if (window.confirm(t('Delete this post?'))) router.delete(route('posts.destroy', post.id), { preserveScroll: true });
@@ -220,6 +228,14 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         )}
                     </div>
                     <div className="text-muted-foreground mt-0.5 text-[0.8125rem]" title={post.created_at ?? ''}>
+                        {post.pinned && (
+                            <>
+                                <span className="text-brand inline-flex items-center gap-0.5 font-semibold">
+                                    <Pin className="size-3.5 rotate-45" /> {t('Pinned')}
+                                </span>
+                                {' · '}
+                            </>
+                        )}
                         <Link href={post.url} className="hover:underline">
                             {relativeTime(post.created_at, locale)}
                         </Link>
@@ -262,7 +278,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     />
                 )}
                 {post.embeddable && <EmbedPostDialog open={embedding} onClose={() => setEmbedding(false)} postId={post.id} src={post.embed_url} />}
-                {(post.can_delete || post.editable_text !== null || canChangeAudience || post.embeddable) && (
+                {(post.can_delete || post.editable_text !== null || canChangeAudience || post.embeddable || pins.length > 0) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             className="text-muted-foreground -me-2 self-start rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
@@ -271,6 +287,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                             <Ellipsis className="size-5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            {pins.map(([place, pinned]) => (
+                                <DropdownMenuItem key={place} onSelect={() => pin(place)}>
+                                    {pinned ? <PinOff className="size-4" /> : <Pin className="size-4" />} {pinLabels[place][pinned ? 1 : 0]}
+                                </DropdownMenuItem>
+                            ))}
                             {post.editable_text !== null && (
                                 <DropdownMenuItem onSelect={() => setEditing(true)}>
                                     <Pencil className="size-4" /> {t('Edit')}

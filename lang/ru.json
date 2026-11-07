@@ -811,5 +811,15 @@
     "Chrome or Edge: click the install icon at the end of the address bar, or open the browser menu and choose “Install”.": "Chrome или Edge: нажмите значок установки в конце адресной строки или откройте меню браузера и выберите «Установить».",
     "Safari on Mac: File menu, then “Add to Dock”.": "Safari на Mac: меню «Файл», затем «Добавить в Dock».",
     "Firefox cannot install sites as apps: open the club in Chrome or Edge.": "Firefox не устанавливает сайты как приложения: откройте клуб в Chrome или Edge.",
-    "The club will open from its own icon, in a window of its own, and can send notifications.": "Клуб будет открываться со своего значка, в отдельном окне, и сможет присылать уведомления."
+    "The club will open from its own icon, in a window of its own, and can send notifications.": "Клуб будет открываться со своего значка, в отдельном окне, и сможет присылать уведомления.",
+    "Create a moment": "Создать момент",
+    "Moment": "Момент",
+    "Event": "Событие",
+    "Pinned": "Закреплено",
+    "Pin to the top of the feed": "Закрепить вверху ленты",
+    "Unpin from the feed": "Открепить из ленты",
+    "Pin to your profile": "Закрепить в профиле",
+    "Unpin from your profile": "Открепить в профиле",
+    "Pin in the group": "Закрепить в группе",
+    "Unpin from the group": "Открепить в группе"
 }

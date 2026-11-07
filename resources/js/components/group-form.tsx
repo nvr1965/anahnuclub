@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useCreateRequest } from '@/lib/create';
 import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { router, useForm } from '@inertiajs/react';
@@ -21,6 +22,8 @@ const field =
 export function GroupForm({ group, isOwner = false }: { group?: EditableGroup; isOwner?: boolean }) {
     const t = useT();
     const [open, setOpen] = useState(false);
+    // "Group" in the "+" menu of the top bar.
+    useCreateRequest('group', () => !group && setOpen(true));
     const form = useForm<{
         name: string;
         description: string;
