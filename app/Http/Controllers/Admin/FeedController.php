@@ -34,7 +34,7 @@ class FeedController extends AdminController
         $channelId = $request->integer('author') ?: null;
         $today = now()->tz(config('feeds.timezone'))->setTime(config('feeds.window')[0], 0)->utc();
 
-        $channels = FeedChannel::with('user:id,name,username')->orderBy('id')->get();
+        $channels = FeedChannel::with(['user:id,name,username', 'group:id,name,slug'])->orderBy('id')->get();
         $counts = FeedItem::selectRaw('feed_channel_id, status, count(*) as n')->groupBy('feed_channel_id', 'status')->get()
             ->groupBy('feed_channel_id')->map(fn ($rows) => $rows->pluck('n', 'status'));
         $postedToday = FeedItem::where('posted_at', '>=', $today)->selectRaw('feed_channel_id, count(*) as n')->groupBy('feed_channel_id')->pluck('n', 'feed_channel_id');
@@ -53,6 +53,7 @@ class FeedController extends AdminController
                 'id' => $c->id,
                 'user' => $c->user ? ['id' => $c->user->id, 'name' => $c->user->name, 'username' => $c->user->username] : null,
                 'topic' => $c->topic,
+                'group' => $c->group ? ['name' => $c->group->name, 'slug' => $c->group->slug] : null,
                 'daily_min' => $c->daily_min,
                 'daily_limit' => $c->daily_limit,
                 'stop_words' => $c->stop_words,
@@ -61,6 +62,8 @@ class FeedController extends AdminController
                 'waiting' => (int) ($counts[$c->id]['new'] ?? 0),
                 'approved' => (int) ($counts[$c->id]['approved'] ?? 0),
                 'posted_today' => (int) ($postedToday[$c->id] ?? 0),
+                // When the author posts today: its own times, different each day.
+                'plan' => $c->paused ? [] : FeedPublisher::plan($c),
                 'posts_week' => $week->get($c->user_id)?->count() ?? 0,
                 'likes_week' => $week->get($c->user_id)?->sum('likes_count') ?? 0,
                 'comments_week' => $week->get($c->user_id)?->sum('comments_count') ?? 0,

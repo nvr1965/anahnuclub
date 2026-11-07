@@ -12,6 +12,7 @@ interface Channel {
     id: number;
     user: { id: number; name: string; username: string | null } | null;
     topic: string | null;
+    group: { name: string; slug: string } | null;
     daily_min: number | null;
     daily_limit: number;
     stop_words: string | null;
@@ -20,6 +21,7 @@ interface Channel {
     waiting: number;
     approved: number;
     posted_today: number;
+    plan: string[];
     posts_week: number;
     likes_week: number;
     comments_week: number;
@@ -304,6 +306,11 @@ function Authors({ channels }: { channels: Channel[] }) {
                         <span className="text-muted-foreground text-sm" dir="auto">
                             {c.topic}
                         </span>
+                        {c.group && (
+                            <Link href={route('groups.show', c.group.slug)} className="text-sm text-sky-600 hover:underline" dir="auto">
+                                {t('Group: :name', { name: c.group.name })}
+                            </Link>
+                        )}
                         {c.paused && <Badge tone="red">{t('Paused')}</Badge>}
                         {c.auto_approve && <Badge tone="green">{t('Auto-approve')}</Badge>}
                     </div>
@@ -312,7 +319,8 @@ function Authors({ channels }: { channels: Channel[] }) {
                             done: c.posted_today,
                             limit: c.daily_min !== null && c.daily_min < c.daily_limit ? `${c.daily_min}–${c.daily_limit}` : c.daily_limit,
                         })}{' '}
-                        · {t(':count waiting', { count: c.waiting })} · {t(':count approved', { count: c.approved })} ·{' '}
+                        {c.plan.length > 0 && <>· {t('Times today: :times', { times: c.plan.join(', ') })} </>}·{' '}
+                        {t(':count waiting', { count: c.waiting })} · {t(':count approved', { count: c.approved })} ·{' '}
                         {t('Week: :posts posts, :likes likes, :comments comments', {
                             posts: c.posts_week,
                             likes: c.likes_week,
@@ -447,7 +455,7 @@ function Sources({ channels, sources }: { channels: Channel[]; sources: Source[]
                     className={`${input} min-w-64 flex-1`}
                     value={draft.url}
                     onChange={(e) => setDraft({ ...draft, url: e.target.value })}
-                    placeholder={t('RSS or Atom address')}
+                    placeholder={t('RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net')}
                 />
                 <input
                     className={`${input} w-16`}

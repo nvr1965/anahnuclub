@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use SimpleXMLElement;
 
-/** Reads an RSS 2.0, RSS 1.0 (RDF) or Atom feed into plain items: title, link, short summary, picture, date. */
+/**
+ * Reads a source into plain items: title, link, short summary, picture, date. A source is an RSS 2.0,
+ * RSS 1.0 (RDF) or Atom feed, a public Telegram channel, or one of the sites without a feed (see PageParsers).
+ */
 class FeedReader
 {
     /** The excerpt we show: a short quote with the link, never the whole article. */
@@ -18,14 +21,31 @@ class FeedReader
      */
     public function read(string $url): array
     {
+        $pages = new PageParsers($this);
+
+        return match (PageParsers::kind($url)) {
+            'telegram' => $pages->telegram($this->fetch(PageParsers::telegramUrl($url))),
+            'panet' => $pages->panet($this->fetch($url)),
+            'bokra' => $pages->bokra($this->fetch($url, PageParsers::BOKRA_HEADERS)),
+            default => $this->parse($this->fetch($url, ['Accept' => 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5'])),
+        };
+    }
+
+    /** A page or feed of a site; sites without RSS are read as a browser would see them. */
+    public function fetch(string $url, array $headers = []): string
+    {
         $response = Http::timeout(15)->connectTimeout(6)
-            ->withHeaders(['User-Agent' => 'AnahnuClubBot/1.0 (+https://anahnu.club)', 'Accept' => 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5'])
+            ->withHeaders($headers + [
+                'User-Agent' => 'Mozilla/5.0 (compatible; AnahnuClubBot/1.0; +https://anahnu.club)',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language' => 'ru,he;q=0.9,ar;q=0.8,en;q=0.7',
+            ])
             ->get($url);
         if (! $response->successful()) {
             throw new RuntimeException('HTTP '.$response->status());
         }
 
-        return $this->parse($response->body());
+        return $response->body();
     }
 
     /**
@@ -86,7 +106,7 @@ class FeedReader
             self::media($e), (string) ($e->published ?: $e->updated));
     }
 
-    private function item(string $title, string $url, string $description, string $image, string $date): array
+    public function item(string $title, string $url, string $description, string $image, string $date): array
     {
         // A picture inside the description, when the feed gives no other.
         if ($image === '' && preg_match('/<img[^>]+src=["\']([^"\']+)/i', $description, $m)) {
