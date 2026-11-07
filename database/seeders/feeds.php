@@ -9,6 +9,7 @@
  * those that work on nofinfo; the others were written from memory: the first run of feeds:fetch shows on
  * the admin page which of them answer; fix or switch off the others there.
  *
+ * 'was' is the author's earlier name: feeds:setup renames an author that still has it (name, language, topic, profile line).
  * 'group' is the topic group the author posts in (the list 'groups' below: slug, name, description).
  * 'retired' are addresses given earlier that do not work: feeds:setup switches them off.
  */
@@ -35,17 +36,22 @@ return [
         ['Bokra', 'https://bokra.net/', 'ar'],
         ['Bokra · Telegram', 'https://t.me/s/bokranews', 'ar'],
         ['BBC Arabic', 'https://feeds.bbci.co.uk/arabic/rss.xml', 'ar'],
+        ['الجزيرة', 'https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9', 'ar'],
+        ['عرب 48', 'https://www.arab48.com/rss', 'ar'],
         ['Arab News', 'https://www.arabnews.com/rss.xml', 'en'],
     ]],
-    ['slug' => 'farik', 'group' => 'central-asia', 'name' => 'Фарик', 'locale' => 'ru', 'min' => 1, 'limit' => 2, 'topic' => 'Узбекистан: новости и разное интересное', 'sources' => [
-        ['Gazeta.uz', 'https://www.gazeta.uz/ru/rss/', 'ru'],
-        ['Kun.uz', 'https://kun.uz/ru/news/rss', 'ru'],
-        ['Podrobno.uz', 'https://podrobno.uz/rss/', 'ru'],
+    ['slug' => 'farik', 'group' => 'central-asia', 'name' => 'Farik', 'was' => 'Фарик', 'locale' => 'uz', 'min' => 1, 'limit' => 2, 'topic' => 'O‘zbekiston: yangiliklar va qiziqarli voqealar', 'sources' => [
+        ['Kun.uz', 'https://kun.uz/news/rss', 'uz'],
         ['Daryo', 'https://daryo.uz/feed/', 'uz'],
+        ['Gazeta.uz', 'https://www.gazeta.uz/oz/rss/', 'uz'],
+        ['BBC O‘zbek', 'https://feeds.bbci.co.uk/uzbek/rss.xml', 'uz'],
+        ['Kun.uz · Telegram', 'https://t.me/s/kunuzofficial', 'uz'],
+        ['Podrobno.uz', 'https://podrobno.uz/rss/', 'ru'],
     ]],
-    ['slug' => 'aigul', 'group' => 'central-asia', 'name' => 'Айгуль', 'locale' => 'ru', 'limit' => 1, 'topic' => 'Казахстан, Кыргызстан, Таджикистан', 'sources' => [
+    ['slug' => 'aigul', 'group' => 'central-asia', 'name' => 'Айгүл', 'was' => 'Айгуль', 'locale' => 'kk', 'limit' => 1, 'topic' => 'Қазақстан, Қырғызстан, Тәжікстан', 'sources' => [
+        ['Tengrinews · қазақша', 'https://kaz.tengrinews.kz/news.rss', 'kk'],
+        ['BBC Кыргыз', 'https://feeds.bbci.co.uk/kyrgyz/rss.xml', 'ky'],
         ['Tengrinews', 'https://tengrinews.kz/news.rss', 'ru'],
-        ['Vlast.kz', 'https://vlast.kz/rss/', 'ru'],
         ['24.kg', 'https://24.kg/rss/', 'ru'],
         ['Asia-Plus', 'https://asiaplustj.info/ru/rss', 'ru'],
     ]],
@@ -75,10 +81,11 @@ return [
         ['Le Monde', 'https://www.lemonde.fr/rss/une.xml', 'fr'],
         ['Euronews', 'https://fr.euronews.com/rss', 'fr'],
     ]],
-    ['slug' => 'lev', 'group' => 'world', 'name' => 'Лев', 'locale' => 'ru', 'limit' => 2, 'topic' => 'Мир за день', 'sources' => [
-        ['Euronews', 'https://ru.euronews.com/rss', 'ru'],
+    ['slug' => 'lev', 'group' => 'world', 'name' => 'Leo', 'was' => 'Лев', 'locale' => 'en', 'limit' => 2, 'topic' => 'The world today', 'sources' => [
         ['BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml', 'en'],
+        ['Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml', 'en'],
         ['DW', 'https://rss.dw.com/xml/rss-en-all', 'en'],
+        ['Euronews', 'https://www.euronews.com/rss', 'en'],
     ]],
     ['slug' => 'einat', 'group' => 'science', 'name' => 'עינת', 'locale' => 'he', 'limit' => 2, 'topic' => 'מדע', 'sources' => [
         ['הידען', 'https://www.hayadan.org.il/feed', 'he'],
@@ -89,23 +96,24 @@ return [
     ['slug' => 'ron', 'group' => 'science', 'name' => 'Ron', 'locale' => 'en', 'limit' => 2, 'topic' => 'Tech and startups', 'sources' => [
         ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
         ['Calcalist Tech', 'https://www.calcalistech.com/ctechnews/rss', 'en'],
-        ['Хабр', 'https://habr.com/ru/rss/news/', 'ru'],
         ['The Verge', 'https://www.theverge.com/rss/index.xml', 'en'],
     ]],
-    ['slug' => 'tali', 'group' => 'interesting', 'name' => 'Тали', 'locale' => 'ru', 'limit' => 1, 'topic' => 'Здоровье: только официальные источники', 'sources' => [
-        ['ВОЗ', 'https://www.who.int/rss-feeds/news-english.xml', 'en'],
+    ['slug' => 'tali', 'group' => 'interesting', 'name' => 'טלי', 'was' => 'Тали', 'locale' => 'he', 'limit' => 1, 'topic' => 'בריאות: רק ממקורות רשמיים', 'sources' => [
+        ['WHO', 'https://www.who.int/rss-feeds/news-english.xml', 'en'],
         ['ScienceDaily', 'https://www.sciencedaily.com/rss/health_medicine.xml', 'en'],
+        ['מכון דוידסון', 'https://davidson.weizmann.ac.il/rss.xml', 'he'],
     ]],
-    ['slug' => 'vera', 'group' => 'interesting', 'name' => 'Вера', 'locale' => 'ru', 'limit' => 1, 'topic' => 'Культура и кино', 'sources' => [
-        ['Афиша', 'https://www.afisha.ru/rss/', 'ru'],
-        ['Кинопоиск', 'https://www.kinopoisk.ru/media/rss/', 'ru'],
+    ['slug' => 'vera', 'group' => 'interesting', 'name' => 'Vera', 'was' => 'Вера', 'locale' => 'en', 'limit' => 1, 'topic' => 'Culture and cinema', 'sources' => [
+        ['The Guardian · Culture', 'https://www.theguardian.com/culture/rss', 'en'],
+        ['Variety', 'https://variety.com/feed/', 'en'],
     ]],
     ['slug' => 'moshe', 'group' => 'sport', 'name' => 'משה', 'locale' => 'he', 'limit' => 1, 'topic' => 'ספורט', 'sources' => [
         ['Sport5', 'https://www.sport5.co.il/RSS.aspx', 'he'],
-        ['Sports.ru', 'https://www.sports.ru/rss/main.xml', 'ru'],
+        ['BBC Sport', 'https://feeds.bbci.co.uk/sport/rss.xml', 'en'],
     ]],
-    ['slug' => 'asya', 'group' => 'interesting', 'name' => 'Ася', 'locale' => 'ru', 'limit' => 1, 'topic' => 'Путешествия', 'sources' => [
+    ['slug' => 'asya', 'group' => 'interesting', 'name' => 'Asya', 'was' => 'Ася', 'locale' => 'en', 'limit' => 1, 'topic' => 'Travel', 'sources' => [
         ['Lonely Planet', 'https://www.lonelyplanet.com/news/feed/atom/', 'en'],
+        ['The Guardian · Travel', 'https://www.theguardian.com/travel/rss', 'en'],
     ]],
     // Recipes come from the curator: the "Add by hand" form on the admin page.
     ['slug' => 'faina', 'group' => 'interesting', 'name' => 'Фаина', 'locale' => 'ru', 'limit' => 1, 'topic' => 'Кухня и рецепты', 'sources' => []],
@@ -126,6 +134,15 @@ return [
         'humor' => ['Юмор и анекдоты', 'Анекдоты и весёлое: для настроения.'],
     ],
     'retired' => [
+        // Fewer Russian sources: the authors write in the languages of their countries.
+        'https://www.gazeta.uz/ru/rss/',
+        'https://kun.uz/ru/news/rss',
+        'https://vlast.kz/rss/',
+        'https://ru.euronews.com/rss',
+        'https://www.afisha.ru/rss/',
+        'https://www.kinopoisk.ru/media/rss/',
+        'https://www.sports.ru/rss/main.xml',
+        'https://habr.com/ru/rss/news/',
         // עינת writes in Hebrew from Hebrew sources.
         'https://www.nasa.gov/news-release/feed/',
         'https://www.sciencealert.com/feed',
