@@ -15,7 +15,7 @@ class ClubActivity extends Notification
         'post_liked', 'post_commented', 'comment_replied', 'comment_also', 'photo_liked', 'video_liked',
         'friend_request', 'friend_accepted', 'event_going', 'event_interested',
         'group_offer_admin', 'group_offer_moderator', 'group_offer_owner', 'group_offer_accepted', 'group_invite',
-        'post_shared', 'wall_post',
+        'post_shared', 'wall_post', 'level_up', 'badge_given',
     ];
 
     public function __construct(
@@ -25,6 +25,7 @@ class ClubActivity extends Notification
         public string $key,
         public ?string $excerpt = null,
         public ?string $reaction = null,
+        public ?string $badge = null,
     ) {}
 
     public function via(object $notifiable): array
@@ -41,6 +42,8 @@ class ClubActivity extends Notification
             'excerpt' => $this->excerpt,
             // Which face was left on a like, for the badge on the picture.
             'reaction' => $this->reaction,
+            // The level reached or the badge given, named in the reader's language by the page.
+            'badge' => $this->badge,
             'actor' => ['id' => $this->actor->id, 'name' => $this->actor->name, 'avatar' => $this->actor->avatar],
         ];
     }
@@ -60,6 +63,20 @@ class ClubActivity extends Notification
         $url = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
         $to->unreadNotifications()->where('data->key', $key)->delete();
         $to->notify(new self($kind, $actor, $url, $key, $excerpt === null ? null : mb_strimwidth(trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace('<br>', ' ', $excerpt))))), 0, 90, '…'), $reaction));
+    }
+
+    /**
+     * Tells a member they reached a level or were given a badge. Unlike send(), it also reaches
+     * the member when the actor is themselves: a level is reached by no one else.
+     */
+    public static function award(User $to, string $kind, string $badge, User $actor): void
+    {
+        if ($to->blocked) {
+            return;
+        }
+        $key = "$kind:$badge:{$to->id}";
+        $to->unreadNotifications()->where('data->key', $key)->delete();
+        $to->notify(new self($kind, $actor, '/people/'.$to->id, $key, null, null, $badge));
     }
 
     /** Another face picked on a like shows on the notice that is still unread. */

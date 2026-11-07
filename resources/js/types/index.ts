@@ -61,6 +61,8 @@ export interface Author {
     id: number;
     name: string;
     avatar: string | null;
+    /** The badge beside the name: a special one given by the club, or the level earned. */
+    badge?: string | null;
 }
 
 export interface TranslationInfo {
@@ -244,6 +246,8 @@ export interface Person {
     avatar: string | null;
     /** Seen on the site in the last few minutes. */
     online?: boolean;
+    /** The badge beside the name: a special one given by the club, or the level earned. */
+    badge?: string | null;
 }
 
 export interface Paginated<T> {

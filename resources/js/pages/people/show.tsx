@@ -7,6 +7,7 @@ import { PostList } from '@/components/post-list';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
+import { UserBadge } from '@/components/user-badge';
 import { VideoGrid } from '@/components/video-grid';
 import ClubLayout from '@/layouts/club-layout';
 import { albumName } from '@/lib/albums';
@@ -43,6 +44,9 @@ interface Profile {
     id: number;
     name: string;
     username: string | null;
+    /** The level earned by posting, and the special badges the club gave. */
+    level: string;
+    badges: string[];
     avatar: string | null;
     cover: string | null;
     status: string | null;
@@ -147,6 +151,12 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                             <h1 dir="auto" className="text-2xl font-bold sm:text-3xl">
                                 {profile.name}
                             </h1>
+                            <div className="my-1 flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                                <UserBadge badge={profile.level} />
+                                {profile.badges.map((b) => (
+                                    <UserBadge key={b} badge={b} />
+                                ))}
+                            </div>
                             {profile.friends_count !== null && (
                                 <Link href={tabHref('friends')} className="text-muted-foreground text-[0.9375rem] font-semibold hover:underline">
                                     {t(':count friends', { count: profile.friends_count })}

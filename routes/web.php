@@ -222,6 +222,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('users', [Admin\UserController::class, 'destroy'])->name('users.destroy');
     Route::delete('banned-emails/{id}', [Admin\UserController::class, 'unban'])->whereNumber('id')->name('users.unban');
     Route::patch('users/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+    Route::put('users/{user}/badges', [Admin\UserController::class, 'badge'])->name('users.badge');
+    Route::get('badges', [Admin\BadgeController::class, 'index'])->name('badges.index');
+    Route::put('badges', [Admin\BadgeController::class, 'update'])->name('badges.update');
     Route::post('users/{user}/purge', [Admin\UserController::class, 'purge'])->name('users.purge');
     Route::get('logins', [Admin\LoginController::class, 'index'])->name('logins.index');
     Route::get('posts', [Admin\PostController::class, 'index'])->name('posts.index');
