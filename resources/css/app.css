@@ -21,7 +21,8 @@
 
 @theme {
     --font-sans:
-        'Rubik Variable', 'Rubik', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        'Rubik Variable', 'Rubik', 'Noto Sans Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
 
     /* anahnu.club brand: teal from the logo, its navy shadow, the indigo header and the green call to action */
     --color-brand: #117892;
@@ -286,14 +287,19 @@
         @apply border-border;
     }
 
-    /* Phones: the page does not pinch-zoom or slide sideways; it only scrolls up and down.
-       "clip" (not "hidden") keeps sticky headers working. */
+    /* Phones: the page does not pinch-zoom or slide sideways; it only scrolls up and down. */
     html,
     body {
-        overflow-x: clip;
         touch-action: pan-x pan-y;
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
+    }
+
+    /* On body only, never on html: the browser then moves it to the window itself. On html as well, body
+       became its own scroll box whenever a menu or dialog locked scrolling (overflow: hidden on body), and the
+       sticky side columns of Stream jumped to the top of the page, leaving the menu floating over a blank screen. */
+    body {
+        overflow-x: clip;
     }
 
     body {

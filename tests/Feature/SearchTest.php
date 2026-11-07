@@ -55,4 +55,24 @@ class SearchTest extends TestCase
 
         $this->actingAs($user)->get('/search?q=privacy')->assertInertia(fn ($page) => $page->where('counts.pages', fn ($n) => $n >= 1));
     }
+
+    public function test_search_ignores_case_and_finds_a_word_anywhere(): void
+    {
+        $user = User::factory()->create(['name' => 'Searcher']);
+        foreach (['Интересные новости', 'Новости Израиля', 'Новости с полей', 'Погода'] as $i => $name) {
+            Group::create(['name' => $name, 'slug' => 'g'.$i, 'owner_id' => $user->id]);
+        }
+        Post::create(['user_id' => $user->id, 'body' => 'Свежие НОВОСТИ дня']);
+        Post::create(['user_id' => $user->id, 'body' => 'Сводка новостей за неделю']);
+
+        foreach (['Новости', 'новости', 'НОВОСТИ', 'новост'] as $q) {
+            $this->actingAs($user)->get('/search?q='.urlencode($q))->assertInertia(fn ($page) => $page
+                ->where('counts.groups', 3)
+                ->where('counts.posts', 2)
+            );
+        }
+
+        // Every word counts, in any order.
+        $this->actingAs($user)->get('/search?q='.urlencode('израиля новости'))->assertInertia(fn ($page) => $page->where('counts.groups', 1));
+    }
 }
