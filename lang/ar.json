@@ -932,5 +932,11 @@
     "Who sent it: :url": "من أرسل: :url",
     "Times today: :times": "أوقات اليوم: :times",
     "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net": "عنوان RSS، قناة تيليغرام https://t.me/s/… أو panet.com / bokra.net",
-    "Group: :name": "المجموعة: :name"
+    "Group: :name": "المجموعة: :name",
+    "In queue": "في الدور",
+    "Club authors post by themselves from :from:00 to :to:00, Israel time: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.": "ينشر كتّاب النادي بأنفسهم من :from:00 حتى :to:00 بتوقيت إسرائيل: حتى ثلاثة أخبار جديدة من كل مصدر في كل مرة، ويختار كل كاتب الخبر الرئيسي في أوقاته. ما لم يُنشر خلال 12 ساعة يخرج من الدور.",
+    "By name": "حسب الاسم",
+    "Newest first": "الأحدث أولاً",
+    "Oldest first": "الأقدم أولاً",
+    "Sort:": "الترتيب:"
 }

@@ -96,7 +96,8 @@ class FeedsTest extends TestCase
         $this->assertSame(1, app(FeedCollector::class)->collect($source));
         $this->assertSame(0, app(FeedCollector::class)->collect($source), 'read again, nothing new');
 
-        $this->assertSame(['Новое метро'], FeedItem::where('status', 'new')->pluck('title')->all());
+        // Straight to the author's queue: the authors post by themselves.
+        $this->assertSame(['Новое метро'], FeedItem::where('status', 'approved')->pluck('title')->all());
         $this->assertSame('stop word: казино', FeedItem::where('status', 'skipped')->value('reason'));
         $this->assertNull($source->fresh()->error);
 
@@ -232,7 +233,7 @@ class FeedsTest extends TestCase
         $channel = $this->author();
         $item = FeedItem::create(['feed_channel_id' => $channel->id, 'title' => 'Новость', 'status' => 'new']);
 
-        $this->actingAs($admin)->get('/admin/feeds')->assertInertia(fn ($page) => $page
+        $this->actingAs($admin)->get('/admin/feeds?status=new')->assertInertia(fn ($page) => $page
             ->component('admin/feeds')->where('items.data.0.id', $item->id)->where('channels.0.waiting', 1));
 
         $this->post('/admin/feeds/items/status', ['ids' => [$item->id], 'status' => 'approved']);
@@ -362,5 +363,42 @@ class FeedsTest extends TestCase
         $this->assertSame('مقدمة الخبر', $items[0]['summary']);
         $this->assertSame('https://panet.com/p.jpg', $items[0]['image']);
         $this->assertSame('https://panet.com/story/123', $items[0]['url']);
+    }
+
+    public function test_three_newest_a_source_each_run_and_the_main_news_goes_first()
+    {
+        $channel = $this->author();
+        $source = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'Gazeta.uz', 'url' => 'https://gazeta.uz/rss']);
+        Http::fake(['gazeta.uz/*' => Http::response($this->rss(collect(range(1, 6))->map(fn ($i) => [
+            'title' => "Новость номер $i", 'link' => "https://gazeta.uz/$i", 'date' => now()->subMinutes(10 * $i)->toRssString(),
+        ])->all()))]);
+
+        $this->assertSame(3, app(FeedCollector::class)->collect($source));
+        $this->assertEqualsCanonicalizing(['https://gazeta.uz/1', 'https://gazeta.uz/2', 'https://gazeta.uz/3'], FeedItem::pluck('url')->all());
+
+        // A fuller item with a picture beats a slightly newer bare one; a curator's own item goes before both.
+        FeedItem::where('url', 'https://gazeta.uz/2')->update(['image' => 'https://img/2.jpg', 'summary' => str_repeat('Подробно. ', 15)]);
+        $dayStart = now()->startOfDay();
+        $this->assertSame('https://gazeta.uz/2', FeedPublisher::choose($channel, $dayStart)->url);
+        FeedItem::create(['feed_channel_id' => $channel->id, 'summary' => 'Анекдот', 'status' => 'approved']);
+        $this->assertSame('Анекдот', FeedPublisher::choose($channel, $dayStart)->summary);
+    }
+
+    public function test_news_not_posted_within_12_hours_leaves_the_queue_and_later_is_deleted()
+    {
+        $channel = $this->author();
+        $source = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'Gazeta.uz', 'url' => 'https://gazeta.uz/rss']);
+        $old = FeedItem::create(['feed_channel_id' => $channel->id, 'feed_source_id' => $source->id, 'title' => 'Вчерашнее', 'status' => 'approved', 'published_at' => now()->subHours(13)]);
+        $fresh = FeedItem::create(['feed_channel_id' => $channel->id, 'feed_source_id' => $source->id, 'title' => 'Свежее', 'status' => 'approved', 'published_at' => now()->subHours(2)]);
+        $manual = FeedItem::create(['feed_channel_id' => $channel->id, 'summary' => 'Анекдот', 'status' => 'approved', 'published_at' => now()->subDay()]);
+
+        FeedPublisher::expire();
+        $this->assertSame('skipped', $old->fresh()->status);
+        $this->assertSame('approved', $fresh->fresh()->status);
+        $this->assertSame('approved', $manual->fresh()->status);
+
+        Carbon::setTestNow(now()->addDays(3));
+        FeedPublisher::expire();
+        $this->assertNull($old->fresh());
     }
 }
