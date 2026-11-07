@@ -282,11 +282,26 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return DB::table('message_blocks')->where('user_id', $this->id)->where('blocked_id', $other->id)->exists();
     }
 
+    public function feedChannel(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(FeedChannel::class);
+    }
+
+    /** An account the club runs (Фарик, Али…), posting news of its country or topic from checked sources. */
+    public function isClubAuthor(): bool
+    {
+        return FeedChannel::authorIds()->contains($this->id);
+    }
+
     /** Whether this member may write to $other: no block, and $other takes messages from them. */
     public function canMessage(User $other): bool
     {
         if ($this->is($other)) {
             return true;
+        }
+        // Nobody signs in as a club author to read messages; its curator answers in the comments.
+        if ($other->isClubAuthor() || $this->isClubAuthor()) {
+            return false;
         }
 
         return ! $other->blocked

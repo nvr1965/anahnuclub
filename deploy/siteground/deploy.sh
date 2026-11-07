@@ -100,6 +100,8 @@ if [ "${IMPORT:-}" = 1 ]; then
     echo "==> Import from the old site"
     "$PHP" artisan import:joomla ${JOOMLA_FILES:+--files="$JOOMLA_FILES"}
 fi
+# The club's authors (Фарик, Али…) and their sources: adds what is missing, keeps the admin's changes.
+"$PHP" artisan feeds:setup
 # Queues link cards still missing; the cron queue worker reads the pages a few at a time.
 "$PHP" artisan posts:link-previews
 

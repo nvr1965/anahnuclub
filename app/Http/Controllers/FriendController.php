@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\FeedChannel;
 use App\Models\FriendList;
 use App\Models\User;
 use App\Notifications\ClubActivity;
+use App\Notifications\ClubAuthorInvited;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -200,6 +202,8 @@ class FriendController extends Controller
             ->merge(DB::table('friendships')->where('friend_id', $me->id)->pluck('user_id'))
             ->merge($me->hiddenUserIds())
             ->merge(DB::table('friend_suggestion_dismissals')->where('user_id', $me->id)->pluck('dismissed_id'))
+            // Club authors are followed through their posts, not befriended.
+            ->merge(FeedChannel::authorIds())
             ->push($me->id)
             ->unique()->values();
 
@@ -313,6 +317,10 @@ class FriendController extends Controller
             case 'none':
                 DB::table('friendships')->insert(['user_id' => $me->id, 'friend_id' => $user->id, 'accepted' => false, 'created_at' => now(), 'updated_at' => now()]);
                 ClubActivity::send($user, 'friend_request', $me, route('friends.index'), 'user:'.$user->id);
+                // Nobody signs in as a club author: its curator gets a letter and answers on the admin page.
+                if ($user->isClubAuthor()) {
+                    ClubAuthorInvited::send($user, $me);
+                }
                 break;
             case 'received':
                 DB::table('friendships')->where('user_id', $user->id)->where('friend_id', $me->id)->update(['accepted' => true, 'updated_at' => now()]);

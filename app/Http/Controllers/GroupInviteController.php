@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\GroupInvitation;
 use App\Models\User;
 use App\Notifications\ClubActivity;
+use App\Notifications\ClubAuthorInvited;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -56,6 +57,9 @@ class GroupInviteController extends Controller
             ->each(function (User $u) use ($group, $me) {
                 $group->invitations()->updateOrCreate(['user_id' => $u->id], ['from_id' => $me->id]);
                 ClubActivity::send($u, 'group_invite', $me, route('groups.show', $group), 'group:'.$group->id, $group->name);
+                if ($u->isClubAuthor()) {
+                    ClubAuthorInvited::send($u, $me, $group);
+                }
             });
 
         return back();

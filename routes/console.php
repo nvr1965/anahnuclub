@@ -38,3 +38,6 @@ Schedule::command('model:prune', ['--model' => [LoginLog::class]])->daily();
 Schedule::command('model:prune', ['--model' => [Moment::class]])->hourly()->name('prune-moments')->withoutOverlapping(10);
 // Days since joining count towards a level: once a night every member's level is counted again.
 Schedule::call(fn () => Badges::refreshAll())->dailyAt('03:30')->name('badge-levels')->withoutOverlapping(30);
+// The club's authors: their sources are read every 20 minutes, and their posts go out one at a time over the day.
+Schedule::command('feeds:fetch')->cron('*/20 * * * *')->withoutOverlapping(15);
+Schedule::command('feeds:publish')->everyFiveMinutes()->withoutOverlapping(5);

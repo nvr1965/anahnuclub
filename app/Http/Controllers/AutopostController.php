@@ -2,15 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\FetchLinkPreview;
-use App\Jobs\SubmitToIndexNow;
-use App\Jobs\TranslateContent;
-use App\Models\LinkPreview;
 use App\Models\Post;
 use App\Models\User;
-use App\Support\Background;
-use App\Support\Html;
-use App\Translation\LanguageGuesser;
+use App\Support\NewsPost;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -46,39 +40,11 @@ class AutopostController extends Controller
             return response()->json(['id' => $existing->id, 'url' => route('posts.show', $existing), 'duplicate' => true]);
         }
 
-        // The card as the site describes its own page: stored first, so nothing has to read the page.
-        if (! empty($data['card_title']) || ! empty($data['card_image'])) {
-            LinkPreview::updateOrCreate(['url' => $data['url']], [
-                'title' => $data['card_title'] ?? null,
-                'description' => $data['card_description'] ?? null,
-                'image' => $data['card_image'] ?? null,
-                'site_name' => parse_url($data['url'], PHP_URL_HOST),
-            ]);
-        }
-
-        $text = trim($data['text'])."\n\n".$data['url'];
-        $groupId = config('services.autopost.group') ?: null;
-        $post = Post::create([
-            'user_id' => $user->id,
-            'group_id' => $groupId,
-            'type' => 'status',
-            'body' => Html::fromPlainText($text),
-            'locale' => LanguageGuesser::guess($text) ?? $user->locale,
-        ]);
-        if (! $groupId) {
-            $post->update(['audience' => 'public']);
-        }
-        // The card is always for the link sent, even when the text itself carries another one
-        // (news descriptions often end with the source's address).
-        if ($post->link_url !== $data['url']) {
-            $post->forceFill(['link_url' => $data['url']])->saveQuietly();
-            if (! LinkPreview::where('url', $data['url'])->exists()) {
-                Background::run(new FetchLinkPreview($data['url']));
-            }
-        }
-
-        Background::run(new TranslateContent($post));
-        Background::run(new SubmitToIndexNow($post));
+        $post = NewsPost::publish($user, $data['text'], $data['url'], [
+            'title' => $data['card_title'] ?? null,
+            'description' => $data['card_description'] ?? null,
+            'image' => $data['card_image'] ?? null,
+        ], config('services.autopost.group') ?: null);
 
         return response()->json(['id' => $post->id, 'url' => route('posts.show', $post)], 201);
     }
