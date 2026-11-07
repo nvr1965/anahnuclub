@@ -811,5 +811,15 @@
     "Chrome or Edge: click the install icon at the end of the address bar, or open the browser menu and choose “Install”.": "Chrome או Edge: לחצו על סמל ההתקנה בסוף שורת הכתובת, או פתחו את תפריט הדפדפן ובחרו \"התקנה\".",
     "Safari on Mac: File menu, then “Add to Dock”.": "Safari ב-Mac: תפריט \"קובץ\" ואז \"הוספה ל-Dock\".",
     "Firefox cannot install sites as apps: open the club in Chrome or Edge.": "Firefox לא מתקין אתרים כאפליקציות: פתחו את המועדון ב-Chrome או ב-Edge.",
-    "The club will open from its own icon, in a window of its own, and can send notifications.": "המועדון ייפתח מהסמל שלו, בחלון משלו, ויוכל לשלוח התראות."
+    "The club will open from its own icon, in a window of its own, and can send notifications.": "המועדון ייפתח מהסמל שלו, בחלון משלו, ויוכל לשלוח התראות.",
+    "Create a moment": "יצירת רגע",
+    "Moment": "רגע",
+    "Event": "אירוע",
+    "Pinned": "מוצמד",
+    "Pin to the top of the feed": "הצמדה לראש הפיד",
+    "Unpin from the feed": "ביטול ההצמדה בפיד",
+    "Pin to your profile": "הצמדה לפרופיל שלך",
+    "Unpin from your profile": "ביטול ההצמדה בפרופיל",
+    "Pin in the group": "הצמדה בקבוצה",
+    "Unpin from the group": "ביטול ההצמדה בקבוצה"
 }

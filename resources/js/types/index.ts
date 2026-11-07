@@ -97,6 +97,10 @@ export interface Post extends Translatable {
     comments: Comment[];
     url: string;
     can_delete: boolean;
+    /** Pinned at the top of the page it is shown on (the feed, the author's profile, the group). */
+    pinned: boolean;
+    /** Where this reader may pin the post, and whether it is pinned there now. */
+    pins: Partial<Record<PinPlace, boolean>> | null;
     audience: Audience;
     audience_ids: number[];
     editable_text: string | null;
@@ -154,8 +158,18 @@ export interface VideoItem {
 }
 
 /** The strip of moments above the feed. */
+/** The newest moment of a person, on their card in the strip above the feed. */
+export type PinPlace = 'feed' | 'profile' | 'group';
+
+export interface MomentCover {
+    kind: 'photo' | 'video' | 'text';
+    thumb: string | null;
+    text: string | null;
+    background: string | null;
+}
+
 export interface MomentTray {
-    people: { user: Person; count: number; unseen: boolean }[];
+    people: { user: Person; count: number; unseen: boolean; cover: MomentCover }[];
     lists: { id: number; name: string }[];
     /** How many moments of the viewer's own are up now. */
     mine: number;

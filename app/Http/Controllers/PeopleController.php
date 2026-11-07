@@ -102,6 +102,7 @@ class PeopleController extends Controller
                 ->where('user_id', $user->id)
                 // Posts in private groups stay inside those groups.
                 ->when(! $me, fn (Builder $q) => $q->whereDoesntHave('group', fn (Builder $g) => $g->where('is_private', true)))
+                ->pinnedFirst('profile')
                 ->simplePaginate(20)
                 ->withQueryString();
         }

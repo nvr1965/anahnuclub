@@ -1,6 +1,7 @@
 import { EventForm } from '@/components/event-form';
 import { EventCard } from '@/components/post-media';
 import AppLayout from '@/layouts/app-layout';
+import { useCreateRequest } from '@/lib/create';
 import { useT } from '@/lib/i18n';
 import { type EventItem } from '@/types';
 import { Head } from '@inertiajs/react';
@@ -16,6 +17,7 @@ interface Props {
 export default function Events({ upcoming, past, groups }: Props) {
     const t = useT();
     const [creating, setCreating] = useState(false);
+    useCreateRequest('event', () => setCreating(true));
     const [showPast, setShowPast] = useState(false);
 
     return (

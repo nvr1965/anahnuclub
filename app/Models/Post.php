@@ -24,6 +24,11 @@ class Post extends Model
 
     public const AUDIENCES = ['public', 'friends', 'except', 'specific', 'only_me'];
 
+    /** Where a post can be pinned, and the column that keeps when it was pinned there. */
+    public const PIN_PLACES = ['feed' => 'pinned_at', 'profile' => 'profile_pinned_at', 'group' => 'group_pinned_at'];
+
+    protected $casts = ['pinned_at' => 'datetime', 'profile_pinned_at' => 'datetime', 'group_pinned_at' => 'datetime'];
+
     protected static function booted(): void
     {
         // The first link in the text becomes a card; its page is read once, in the background.
@@ -41,6 +46,32 @@ class Post extends Model
                     : Background::run(new FetchLinkPreview($post->link_url));
             }
         });
+    }
+
+    /** Pinned posts of the place first, the last pinned on top, then the rest newest first. */
+    public function scopePinnedFirst(Builder $query, string $place): Builder
+    {
+        $column = 'posts.'.self::PIN_PLACES[$place];
+
+        return $query->reorder()->orderByRaw("$column is null")->orderByDesc($column)->latest('posts.created_at')->orderByDesc('posts.id');
+    }
+
+    /**
+     * Who may pin the post where: the main administrator in everyone's feed, the author on their profile,
+     * the owner and admins of its group (and the site's administrators) in the group.
+     */
+    public function canPin(?User $user, string $place): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return match ($place) {
+            'feed' => $user->isSuperAdmin(),
+            'profile' => $this->user_id === $user->id,
+            'group' => $this->group_id !== null && ($user->is_admin || in_array($this->group?->roleOf($user), ['owner', 'admin'], true)),
+            default => false,
+        };
     }
 
     public function linkPreview(): BelongsTo

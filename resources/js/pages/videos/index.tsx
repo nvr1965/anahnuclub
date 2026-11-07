@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VideoGrid } from '@/components/video-grid';
 import AppLayout from '@/layouts/app-layout';
+import { useCreateRequest } from '@/lib/create';
 import { useT } from '@/lib/i18n';
 import { videoFrame } from '@/lib/shrink-image';
 import { type Paginated, type Person, type VideoItem } from '@/types';
@@ -16,6 +17,7 @@ interface Props {
 export default function Videos({ videos, author }: Props) {
     const t = useT();
     const [adding, setAdding] = useState(() => new URLSearchParams(window.location.search).has('add'));
+    useCreateRequest('video', () => setAdding(true));
 
     return (
         <AppLayout>

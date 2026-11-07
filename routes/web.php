@@ -111,6 +111,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::post('posts/{post}/pin/{place}', [PostController::class, 'pin'])->whereIn('place', ['feed', 'profile', 'group'])->name('posts.pin');
 
     Route::get('people', [PeopleController::class, 'index'])->name('people.index');
     Route::get('people/{user}', [PeopleController::class, 'show'])->name('people.show');

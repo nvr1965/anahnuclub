@@ -23,6 +23,8 @@ class FeedController extends Controller
     {
         $posts = self::postQuery($request)
             ->whereDoesntHave('group', fn (Builder $q) => $q->where('is_private', true))
+            // What the main administrator pinned stays on top for everyone.
+            ->pinnedFirst('feed')
             // Only "Newer / Older" links: counting every post the reader may see took longer than the page itself.
             ->simplePaginate(20);
 
@@ -48,7 +50,7 @@ class FeedController extends Controller
             return to_route('dashboard');
         }
 
-        $posts = self::guestPosts($request)->limit(10)->get();
+        $posts = self::guestPosts($request)->pinnedFirst('feed')->limit(10)->get();
 
         return Inertia::render('welcome', [
             'posts' => PostResource::collection($posts),

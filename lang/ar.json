@@ -811,5 +811,15 @@
     "Chrome or Edge: click the install icon at the end of the address bar, or open the browser menu and choose “Install”.": "Chrome أو Edge: انقر على أيقونة التثبيت في نهاية شريط العنوان، أو افتح قائمة المتصفح واختر \"تثبيت\".",
     "Safari on Mac: File menu, then “Add to Dock”.": "Safari على Mac: قائمة \"ملف\" ثم \"إضافة إلى Dock\".",
     "Firefox cannot install sites as apps: open the club in Chrome or Edge.": "لا يثبّت Firefox المواقع كتطبيقات: افتح النادي في Chrome أو Edge.",
-    "The club will open from its own icon, in a window of its own, and can send notifications.": "سيفتح النادي من أيقونته الخاصة، في نافذة مستقلة، ويمكنه إرسال الإشعارات."
+    "The club will open from its own icon, in a window of its own, and can send notifications.": "سيفتح النادي من أيقونته الخاصة، في نافذة مستقلة، ويمكنه إرسال الإشعارات.",
+    "Create a moment": "أنشئ لحظة",
+    "Moment": "لحظة",
+    "Event": "فعالية",
+    "Pinned": "مثبّت",
+    "Pin to the top of the feed": "تثبيت أعلى الصفحة الرئيسية",
+    "Unpin from the feed": "إلغاء التثبيت من الصفحة الرئيسية",
+    "Pin to your profile": "تثبيت في ملفك الشخصي",
+    "Unpin from your profile": "إلغاء التثبيت من ملفك الشخصي",
+    "Pin in the group": "تثبيت في المجموعة",
+    "Unpin from the group": "إلغاء التثبيت من المجموعة"
 }

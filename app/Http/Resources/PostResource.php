@@ -49,6 +49,12 @@ class PostResource extends JsonResource
             'audience_ids' => $request->user()?->id === $this->user_id && in_array($this->audience, ['except', 'specific'], true)
                 ? $this->audienceUsers()->pluck('users.id')->all()
                 : [],
+            // Pinned at the top of the page it is shown on: the feed, the author's profile or the group.
+            'pinned' => ($place = self::place($request)) !== null && $this->{Post::PIN_PLACES[$place]} !== null,
+            // The places this reader may pin it to, and whether it is pinned there now.
+            'pins' => collect(array_keys(Post::PIN_PLACES))
+                ->filter(fn ($p) => $this->resource->canPin($request->user(), $p))
+                ->mapWithKeys(fn ($p) => [$p => $this->{Post::PIN_PLACES[$p]} !== null])->all() ?: null,
             'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin || ($this->group_id && $this->group?->canModerate($request->user()))),
             // The text as the author typed it, for editing (only posts written here, not imported HTML).
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
@@ -67,5 +73,16 @@ class PostResource extends JsonResource
                 ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)
                 : null,
         ];
+    }
+
+    /** Which place's pins the page shows on top. */
+    private static function place(Request $request): ?string
+    {
+        return match (true) {
+            $request->routeIs('dashboard', 'home') => 'feed',
+            $request->routeIs('people.show') => 'profile',
+            $request->routeIs('groups.show') => 'group',
+            default => null,
+        };
     }
 }
