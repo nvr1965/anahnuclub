@@ -81,10 +81,10 @@ return [
         ['DW', 'https://rss.dw.com/xml/rss-en-all', 'en'],
     ]],
     ['slug' => 'einat', 'group' => 'science', 'name' => 'עינת', 'locale' => 'he', 'limit' => 2, 'topic' => 'מדע', 'sources' => [
-        ['NASA', 'https://www.nasa.gov/news-release/feed/', 'en'],
-        ['ScienceAlert', 'https://www.sciencealert.com/feed', 'en'],
-        ['N+1', 'https://nplus1.ru/rss', 'ru'],
-        ['Nature', 'https://www.nature.com/nature.rss', 'en'],
+        ['הידען', 'https://www.hayadan.org.il/feed', 'he'],
+        ['זווית', 'https://www.zavit.org.il/feed/', 'he'],
+        ['מכון דוידסון', 'https://davidson.weizmann.ac.il/rss.xml', 'he'],
+        ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
     ]],
     ['slug' => 'ron', 'group' => 'science', 'name' => 'Ron', 'locale' => 'en', 'limit' => 2, 'topic' => 'Tech and startups', 'sources' => [
         ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
@@ -126,6 +126,11 @@ return [
         'humor' => ['Юмор и анекдоты', 'Анекдоты и весёлое: для настроения.'],
     ],
     'retired' => [
+        // עינת writes in Hebrew from Hebrew sources.
+        'https://www.nasa.gov/news-release/feed/',
+        'https://www.sciencealert.com/feed',
+        'https://nplus1.ru/rss',
+        'https://www.nature.com/nature.rss',
         'https://www.panet.co.il/rss/news',
         'https://www.bokra.net/rss.xml',
     ],

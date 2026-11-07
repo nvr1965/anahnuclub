@@ -121,7 +121,7 @@ class FeedReader
         return [
             'title' => mb_substr(self::plain($title), 0, 500),
             'url' => trim($url),
-            'summary' => self::excerpt($description) ?: null,
+            'summary' => self::excerpt(self::withoutBoilerplate($description)) ?: null,
             'image' => preg_match('#^https?://#i', $image) ? mb_substr($image, 0, 1000) : null,
             'published_at' => $published,
         ];
@@ -148,6 +148,21 @@ class FeedReader
         }
 
         return '';
+    }
+
+    /** The lines a site adds to every item of its feed: they say nothing about the news. */
+    public static function withoutBoilerplate(string $html): string
+    {
+        $text = self::plain($html);
+        foreach ([
+            '/\s*ScienceAlert stories are written, fact-checked.*$/su',
+            '/\s*The post .{1,300} appeared first on .*$/su',
+            '/\s*(Continue reading|Read more|Читать далее|Подробнее)\s*(…|\.\.\.)?\s*$/iu',
+        ] as $re) {
+            $text = preg_replace($re, '', $text);
+        }
+
+        return $text;
     }
 
     public static function plain(string $html): string

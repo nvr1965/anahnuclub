@@ -19,6 +19,9 @@ class FeedCollector
     /** New items taken from one source per run, the newest: the queue holds a choice, not the whole site. */
     public const PER_RUN = 3;
 
+    /** An author keeps only this many best news waiting; the rest leave the queue at once. */
+    public const QUEUE = 5;
+
     public const SAME_TITLE_HOURS = 48;
 
     public function __construct(private FeedReader $reader) {}
@@ -88,6 +91,21 @@ class FeedCollector
             $added += $reason ? 0 : 1;
         }
 
+        self::trim($channel);
+
         return $added;
+    }
+
+    /** Keeps the author's best few news from sources in its queue (FeedPublisher::points); hand-added ones always stay. */
+    public static function trim(\App\Models\FeedChannel $channel): void
+    {
+        $extra = FeedItem::where('feed_channel_id', $channel->id)->whereIn('status', ['new', 'approved'])
+            ->whereNotNull('feed_source_id')->with('source')->get()
+            ->sortByDesc(fn (FeedItem $i) => FeedPublisher::points($i))
+            ->slice(self::QUEUE)->pluck('id');
+        if ($extra->isNotEmpty()) {
+            // Kept hidden for two days only so the same story is not taken again.
+            FeedItem::whereIn('id', $extra)->update(['status' => 'skipped', 'reason' => 'stale']);
+        }
     }
 }
