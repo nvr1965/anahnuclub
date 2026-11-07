@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\FeedChannel;
 use App\Models\FeedSource;
+use App\Models\Group;
 use App\Models\User;
 use App\Support\Badges;
 use Illuminate\Console\Command;
@@ -32,7 +33,11 @@ class FeedsSetup extends Command
 
     public function handle(): int
     {
-        foreach (require database_path('seeders/feeds.php') as $author) {
+        $config = require database_path('seeders/feeds.php');
+        $retired = $config['retired'] ?? [];
+        $groups = $config['groups'] ?? [];
+        unset($config['retired'], $config['groups']);
+        foreach ($config as $author) {
             $user = User::firstWhere('email', $author['slug'].'@authors.anahnu.club');
             if (! $user) {
                 $user = User::forceCreate([
@@ -56,13 +61,47 @@ class FeedsSetup extends Command
                 'daily_min' => $author['min'] ?? null,
                 'daily_limit' => $author['limit'],
             ]);
+            if (! $channel->group_id && isset($author['group'], $groups[$author['group']])) {
+                $group = $this->topicGroup($author['group'], $groups[$author['group']], $user);
+                $channel->update(['group_id' => $group?->id]);
+            }
+            $group = $channel->group_id ? Group::find($channel->group_id) : null;
+            if ($group && ! $group->members()->whereKey($user->id)->exists()) {
+                $group->members()->attach($user->id, ['role' => 'admin', 'approved' => true]);
+            }
             foreach ($author['sources'] as [$name, $url, $locale]) {
                 FeedSource::firstOrCreate(['feed_channel_id' => $channel->id, 'url' => $url], ['name' => $name, 'locale' => $locale]);
             }
         }
+        // Addresses given earlier that never worked: off, so they do not fill the admin page with errors.
+        FeedSource::whereIn('url', $retired)->update(['active' => false]);
         $this->info(FeedChannel::count().' authors, '.FeedSource::count().' sources.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The topic group "Новости России", "Интересно"…: made once, by its first author, open to everyone.
+     * A group of a member that happens to have the same address is left alone; the author then posts in the feed.
+     */
+    private function topicGroup(string $slug, array $group, User $author): ?Group
+    {
+        $existing = Group::firstWhere('slug', $slug);
+        if ($existing) {
+            return FeedChannel::where('group_id', $existing->id)->exists() ? $existing : null;
+        }
+        [$name, $description] = $group;
+        $created = Group::create([
+            'owner_id' => $author->id,
+            'name' => $name,
+            'slug' => $slug,
+            'description' => $description,
+            'locale' => 'ru',
+        ]);
+        $created->members()->attach($author->id, ['role' => 'owner', 'approved' => true]);
+        $this->line('Group '.$name.' created.');
+
+        return $created;
     }
 
     private function freeUsername(string $slug): string

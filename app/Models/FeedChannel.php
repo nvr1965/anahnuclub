@@ -10,13 +10,19 @@ use Illuminate\Support\Collection;
 /** A club author: an account run by the club that posts news of one country or topic. */
 class FeedChannel extends Model
 {
-    protected $fillable = ['user_id', 'topic', 'daily_min', 'daily_limit', 'stop_words', 'auto_approve', 'paused'];
+    protected $fillable = ['user_id', 'group_id', 'topic', 'daily_min', 'daily_limit', 'stop_words', 'auto_approve', 'paused'];
 
     protected $casts = ['auto_approve' => 'boolean', 'paused' => 'boolean'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** The topic group the author posts in; without one, its posts go to the common feed. */
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
     }
 
     public function sources(): HasMany
@@ -35,6 +41,25 @@ class FeedChannel extends Model
         $min = min($this->daily_min ?? $this->daily_limit, $this->daily_limit);
 
         return $min + crc32($day.'#'.$this->id) % ($this->daily_limit - $min + 1);
+    }
+
+    /**
+     * The day's planned moments for the author's posts, in minutes after the club's day opens: the day is cut
+     * into equal parts, one post in each, at a random moment inside the part (the same all day, new every day).
+     * So the posts of one author never come together, and the authors do not post at the same hours each day.
+     *
+     * @return list<int>
+     */
+    public function slotsFor(string $day, int $count, int $dayMinutes): array
+    {
+        $part = $dayMinutes / max(1, $count);
+        $slots = [];
+        for ($i = 0; $i < $count; $i++) {
+            $shift = (crc32($day.'#'.$this->id.'#'.$i) % 1000) / 1000;
+            $slots[] = (int) floor($part * $i + $part * (0.1 + 0.8 * $shift));
+        }
+
+        return $slots;
     }
 
     /** @return list<string> */

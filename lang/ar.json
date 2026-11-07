@@ -929,5 +929,8 @@
     ":name asked the club author :author to be friends.": ":name أرسل طلب صداقة إلى كاتب النادي :author.",
     "Accept or decline it on the admin page \"Feed filling\", the Authors tab.": "يمكن القبول أو الرفض في صفحة الإدارة «ملء الخلاصة»، تبويب «الكتّاب».",
     "Open the requests": "فتح الطلبات",
-    "Who sent it: :url": "من أرسل: :url"
+    "Who sent it: :url": "من أرسل: :url",
+    "Times today: :times": "أوقات اليوم: :times",
+    "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net": "عنوان RSS، قناة تيليغرام https://t.me/s/… أو panet.com / bokra.net",
+    "Group: :name": "المجموعة: :name"
 }

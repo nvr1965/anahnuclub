@@ -42,6 +42,13 @@ class FeedsTest extends TestCase
         return FeedChannel::create($channel + ['user_id' => $user->id, 'topic' => 'Узбекистан', 'daily_limit' => 2]);
     }
 
+    /** The moment of the author's planned post number $n today. */
+    private function atSlot(FeedChannel $channel, int $n, int $plusMinutes = 0): void
+    {
+        [$h, $m] = explode(':', FeedPublisher::plan($channel)[$n]);
+        Carbon::setTestNow(Carbon::parse('2026-11-08', 'Asia/Jerusalem')->setTime((int) $h, (int) $m)->addMinutes($plusMinutes)->utc());
+    }
+
     private function rss(array $items): string
     {
         $xml = '<?xml version="1.0"?><rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel><title>Gazeta</title>';
@@ -123,6 +130,7 @@ class FeedsTest extends TestCase
         $source = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'Gazeta.uz', 'url' => 'https://gazeta.uz/rss', 'locale' => 'ru']);
         FeedItem::create(['feed_channel_id' => $channel->id, 'feed_source_id' => $source->id, 'url' => 'https://gazeta.uz/1',
             'title' => 'Новое метро', 'summary' => 'В Ташкенте открыли станцию.', 'image' => 'https://img.gazeta.uz/1.jpg', 'status' => 'approved']);
+        $this->atSlot($channel, 0);
 
         $item = app(FeedPublisher::class)->publishNext();
 
@@ -143,6 +151,7 @@ class FeedsTest extends TestCase
             FeedItem::create(['feed_channel_id' => $channel->id, 'title' => "Новость $i", 'summary' => "Текст $i", 'status' => 'approved']);
         }
         $publisher = app(FeedPublisher::class);
+        $this->atSlot($channel, 1);
 
         $this->assertNotNull($publisher->publishNext());
         // Not twice within minutes, and the same author waits an hour and a half.
@@ -169,6 +178,7 @@ class FeedsTest extends TestCase
         FeedItem::create(['feed_channel_id' => $channel->id, 'summary' => 'Первый', 'status' => 'approved']);
         FeedItem::create(['feed_channel_id' => $channel->id, 'summary' => 'Второй', 'status' => 'approved']);
         $publisher = app(FeedPublisher::class);
+        $this->atSlot($channel, 0);
 
         $this->assertNotNull($publisher->publishNext());
         Carbon::setTestNow(now()->addHours(5));
@@ -252,5 +262,105 @@ class FeedsTest extends TestCase
         $this->assertStringContainsString('автор AnahnuClub', $farik->about);
         $this->assertContains('club-author', \App\Support\Badges::special($farik->fresh()));
         $this->assertGreaterThan(0, $farik->feedChannel()->first()->sources()->count());
+
+        // Topic groups: Фарик and Айгуль write in "Средняя Азия", Сергей in "Новости России"; made once.
+        $asia = Group::firstWhere('slug', 'central-asia');
+        $this->assertSame('Средняя Азия', $asia->name);
+        $this->assertSame($asia->id, $farik->feedChannel()->first()->group_id);
+        $this->assertSame($asia->id, User::where('email', 'aigul@authors.anahnu.club')->first()->feedChannel()->first()->group_id);
+        $this->assertSame('owner', $asia->roleOf($farik));
+        $this->assertSame('Новости России', User::where('email', 'sergey@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        $this->assertSame(1, Group::where('slug', 'central-asia')->count());
+        // Addresses that never worked are switched off; Telegram channels and Panet's front page are sources.
+        $this->assertTrue(FeedSource::where('url', 'https://t.me/s/bokranews')->exists());
+        $this->assertFalse(FeedSource::where('url', 'https://www.panet.co.il/rss/news')->where('active', true)->exists());
+    }
+
+    public function test_an_author_in_a_topic_group_posts_there_and_still_to_everyone()
+    {
+        $channel = $this->author();
+        $group = Group::create(['owner_id' => $channel->user_id, 'name' => 'Средняя Азия', 'slug' => 'central-asia']);
+        $channel->update(['group_id' => $group->id]);
+        FeedItem::create(['feed_channel_id' => $channel->id, 'summary' => 'Новость', 'status' => 'approved']);
+        $this->atSlot($channel, 0);
+
+        $item = app(FeedPublisher::class)->publishNext();
+
+        $post = Post::find($item->post_id);
+        $this->assertSame($group->id, $post->group_id);
+        $this->assertSame('public', $post->audience);
+    }
+
+    public function test_each_author_has_its_own_times_spread_over_the_day()
+    {
+        $channel = $this->author(['daily_limit' => 3]);
+        $other = $this->author(['daily_limit' => 3]);
+        $day = 16 * 60;
+
+        $slots = $channel->slotsFor('2026-11-08', 3, $day);
+        // One post in each third of the day, never at its very edges.
+        foreach ($slots as $i => $minute) {
+            $this->assertGreaterThanOrEqual($i * $day / 3, $minute);
+            $this->assertLessThan(($i + 1) * $day / 3, $minute);
+        }
+        $this->assertSame($slots, $channel->slotsFor('2026-11-08', 3, $day));
+        $this->assertNotSame($slots, $channel->slotsFor('2026-11-09', 3, $day));
+        $this->assertNotSame($slots, $other->slotsFor('2026-11-08', 3, $day));
+
+        // Before its first time the author waits, then posts.
+        FeedItem::create(['feed_channel_id' => $channel->id, 'summary' => 'Новость', 'status' => 'approved']);
+        $publisher = app(FeedPublisher::class);
+        $this->atSlot($channel, 0, -1);
+        $this->assertNull($publisher->publishNext());
+        $this->atSlot($channel, 0);
+        $this->assertNotNull($publisher->publishNext());
+    }
+
+    public function test_the_pause_between_posts_of_the_site_changes()
+    {
+        $gaps = collect(range(1, 50))->map(fn ($id) => FeedPublisher::siteGap($id));
+
+        $this->assertGreaterThanOrEqual(10, $gaps->min());
+        $this->assertLessThanOrEqual(25, $gaps->max());
+        $this->assertGreaterThan(5, $gaps->unique()->count());
+    }
+
+    public function test_telegram_channels_and_sites_without_rss_are_read_from_their_pages()
+    {
+        $this->assertSame('telegram', \App\Feeds\PageParsers::kind('https://t.me/kunuzru'));
+        $this->assertSame('https://t.me/s/kunuzru', \App\Feeds\PageParsers::telegramUrl('https://t.me/kunuzru'));
+        $this->assertSame('https://t.me/s/kunuzru', \App\Feeds\PageParsers::telegramUrl('@kunuzru'));
+        $this->assertSame('panet', \App\Feeds\PageParsers::kind('https://panet.com/'));
+        $this->assertSame('feed', \App\Feeds\PageParsers::kind('https://www.panet.co.il/rss/news'));
+        $this->assertSame('bokra', \App\Feeds\PageParsers::kind('https://bokra.net/'));
+
+        $post = fn ($n, $text, $extra = '') => '<div class="tgme_widget_message_bubble">'.$extra
+            .'<div class="tgme_widget_message_text js-message_text" dir="auto">'.$text.'</div>'
+            .'<a class="tgme_widget_message_date" href="https://t.me/kunuzru/'.$n.'"><time datetime="'.now()->subHour()->toIso8601String().'" class="time">9:00</time></a></div>';
+        Http::fake([
+            't.me/*' => Http::response('<html>'
+                .$post(1, 'Старое: в Ташкенте прошёл дождь, впервые за месяц.')
+                .$post(2, 'Коротко')
+                .$post(3, 'В Самарканде открыли новый музей.<br>Подробности на сайте <a href="https://kun.uz/1">kun.uz</a>', '<a class="tgme_widget_message_photo_wrap" style="width:800px;background-image:url(\'https://cdn.tg/photo.jpg\')"></a>')
+                .'</html>'),
+            'panet.com/story/*' => Http::response('<html><head><meta property="og:image" content="https://panet.com/p.jpg"></head><div id="story-subject"><h3>عنوان الخبر</h3></div><div id="story-intro">مقدمة الخبر</div></html>'),
+            'panet.com/*' => Http::response('<a href="https://panet.com/story/123">x</a><a href="https://www.panet.com/story/124">y</a>'),
+        ]);
+        $reader = app(FeedReader::class);
+
+        $items = $reader->read('https://t.me/kunuzru');
+        $this->assertCount(2, $items);
+        $this->assertSame('https://t.me/kunuzru/3', $items[0]['url']);
+        $this->assertSame('В Самарканде открыли новый музей.', $items[0]['title']);
+        $this->assertStringContainsString('Подробности на сайте kun.uz', $items[0]['summary']);
+        $this->assertSame('https://cdn.tg/photo.jpg', $items[0]['image']);
+        $this->assertNotNull($items[0]['published_at']);
+
+        $items = $reader->read('https://panet.com/');
+        $this->assertCount(2, $items);
+        $this->assertSame('عنوان الخبر', $items[0]['title']);
+        $this->assertSame('مقدمة الخبر', $items[0]['summary']);
+        $this->assertSame('https://panet.com/p.jpg', $items[0]['image']);
+        $this->assertSame('https://panet.com/story/123', $items[0]['url']);
     }
 }

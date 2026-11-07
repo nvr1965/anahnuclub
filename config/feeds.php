@@ -8,8 +8,9 @@ return [
     // Posts go out in the club's daytime only.
     'timezone' => env('FEEDS_TIMEZONE', 'Asia/Jerusalem'),
     'window' => [7, 23],
-    // Minutes between any two authors' posts, and between two posts of one author.
-    'site_gap' => 10,
+    // Minutes between any two authors' posts (a different pause each time, between the two numbers),
+    // and the least between two posts of one author.
+    'site_gap' => [10, 25],
     'author_gap' => 90,
     // When members wrote more posts than this in a day, the authors post half as much.
     'busy_members' => 30,
