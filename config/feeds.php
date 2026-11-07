@@ -14,8 +14,8 @@ return [
     'author_gap' => 90,
     // When members wrote more posts than this in a day, the authors post half as much.
     'busy_members' => 30,
-    // Approved or waiting news older than this is dropped from the queue (jokes and curators' items stay).
-    'stale_hours' => 36,
+    // News not posted within this many hours leaves the queue (what a curator added by hand stays).
+    'stale_hours' => 12,
     // Where the letters about friend requests and group invitations to club authors go.
     'inbox' => env('FEEDS_INBOX', 'club@anahnu.club'),
     // Sources read per run of feeds:fetch (every 20 minutes), the longest unread first.

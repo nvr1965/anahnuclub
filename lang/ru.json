@@ -932,5 +932,11 @@
     "Who sent it: :url": "Кто прислал: :url",
     "Times today: :times": "Время сегодня: :times",
     "RSS address, Telegram channel https://t.me/s/… or panet.com / bokra.net": "Адрес RSS, канал Telegram https://t.me/s/… или panet.com / bokra.net",
-    "Group: :name": "Группа: :name"
+    "Group: :name": "Группа: :name",
+    "In queue": "В очереди",
+    "Club authors post by themselves from :from:00 to :to:00, Israel time: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.": "Авторы клуба публикуют сами с :from:00 до :to:00 по Израилю: с каждого источника за раз берутся до трёх свежих новостей, автор в своё время выбирает главную. Что не вышло за 12 часов, уходит из очереди.",
+    "By name": "По алфавиту",
+    "Newest first": "Сначала новые",
+    "Oldest first": "Сначала старые",
+    "Sort:": "Сортировка:"
 }

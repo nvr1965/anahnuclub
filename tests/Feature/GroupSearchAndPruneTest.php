@@ -87,4 +87,17 @@ class GroupSearchAndPruneTest extends TestCase
         $this->assertNull(Group::find($empty->id));
         $this->assertNotNull(Group::find($active->id));
     }
+
+    public function test_the_groups_page_sorts_by_name_or_by_creation_date(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $b = Group::create(['name' => 'Бета', 'slug' => 'b']);
+        $a = Group::create(['name' => 'Альфа', 'slug' => 'a']);
+        $b->forceFill(['created_at' => now()->subDays(2)])->save();
+        $a->forceFill(['created_at' => now()->subDay()])->save();
+
+        $this->actingAs($admin)->get('/admin/groups')->assertInertia(fn ($p) => $p->where('sort', 'name')->where('groups.data.0.name', 'Альфа'));
+        $this->get('/admin/groups?sort=newest')->assertInertia(fn ($p) => $p->where('groups.data.0.name', 'Альфа'));
+        $this->get('/admin/groups?sort=oldest')->assertInertia(fn ($p) => $p->where('groups.data.0.name', 'Бета'));
+    }
 }

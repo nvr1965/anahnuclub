@@ -91,10 +91,13 @@ export default function AdminFeeds(props: Props) {
             }
         >
             <p className="text-muted-foreground mb-3 text-sm">
-                {t('Club authors post approved items one at a time from :from:00 to :to:00, Israel time, each up to its daily number.', {
-                    from: hours[0],
-                    to: hours[1],
-                })}{' '}
+                {t(
+                    'Club authors post by themselves from :from:00 to :to:00, Israel time: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.',
+                    {
+                        from: hours[0],
+                        to: hours[1],
+                    },
+                )}{' '}
                 {paused && <b className="text-red-600">{t('Posting is paused.')}</b>}
                 {members_busy && !paused && <b>{t('Members wrote a lot today, so authors post half as much.')}</b>}
             </p>
@@ -123,7 +126,7 @@ function Queue({ items, status, author, channels }: Props) {
     };
     const filter = (params: Record<string, unknown>) =>
         router.get(route('admin.feeds.index', { tab: 'queue', status, author: author ?? undefined, ...params }));
-    const labels: Record<Status, string> = { new: t('Waiting'), approved: t('Approved'), posted: t('Posted'), skipped: t('Skipped') };
+    const labels: Record<Status, string> = { approved: t('In queue'), posted: t('Posted'), new: t('Waiting'), skipped: t('Skipped') };
     const page = items!;
 
     return (

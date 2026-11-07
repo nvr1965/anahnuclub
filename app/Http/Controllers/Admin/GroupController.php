@@ -15,13 +15,16 @@ class GroupController extends AdminController
     {
         $q = trim((string) $request->query('q'));
         $stale = $request->boolean('stale');
+        // By name (А–Я), or by when the group was made: newest or oldest first.
+        $sort = in_array($request->query('sort'), ['name', 'newest', 'oldest'], true) ? $request->query('sort') : ($stale ? 'oldest' : 'name');
 
         $groups = Group::query()
             ->with('owner:id,name')
             ->withCount(['members', 'posts'])
             ->when($q !== '', fn (Builder $b) => $b->where('name', $this->like(), $this->pattern($q)))
             ->when($stale, fn (Builder $b) => $b->stale())
-            ->when($stale, fn (Builder $b) => $b->orderBy('created_at'), fn (Builder $b) => $b->orderBy('name'))
+            ->when($sort === 'name', fn (Builder $b) => $b->orderBy('name'))
+            ->when($sort !== 'name', fn (Builder $b) => $b->orderBy('created_at', $sort === 'newest' ? 'desc' : 'asc')->orderBy('id', $sort === 'newest' ? 'desc' : 'asc'))
             ->paginate(30)->withQueryString()
             ->through(fn (Group $g) => [
                 'id' => $g->id,
@@ -39,6 +42,7 @@ class GroupController extends AdminController
             'groups' => $groups,
             'q' => $q,
             'stale' => $stale,
+            'sort' => $sort,
             'stale_count' => Group::query()->stale()->count(),
         ]);
     }

@@ -15,11 +15,30 @@ interface Row {
     created_at: string | null;
 }
 
-export default function AdminGroups({ groups, q, stale, stale_count }: { groups: Page<Row>; q: string; stale: boolean; stale_count: number }) {
+type Sort = 'name' | 'newest' | 'oldest';
+
+export default function AdminGroups({
+    groups,
+    q,
+    stale,
+    stale_count,
+    sort,
+}: {
+    groups: Page<Row>;
+    q: string;
+    stale: boolean;
+    stale_count: number;
+    sort: Sort;
+}) {
     const t = useT();
+    const sorts: Record<Sort, string> = { name: t('By name'), newest: t('Newest first'), oldest: t('Oldest first') };
+    const params = (extra: Record<string, unknown>) => ({ ...(stale ? { stale: 1 } : {}), ...(q ? { q } : {}), sort, ...extra });
 
     return (
-        <AdminLayout title={t('Groups')} actions={<AdminSearch value={q} routeName="admin.groups.index" params={stale ? { stale: 1 } : {}} />}>
+        <AdminLayout
+            title={t('Groups')}
+            actions={<AdminSearch value={q} routeName="admin.groups.index" params={{ ...(stale ? { stale: 1 } : {}), sort }} />}
+        >
             <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
                 <Link
                     href={route('admin.groups.index', stale ? {} : { stale: 1 })}
@@ -27,6 +46,17 @@ export default function AdminGroups({ groups, q, stale, stale_count }: { groups:
                 >
                     {t('Empty for over a year')} ({stale_count})
                 </Link>
+                <span className="text-muted-foreground ms-2">{t('Sort:')}</span>
+                {(Object.keys(sorts) as Sort[]).map((s) => (
+                    <Link
+                        key={s}
+                        href={route('admin.groups.index', params({ sort: s }))}
+                        preserveScroll
+                        className={`rounded-full px-3 py-1 font-medium shadow-sm ${sort === s ? 'bg-brand text-white' : 'bg-white dark:bg-neutral-900'}`}
+                    >
+                        {sorts[s]}
+                    </Link>
+                ))}
                 {stale && stale_count > 0 && (
                     <ActionButton
                         danger
