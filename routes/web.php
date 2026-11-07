@@ -254,6 +254,16 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('pages/{page}/translate', [Admin\PageController::class, 'translate'])->name('pages.translate');
     Route::patch('site-settings', [Admin\PageController::class, 'settings'])->name('settings.update');
     Route::patch('skins', [Admin\PageController::class, 'skins'])->name('skins.update');
+    Route::get('feeds', [Admin\FeedController::class, 'index'])->name('feeds.index');
+    Route::patch('feeds/pause', [Admin\FeedController::class, 'pause'])->name('feeds.pause');
+    Route::patch('feeds/authors/{channel}', [Admin\FeedController::class, 'updateChannel'])->name('feeds.authors.update');
+    Route::post('feeds/sources', [Admin\FeedController::class, 'storeSource'])->name('feeds.sources.store');
+    Route::patch('feeds/sources/{source}', [Admin\FeedController::class, 'updateSource'])->name('feeds.sources.update');
+    Route::delete('feeds/sources/{source}', [Admin\FeedController::class, 'destroySource'])->name('feeds.sources.destroy');
+    Route::post('feeds/sources/{source}/fetch', [Admin\FeedController::class, 'fetchSource'])->name('feeds.sources.fetch');
+    Route::post('feeds/items/status', [Admin\FeedController::class, 'status'])->name('feeds.items.status');
+    Route::post('feeds/items', [Admin\FeedController::class, 'storeItems'])->name('feeds.items.store');
+    Route::post('feeds/items/{item}/publish', [Admin\FeedController::class, 'publishNow'])->name('feeds.items.publish');
     Route::get('contact', [Admin\ContactController::class, 'index'])->name('contact.index');
     Route::patch('contact/{message}', [Admin\ContactController::class, 'update'])->name('contact.update');
     Route::delete('contact/{message}', [Admin\ContactController::class, 'destroy'])->name('contact.destroy');

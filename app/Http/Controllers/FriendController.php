@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\FeedChannel;
 use App\Models\FriendList;
 use App\Models\User;
 use App\Notifications\ClubActivity;
@@ -200,6 +201,8 @@ class FriendController extends Controller
             ->merge(DB::table('friendships')->where('friend_id', $me->id)->pluck('user_id'))
             ->merge($me->hiddenUserIds())
             ->merge(DB::table('friend_suggestion_dismissals')->where('user_id', $me->id)->pluck('dismissed_id'))
+            // Club authors are followed through their posts, not befriended.
+            ->merge(FeedChannel::authorIds())
             ->push($me->id)
             ->unique()->values();
 
@@ -306,7 +309,7 @@ class FriendController extends Controller
     public function store(Request $request, User $user): RedirectResponse
     {
         $me = $request->user();
-        abort_if($me->is($user) || $user->blocked || $me->isBlockedWith($user), 422);
+        abort_if($me->is($user) || $user->blocked || $me->isBlockedWith($user) || $user->isClubAuthor(), 422);
 
         $url = route('people.show', $me);
         switch ($me->friendshipWith($user)) {

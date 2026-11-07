@@ -8,7 +8,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-type Member = Person & { friendship: 'none' | 'friends' | 'sent' | 'received' };
+type Member = Person & { friendship: 'none' | 'friends' | 'sent' | 'received' | null };
 
 interface Props {
     people: Paginated<Member>;
