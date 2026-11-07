@@ -5,6 +5,7 @@ import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { VideoGrid } from '@/components/video-grid';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
+import { focusSearchBox } from '@/lib/search-box';
 import { type EventItem, type Person, type Post, type SharedData, type Sidebar, type VideoItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FileText, Lock, Search } from 'lucide-react';
@@ -41,9 +42,7 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
     useEffect(() => setQuery(q), [q]);
     // Opened from the menu (no query yet): the cursor goes straight into whichever search box this style shows.
     useEffect(() => {
-        if (q) return;
-        const box = [...document.querySelectorAll<HTMLInputElement>('input[data-search-box]')].find((el) => el.getClientRects().length > 0);
-        box?.focus();
+        if (!q) focusSearchBox();
     }, [q]);
     // This page's own box shows only where the style has no other one on screen: Stream has none in its side columns
     // between lg and xl, Showcase has none between md and xl; the other styles keep theirs in the top bar from sm.

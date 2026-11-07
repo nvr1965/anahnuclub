@@ -75,4 +75,21 @@ class SearchTest extends TestCase
         // Every word counts, in any order.
         $this->actingAs($user)->get('/search?q='.urlencode('израиля новости'))->assertInertia(fn ($page) => $page->where('counts.groups', 1));
     }
+
+    public function test_groups_are_found_by_name_and_posts_with_the_word_come_first(): void
+    {
+        $user = User::factory()->create(['name' => 'Searcher']);
+        Group::create(['name' => 'Новости Израиля', 'slug' => 'news', 'owner_id' => $user->id]);
+        Group::create(['name' => 'Health', 'slug' => 'health', 'owner_id' => $user->id, 'description' => 'Лучшие новости о здоровье']);
+        $byComment = Post::create(['user_id' => $user->id, 'body' => 'Привет']);
+        Comment::create(['post_id' => $byComment->id, 'user_id' => $user->id, 'body' => 'Где новости?']);
+        $byText = Post::create(['user_id' => $user->id, 'body' => 'Новости дня', 'created_at' => now()->subDay()]);
+
+        $this->actingAs($user)->get('/search?q='.urlencode('новости'))->assertInertia(fn ($page) => $page
+            ->where('counts.groups', 1)
+            ->where('results.groups.0.name', 'Новости Израиля')
+            ->where('counts.posts', 2)
+            ->where('results.posts.data.0.id', $byText->id)
+        );
+    }
 }

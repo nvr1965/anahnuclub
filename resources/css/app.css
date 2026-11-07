@@ -302,6 +302,21 @@
         overflow-x: clip;
     }
 
+    /* The search box lights up when the menu's Search moves the cursor into it. */
+    .search-box-flash {
+        animation: search-box-flash 1.6s ease-out;
+    }
+    @keyframes search-box-flash {
+        0%,
+        40% {
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 55%, transparent);
+            border-color: var(--color-brand);
+        }
+        100% {
+            box-shadow: 0 0 0 0 transparent;
+        }
+    }
+
     body {
         @apply bg-background text-foreground;
         /* Members paste long links into posts and profiles; they wrap instead of running off the card. */

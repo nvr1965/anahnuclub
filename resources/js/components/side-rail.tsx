@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useT } from '@/lib/i18n';
+import { focusSearchBox } from '@/lib/search-box';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, Ellipsis, Film, House, type LucideIcon, Menu, MessageCircle, PenLine, Plus, Search, UserRound, Users } from 'lucide-react';
@@ -70,7 +71,14 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
             {items.map((item) => {
                 const active = page.url.startsWith(item.match);
                 return (
-                    <Link key={item.href} href={item.href} className={`${row} ${active ? 'font-bold' : ''}`} title={item.label}>
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`${row} ${active ? 'font-bold' : ''}`}
+                        title={item.label}
+                        // Search keeps the page as it is and moves the cursor into the search box, when one is on screen.
+                        onClick={item.match === '/search' ? (e) => focusSearchBox() && e.preventDefault() : undefined}
+                    >
                         <span className="relative shrink-0">
                             <item.icon className={wide ? 'size-7' : 'size-6'} strokeWidth={active ? 2.6 : 2} />
                             {(item.badge ?? 0) > 0 && (
