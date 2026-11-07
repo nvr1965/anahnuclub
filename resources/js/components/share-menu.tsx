@@ -99,7 +99,12 @@ export function ShareMenu({
                     {copied ? <Check className="size-5" /> : (icon ?? <Share2 className="size-5" />)}{' '}
                     {copied ? t('Link copied') : (label ?? t('Share'))}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuContent
+                    align="end"
+                    collisionPadding={8}
+                    // On a phone the list is taller than the screen: it stays inside it and scrolls.
+                    className="max-h-[var(--radix-dropdown-menu-content-available-height)] w-64 overflow-y-auto overscroll-contain max-sm:[&_[role=menuitem]]:py-1"
+                >
                     {inClub && (
                         <>
                             <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">{t('Share on anahnu.club')}</DropdownMenuLabel>
