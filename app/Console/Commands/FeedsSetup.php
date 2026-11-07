@@ -29,6 +29,8 @@ class FeedsSetup extends Command
         'en' => ':name · AnahnuClub author. :topic: picks from checked sources, with links.',
         'de' => ':name · Autor bei AnahnuClub. :topic: Auswahl aus geprüften Quellen, mit Links.',
         'fr' => ':name · auteur d’AnahnuClub. :topic : une sélection de sources vérifiées, avec les liens.',
+        'uz' => ':name · AnahnuClub muallifi. :topic: ishonchli manbalardan saralangan xabarlar, havolalar bilan.',
+        'kk' => ':name · AnahnuClub авторы. :topic: тексерілген дереккөздерден іріктеме, сілтемелерімен.',
     ];
 
     public function handle(): int
@@ -52,6 +54,16 @@ class FeedsSetup extends Command
                     'about' => strtr(self::ABOUT[$author['locale']] ?? self::ABOUT['en'], [':name' => $author['name'], ':topic' => $author['topic']]),
                 ]);
                 $this->line('Author '.$author['name'].' created.');
+            }
+            // Renamed in the list since: the name in the author's own language, and its language and topic with it.
+            if (isset($author['was']) && $user->name === $author['was']) {
+                $user->forceFill([
+                    'name' => $author['name'],
+                    'locale' => $author['locale'],
+                    'about' => strtr(self::ABOUT[$author['locale']] ?? self::ABOUT['en'], [':name' => $author['name'], ':topic' => $author['topic']]),
+                ])->save();
+                $user->feedChannel()->update(['topic' => $author['topic']]);
+                $this->line('Author '.$author['was'].' is now '.$author['name'].'.');
             }
             // The "Club author" badge beside the name: a club account, not a private person.
             Badges::set($user, 'club-author', true);
