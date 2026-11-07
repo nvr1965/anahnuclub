@@ -1,10 +1,11 @@
 import { REACTIONS } from '@/components/reactions';
 import { UserAvatar } from '@/components/user-avatar';
+import { useBadgeName } from '@/components/user-badge';
 import { useT } from '@/lib/i18n';
 import { shortAgo } from '@/lib/relative-time';
 import { type Person, type Reaction, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarCheck, Crown, MessageCircle, PenLine, Share2, Shield, ShieldCheck, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
+import { Award, CalendarCheck, Crown, MessageCircle, PenLine, Share2, Shield, ShieldCheck, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
 import { Fragment, type ReactNode, useState } from 'react';
 
 export interface ClubNotification {
@@ -18,6 +19,8 @@ export interface ClubNotification {
     /** The face left on a like. */
     reaction?: Reaction | null;
     excerpt: string | null;
+    /** The level reached or the badge given. */
+    badge?: string | null;
     read: boolean;
     created_at: string | null;
 }
@@ -76,6 +79,8 @@ const kinds: Record<string, { one: string; many?: string; reacted?: [string, str
     group_offer_accepted: { one: ':name accepted your offer in a group', icon: <UserCheck />, color: 'bg-indigo-500' },
     post_shared: { one: ':name shared your post', many: ':names shared your post', icon: <Share2 />, color: 'bg-brand' },
     wall_post: { one: ':name wrote on your profile', many: ':names wrote on your profile', icon: <PenLine />, color: 'bg-sky-500' },
+    level_up: { one: 'Congratulations! You reached a new level in the club: :badge', icon: <Award />, color: 'bg-amber-500' },
+    badge_given: { one: ':name gave you the badge :badge', icon: <Award />, color: 'bg-amber-500' },
 };
 
 /** Puts bold names into a translated sentence in place of its :placeholders. */
@@ -108,6 +113,7 @@ function Badge({ n }: { n: ClubNotification }) {
 /** One notice: opening it goes to what it is about and marks it read. */
 function Row({ n }: { n: ClubNotification }) {
     const t = useT();
+    const badgeName = useBadgeName();
     const { locale } = usePage<SharedData>().props;
     const kind = kinds[n.kind] ?? { one: ':name', icon: <Star />, color: 'bg-slate-400' };
     const several = Boolean(n.also);
@@ -135,7 +141,7 @@ function Row({ n }: { n: ClubNotification }) {
                 </span>
                 <span className="min-w-0 flex-1 text-[0.9375rem] leading-[1.3]">
                     <span className={`line-clamp-3 ${n.read ? 'text-muted-foreground' : 'text-slate-900 dark:text-white'}`}>
-                        {fill(t(text), { name: name(n.actor), names })}
+                        {fill(t(text), { name: name(n.actor), names, badge: <b className="font-semibold">«{badgeName(n.badge)}»</b> })}
                         {n.excerpt && (
                             <>
                                 {': '}

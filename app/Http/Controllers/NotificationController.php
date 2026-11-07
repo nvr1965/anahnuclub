@@ -52,6 +52,7 @@ class NotificationController extends Controller
                     'others' => max(0, $people->count() - 2),
                     'reaction' => $n->data['reaction'] ?? null,
                     'excerpt' => $n->data['excerpt'] ?? null,
+                    'badge' => $n->data['badge'] ?? null,
                     'read' => $group->every(fn (DatabaseNotification $m) => $m->read_at !== null),
                     'created_at' => $n->created_at?->toIso8601String(),
                 ];

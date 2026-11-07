@@ -12,6 +12,7 @@ use App\Models\Photo;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Video;
+use App\Support\Badges;
 use App\Translation\NullTranslator;
 use App\Translation\Translator;
 use App\Translation\TranslatorChain;
@@ -41,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Events::subscribe(LogLogins::class);
+        Badges::listen();
 
         Relation::enforceMorphMap([
             'post' => Post::class,

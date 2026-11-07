@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\FeedChannel;
 use App\Models\FeedSource;
 use App\Models\User;
+use App\Support\Badges;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -36,10 +37,8 @@ class FeedsSetup extends Command
                 ]);
                 $this->line('Author '.$author['name'].' created.');
             }
-            // The "Club author" badge, once the badges are on the site.
-            if (class_exists(\App\Support\Badges::class)) {
-                \App\Support\Badges::set($user, 'club-author', true);
-            }
+            // The "Club author" badge beside the name: a club account, not a private person.
+            Badges::set($user, 'club-author', true);
 
             $channel = FeedChannel::firstOrCreate(['user_id' => $user->id], [
                 'topic' => $author['topic'],

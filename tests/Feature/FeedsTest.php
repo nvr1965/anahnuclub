@@ -215,6 +215,7 @@ class FeedsTest extends TestCase
         $farik = User::where('email', 'farik@authors.anahnu.club')->first();
         $this->assertSame('Фарик', $farik->name);
         $this->assertStringContainsString('автор AnahnuClub', $farik->about);
+        $this->assertContains('club-author', \App\Support\Badges::special($farik->fresh()));
         $this->assertGreaterThan(0, $farik->feedChannel()->first()->sources()->count());
     }
 }

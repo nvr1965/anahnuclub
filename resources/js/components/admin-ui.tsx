@@ -83,7 +83,7 @@ export function ActionButton({ children, onClick, danger = false }: { children: 
 }
 
 /** Sends a change and keeps the list where it was. */
-export function send(method: 'patch' | 'post' | 'delete', url: string, data: Record<string, unknown> = {}) {
+export function send(method: 'patch' | 'post' | 'put' | 'delete', url: string, data: Record<string, unknown> = {}) {
     const options = { preserveScroll: true, preserveState: true };
     if (method === 'delete') router.delete(url, { ...options, data });
     else router[method](url, data, options);
