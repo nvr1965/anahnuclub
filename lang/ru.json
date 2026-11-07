@@ -821,5 +821,20 @@
     "Pin to your profile": "Закрепить в профиле",
     "Unpin from your profile": "Открепить в профиле",
     "Pin in the group": "Закрепить в группе",
-    "Unpin from the group": "Открепить в группе"
+    "Unpin from the group": "Открепить в группе",
+    "Share to Feed": "Поделиться в своей ленте",
+    "Share to a group": "Поделиться в группе",
+    "Share on a friend's profile": "Поделиться в профиле друга",
+    "You aren't in any groups yet.": "Вы пока не состоите ни в одной группе.",
+    "Write something to :name…": "Напишите что-нибудь для :name…",
+    "Say something about this…": "Напишите что-нибудь об этом…",
+    "Could not share the post. Please try again.": "Не удалось поделиться постом. Попробуйте ещё раз.",
+    "Share now": "Поделиться",
+    "shared a post": "поделился(-ась) публикацией",
+    "This content isn't available right now": "Эта публикация сейчас недоступна",
+    "The post was deleted or its author changed who can see it.": "Пост удалён, или автор изменил, кто может его видеть.",
+    ":name shared your post": ":name поделился(-ась) вашим постом",
+    ":names shared your post": ":names поделились вашим постом",
+    ":name wrote on your profile": ":name написал(а) в вашем профиле",
+    ":names wrote on your profile": ":names написали в вашем профиле"
 }

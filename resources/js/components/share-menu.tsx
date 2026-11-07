@@ -1,8 +1,16 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { SharePostDialog, type ShareTarget } from '@/components/share-post-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { Check, Link2, Mail, MessageCircle, MessageSquare, Phone, Send, Share2 } from 'lucide-react';
+import { Check, Link2, Mail, MessageCircle, MessageSquare, Newspaper, Phone, Send, Share2, UserRound, Users } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
 interface Network {
@@ -52,6 +60,7 @@ export function ShareMenu({
     className,
     label,
     icon,
+    post,
 }: {
     url: string;
     title: string;
@@ -59,9 +68,13 @@ export function ShareMenu({
     /** Instead of "Share", e.g. "Invite friends". */
     label?: string;
     icon?: ReactNode;
+    /** A post of the club: it can also be shared inside it, to one's feed, a group or a friend's profile. */
+    post?: { id: number; preview: string };
 }) {
     const t = useT();
-    const { locale } = usePage<SharedData>().props;
+    const { locale, auth } = usePage<SharedData>().props;
+    const [sharing, setSharing] = useState<ShareTarget | null>(null);
+    const inClub = Boolean(post && auth.user);
     const url = inLanguage(address, locale);
     const [copied, setCopied] = useState(false);
     const encodedUrl = encodeURIComponent(url);
@@ -80,31 +93,53 @@ export function ShareMenu({
     };
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger className={className}>
-                {copied ? <Check className="size-5" /> : (icon ?? <Share2 className="size-5" />)} {copied ? t('Link copied') : (label ?? t('Share'))}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-                {(phone ? [...networks, sms] : networks).map((network) => (
-                    <DropdownMenuItem key={network.name} asChild>
-                        <a href={network.href(encodedUrl, encodedTitle)} target="_blank" rel="noreferrer" className="flex items-center gap-3">
-                            {network.badge}
-                            {network.name === 'Email' ? t('Email') : network.name}
-                        </a>
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger className={className}>
+                    {copied ? <Check className="size-5" /> : (icon ?? <Share2 className="size-5" />)}{' '}
+                    {copied ? t('Link copied') : (label ?? t('Share'))}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                    {inClub && (
+                        <>
+                            <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">{t('Share on anahnu.club')}</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => setSharing('feed')} className="flex items-center gap-3">
+                                {badge('bg-brand', <Newspaper className="size-3.5" />)}
+                                {t('Share to Feed')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setSharing('group')} className="flex items-center gap-3">
+                                {badge('bg-indigo-500', <Users className="size-3.5" />)}
+                                {t('Share to a group')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setSharing('friend')} className="flex items-center gap-3">
+                                {badge('bg-sky-500', <UserRound className="size-3.5" />)}
+                                {t("Share on a friend's profile")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
+                    {(phone ? [...networks, sms] : networks).map((network) => (
+                        <DropdownMenuItem key={network.name} asChild>
+                            <a href={network.href(encodedUrl, encodedTitle)} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                                {network.badge}
+                                {network.name === 'Email' ? t('Email') : network.name}
+                            </a>
+                        </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={copy} className="flex items-center gap-3">
+                        {badge('bg-slate-500', <Link2 className="size-3.5" />)}
+                        {t('Copy link')}
                     </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={copy} className="flex items-center gap-3">
-                    {badge('bg-slate-500', <Link2 className="size-3.5" />)}
-                    {t('Copy link')}
-                </DropdownMenuItem>
-                {canShareNatively && (
-                    <DropdownMenuItem onSelect={() => navigator.share({ url, title }).catch(() => undefined)} className="flex items-center gap-3">
-                        {badge('bg-slate-400', <Share2 className="size-3.5" />)}
-                        {t('More…')}
-                    </DropdownMenuItem>
-                )}
-            </DropdownMenuContent>
-        </DropdownMenu>
+                    {canShareNatively && (
+                        <DropdownMenuItem onSelect={() => navigator.share({ url, title }).catch(() => undefined)} className="flex items-center gap-3">
+                            {badge('bg-slate-400', <Share2 className="size-3.5" />)}
+                            {t('More…')}
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            {inClub && post && <SharePostDialog postId={post.id} preview={post.preview} target={sharing} onClose={() => setSharing(null)} />}
+        </>
     );
 }

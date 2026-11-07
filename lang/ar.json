@@ -821,5 +821,20 @@
     "Pin to your profile": "تثبيت في ملفك الشخصي",
     "Unpin from your profile": "إلغاء التثبيت من ملفك الشخصي",
     "Pin in the group": "تثبيت في المجموعة",
-    "Unpin from the group": "إلغاء التثبيت من المجموعة"
+    "Unpin from the group": "إلغاء التثبيت من المجموعة",
+    "Share to Feed": "مشاركة في موجز الأخبار",
+    "Share to a group": "مشاركة في مجموعة",
+    "Share on a friend's profile": "مشاركة في الملف الشخصي لصديق",
+    "You aren't in any groups yet.": "لست عضوًا في أي مجموعة بعد.",
+    "Write something to :name…": "اكتب شيئًا لـ :name…",
+    "Say something about this…": "قل شيئًا عن هذا…",
+    "Could not share the post. Please try again.": "تعذّرت مشاركة المنشور. حاول مرة أخرى.",
+    "Share now": "مشاركة الآن",
+    "shared a post": "شارك منشورًا",
+    "This content isn't available right now": "هذا المحتوى غير متاح حاليًا",
+    "The post was deleted or its author changed who can see it.": "حُذف المنشور أو غيّر كاتبه من يمكنه رؤيته.",
+    ":name shared your post": "شارك :name منشورك",
+    ":names shared your post": "شارك :names منشورك",
+    ":name wrote on your profile": "كتب :name في ملفك الشخصي",
+    ":names wrote on your profile": "كتب :names في ملفك الشخصي"
 }

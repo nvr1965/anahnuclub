@@ -22,7 +22,9 @@ class PostResource extends JsonResource
         $mine = $request->user()?->id === $this->user_id;
         // A post of Facebook, Instagram, YouTube… linked in the text plays right here; photos or a video of the post come first.
         $media = $this->video_id || ($this->relationLoaded('photos') && $this->photos->isNotEmpty());
-        $embed = ! $media && $this->link_url ? Embed::fromUrl($this->link_url) : null;
+        // A share shows the post it carries, not a card of a link in its own words.
+        $share = $this->type === 'share' || $this->shared_post_id !== null;
+        $embed = ! $media && ! $share && $this->link_url ? Embed::fromUrl($this->link_url) : null;
 
         return [
             'id' => $this->id,
@@ -34,6 +36,12 @@ class PostResource extends JsonResource
             'author' => $official && ! $mine ? null : AuthorResource::make($this->whenLoaded('user')),
             'official' => $official,
             'group' => $this->whenLoaded('group', fn () => $this->group?->only('id', 'name', 'slug')),
+            // Put on a friend's profile: "Anna ▸ Boris".
+            'wall' => $this->whenLoaded('wallUser', fn () => $this->wallUser?->only('id', 'name'), null),
+            // The post shared; null inside it when it was deleted or this reader may not read it.
+            'shared' => $share ? ['post' => $this->relationLoaded('sharedPost') && $this->sharedPost ? self::sharedCard($this->sharedPost, $request) : null] : null,
+            // Whether the reader may share it inside the club (its original, for a share).
+            'can_share' => $this->canShare($request),
             'likes_count' => $this->likes_count ?? 0,
             'liked' => ($this->my_reaction ?? null) !== null,
             'my_reaction' => $this->my_reaction ?? null,
@@ -55,12 +63,12 @@ class PostResource extends JsonResource
             'pins' => collect(array_keys(Post::PIN_PLACES))
                 ->filter(fn ($p) => $this->resource->canPin($request->user(), $p))
                 ->mapWithKeys(fn ($p) => [$p => $this->{Post::PIN_PLACES[$p]} !== null])->all() ?: null,
-            'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->is_admin || ($this->group_id && $this->group?->canModerate($request->user()))),
+            'can_delete' => $request->user() && ($request->user()->id === $this->user_id || $request->user()->id === $this->wall_user_id || $request->user()->is_admin || ($this->group_id && $this->group?->canModerate($request->user()))),
             // The text as the author typed it, for editing (only posts written here, not imported HTML).
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map->card()->all(), []),
             'video' => $this->whenLoaded('video', fn () => $this->video?->card()),
             // A shared link as a card; photos or a video, when the post has them, take its place.
-            'link' => $this->relationLoaded('linkPreview') && ! $media && ! $embed
+            'link' => $this->relationLoaded('linkPreview') && ! $media && ! $embed && ! $share
                 ? $this->linkPreview?->card()
                 : null,
             'embed' => $embed,
@@ -69,9 +77,48 @@ class PostResource extends JsonResource
                 && (! $this->group_id || ($this->relationLoaded('group') && $this->group && $this->group->published && ! $this->group->is_private)),
             'embed_url' => route('embed.post', $this->id),
             'event' => $this->whenLoaded('event', fn () => $this->event ? EventController::card($this->event) : null),
-            'editable_text' => $request->user()?->id === $this->user_id && in_array($this->type, ['status', 'photo', 'video'], true) && $this->legacy_source === null
+            'editable_text' => $request->user()?->id === $this->user_id && in_array($this->type, ['status', 'photo', 'video', 'share'], true) && $this->legacy_source === null
                 ? html_entity_decode(strip_tags(str_replace('<br>', "\n", preg_replace('~<br>\R?~', '<br>', $this->body))), ENT_QUOTES | ENT_HTML5)
                 : null,
+        ];
+    }
+
+    private function canShare(Request $request): bool
+    {
+        if (! $request->user()) {
+            return false;
+        }
+        if ($this->shared_post_id || $this->type === 'share') {
+            return $this->relationLoaded('sharedPost') && $this->sharedPost && $this->sharedPost->canBeSharedBy($request->user());
+        }
+
+        return $this->resource->canBeSharedBy($request->user());
+    }
+
+    /** The shared post inside a share, as Facebook shows it: its author, words, pictures, video or link. */
+    private static function sharedCard(Post $post, Request $request): array
+    {
+        $official = $post->relationLoaded('user') && $post->isOfficial();
+        $media = $post->video_id || ($post->relationLoaded('photos') && $post->photos->isNotEmpty());
+        $embed = ! $media && $post->link_url ? Embed::fromUrl($post->link_url) : null;
+
+        return [
+            'id' => $post->id,
+            'type' => $post->type,
+            'title' => $post->title,
+            'body' => Html::clean($post->body),
+            'created_at' => $post->created_at?->toIso8601String(),
+            'author' => $official ? null : ($post->user ? AuthorResource::make($post->user)->resolve($request) : null),
+            'official' => $official,
+            'group' => $post->group?->only('id', 'name', 'slug'),
+            'translation' => TranslationPayload::for($post, app()->getLocale(), app(ContentTranslator::class)),
+            'url' => route('posts.show', $post->id),
+            'audience' => $post->audience ?? 'public',
+            'photos' => $post->relationLoaded('photos') ? $post->photos->map->card()->all() : [],
+            'video' => $post->relationLoaded('video') ? $post->video?->card() : null,
+            'link' => $post->relationLoaded('linkPreview') && ! $media && ! $embed ? $post->linkPreview?->card() : null,
+            'embed' => $embed,
+            'event' => $post->relationLoaded('event') && $post->event ? EventController::card($post->event) : null,
         ];
     }
 

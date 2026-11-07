@@ -10,7 +10,9 @@ use App\Models\Album;
 use App\Models\Group;
 use App\Models\LinkPreview;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\Video;
+use App\Notifications\ClubActivity;
 use App\Support\Background;
 use App\Support\Embed;
 use App\Support\Html;
@@ -105,6 +107,75 @@ class PostController extends Controller
         Background::run(new SubmitToIndexNow($post));
 
         return back();
+    }
+
+    /**
+     * Shares a post inside the club, as on Facebook: to the member's own feed, to a group they are in,
+     * or onto a friend's profile, with a few words of their own above it. A share of a share carries
+     * the original post.
+     */
+    public function share(Request $request, Post $post): RedirectResponse
+    {
+        $me = $request->user();
+        $data = $request->validate([
+            'target' => ['required', 'in:feed,group,friend'],
+            'body' => ['nullable', 'string', 'max:20000'],
+            'group_id' => ['required_if:target,group', 'nullable', 'integer'],
+            'user_id' => ['required_if:target,friend', 'nullable', 'integer'],
+            ...self::audienceRules(),
+        ]);
+
+        $original = $post->shareRoot();
+        abort_unless($original->canBeSharedBy($me) && $original->isVisibleTo($me), 403);
+        abort_if($original->user && $me->isBlockedWith($original->user), 403);
+
+        $group = null;
+        $wall = null;
+        if ($data['target'] === 'group') {
+            $group = Group::where('published', true)->find($data['group_id']);
+            abort_unless($group && $group->members()->whereKey($me->id)->wherePivot('approved', true)->exists(), 403);
+        } elseif ($data['target'] === 'friend') {
+            $wall = User::where('blocked', false)->find($data['user_id']);
+            abort_unless($wall && ! $wall->is($me) && $me->friendIds()->contains($wall->id) && ! $me->isBlockedWith($wall), 403);
+        }
+
+        $text = trim((string) ($data['body'] ?? ''));
+        $share = Post::create([
+            'user_id' => $me->id,
+            'group_id' => $group?->id,
+            'wall_user_id' => $wall?->id,
+            'shared_post_id' => $original->id,
+            'type' => 'share',
+            'body' => Html::fromPlainText($text),
+            'locale' => LanguageGuesser::guess($text) ?? $me->locale,
+        ]);
+        // The shared post shows as itself, not as a card of its address typed in the words.
+        $share->forceFill(['link_url' => ''])->saveQuietly();
+        if (! $group) {
+            $this->applyAudience($request, $share, $data);
+        }
+
+        $url = route('posts.show', $share);
+        if ($wall) {
+            ClubActivity::send($wall, 'wall_post', $me, $url, 'post:'.$share->id, $text !== '' ? $text : $original->body);
+        }
+        if (! $original->isOfficial() && ! $original->user?->is($wall)) {
+            ClubActivity::send($original->user, 'post_shared', $me, $url, 'post:'.$original->id, $original->body);
+        }
+        if ($text !== '') {
+            Background::run(new TranslateContent($share));
+        }
+
+        return back();
+    }
+
+    /** The groups the member may share into: those they belong to, the latest joined first. */
+    public function shareTargets(Request $request): JsonResponse
+    {
+        return response()->json($request->user()->groups()
+            ->wherePivot('approved', true)->where('published', true)
+            ->orderByDesc('group_user.created_at')->limit(500)->get()
+            ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->name, 'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null, 'is_private' => $g->is_private])->values());
     }
 
     /** The card for a link being typed into a new post, read now if it is not known yet. */
@@ -306,7 +377,7 @@ class PostController extends Controller
     /** Authors can rewrite what they typed; the new text is translated again. */
     public function update(Request $request, Post $post): RedirectResponse
     {
-        abort_unless($post->user_id === $request->user()->id && in_array($post->type, ['status', 'photo', 'video'], true) && $post->legacy_source === null, 403);
+        abort_unless($post->user_id === $request->user()->id && in_array($post->type, ['status', 'photo', 'video', 'share'], true) && $post->legacy_source === null, 403);
         $body = Embed::unwrap((string) $request->validate(['body' => [$post->type === 'status' ? 'required' : 'nullable', 'string', 'max:20000']])['body']);
 
         $post->update(['body' => Html::fromPlainText($body), 'locale' => LanguageGuesser::guess($body) ?? $post->locale]);
@@ -331,7 +402,8 @@ class PostController extends Controller
 
     public function destroy(Request $request, Post $post): RedirectResponse
     {
-        abort_unless($post->user_id === $request->user()->id || $request->user()->is_admin || $post->group?->canModerate($request->user()), 403);
+        // Also the member on whose profile a friend put it.
+        abort_unless($post->user_id === $request->user()->id || $post->wall_user_id === $request->user()->id || $request->user()->is_admin || $post->group?->canModerate($request->user()), 403);
         // Pictures added with the post go with it; ones uploaded to an album stay there.
         $post->photos()->whereHas('album', fn ($q) => $q->where('kind', 'timeline'))->get()->each(fn ($photo) => AlbumController::deletePhoto($photo));
         $post->delete();

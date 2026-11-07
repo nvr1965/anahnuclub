@@ -32,7 +32,7 @@ export function AudienceIcon({ audience, className = 'size-3.5' }: { audience: A
 
 /** The friends list, asked for once a page and kept. */
 let friendsCache: Promise<Author[]> | null = null;
-const loadFriends = () =>
+export const loadFriends = () =>
     (friendsCache ??= fetch(route('friends.list'), { headers: { Accept: 'application/json' } }).then((r) => (r.ok ? r.json() : [])));
 
 /** The "Who can see your post?" window, as on Facebook: five audiences, a friend list for the two that name people. */
