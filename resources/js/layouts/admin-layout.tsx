@@ -2,12 +2,17 @@ import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Award, Bot, FileText, Gauge, Inbox, Languages, LogIn, Newspaper, ScrollText, ShieldAlert, Users, UsersRound } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 
 /** Admin pages: the club frame with the admin sections as the start-side menu. */
 export default function AdminLayout({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
     const t = useT();
     const { url } = usePage();
+    const tabsRef = useRef<HTMLDivElement>(null);
+    // Bring the current section's pill into view in the scrollable row on phones.
+    useEffect(() => {
+        tabsRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }, [url]);
     const items = [
         { title: t('Overview'), href: route('admin.index'), match: (u: string) => u === '/admin' || u.startsWith('/admin?'), icon: Gauge },
         { title: t('Users'), href: route('admin.users.index'), match: (u: string) => u.startsWith('/admin/users'), icon: Users },
@@ -48,11 +53,15 @@ export default function AdminLayout({ title, children, actions }: { title: strin
         <ClubLayout left={menu}>
             <Head title={`${title} · ${t('Administration')}`} />
             {/* On small screens the side menu is hidden, so the sections show as a scrollable row. */}
-            <div className="mb-3 flex gap-2 overflow-x-auto lg:hidden">
+            <div
+                ref={tabsRef}
+                className="-mx-3 mb-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:-mx-4 sm:px-4 lg:hidden [&::-webkit-scrollbar]:hidden"
+            >
                 {items.map((item) => (
                     <Link
                         key={item.href}
                         href={item.href}
+                        aria-current={item.match(url) ? 'page' : undefined}
                         className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${item.match(url) ? 'bg-brand text-white' : 'bg-white dark:bg-neutral-900'}`}
                     >
                         {item.title}

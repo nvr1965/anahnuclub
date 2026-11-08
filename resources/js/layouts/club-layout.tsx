@@ -64,7 +64,7 @@ function ClubFrame({ children, left, right, full, wide }: Props) {
         left && right
             ? 'lg:grid-cols-[280px_minmax(0,680px)] xl:grid-cols-[280px_minmax(0,680px)_300px]'
             : left
-              ? 'lg:grid-cols-[280px_minmax(0,1fr)]'
+              ? 'grid-cols-[minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)]'
               : wide
                 ? 'grid-cols-[minmax(0,1100px)]'
                 : '';
