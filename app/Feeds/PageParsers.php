@@ -30,10 +30,35 @@ class PageParsers
 
         return match (true) {
             str_starts_with(trim($url), '@') || in_array($host, ['t.me', 'telegram.me'], true) => 'telegram',
+            in_array($host, ['youtube.com', 'm.youtube.com'], true) && ! str_contains($path, '/feeds/') => 'youtube',
             in_array($host, ['panet.com', 'panet.co.il'], true) && ! $feed => 'panet',
             $host === 'bokra.net' && ! $feed => 'bokra',
             default => 'feed',
         };
+    }
+
+    /** YouTube asks for a cookie choice before its pages: the answer "only what is needed". */
+    public const YOUTUBE_HEADERS = ['Cookie' => 'SOCS=CAI; CONSENT=YES+1', 'Accept-Language' => 'en-US,en;q=0.8'];
+
+    /**
+     * The feed of a YouTube channel or playlist: https://www.youtube.com/@name, /channel/UC…, /c/name, /user/name,
+     * or a playlist link (?list=…). A channel's id is read from its page when the link does not carry it.
+     */
+    public function youtubeFeed(string $url): string
+    {
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+        if (! empty($query['list'])) {
+            return 'https://www.youtube.com/feeds/videos.xml?playlist_id='.rawurlencode($query['list']);
+        }
+        if (preg_match('#/channel/(UC[\w-]{22})#', $url, $m)) {
+            return 'https://www.youtube.com/feeds/videos.xml?channel_id='.$m[1];
+        }
+        $page = $this->reader->fetch($url, self::YOUTUBE_HEADERS);
+        if (preg_match('#<link rel="canonical" href="https://www\.youtube\.com/channel/(UC[\w-]{22})"#', $page, $m)
+            || preg_match('#"(?:channelId|externalId|browseId)":"(UC[\w-]{22})"#', $page, $m)) {
+            return 'https://www.youtube.com/feeds/videos.xml?channel_id='.$m[1];
+        }
+        throw new \RuntimeException('YouTube channel not found on the page');
     }
 
     /** https://t.me/name, t.me/s/name or @name → the channel's public web page https://t.me/s/name. */

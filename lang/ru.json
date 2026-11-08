@@ -996,5 +996,8 @@
     ":n sec": ":n сек",
     ":n min": ":n мин",
     "Declined": "Отклонён",
-    "No answer": "Нет ответа"
+    "No answer": "Нет ответа",
+    "Whole text": "Целиком",
+    "Excerpt only": "Только начало",
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "Адрес RSS, канал YouTube, канал Telegram https://t.me/s/… или panet.com / bokra.net"
 }

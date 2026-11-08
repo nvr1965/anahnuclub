@@ -16,6 +16,9 @@ class FeedReader
     /** The excerpt we show: a short quote with the link, never the whole article. */
     public const SUMMARY_LENGTH = 300;
 
+    /** A joke or a recipe is not cut in the middle: the whole of it, when not longer than this. */
+    public const FULL_TEXT_LENGTH = 1500;
+
     /**
      * @return list<array{title: string, url: string, summary: ?string, image: ?string, published_at: ?Carbon}>
      */
@@ -26,6 +29,7 @@ class FeedReader
         return match (PageParsers::kind($url)) {
             'telegram' => $pages->telegram($this->fetch(PageParsers::telegramUrl($url))),
             'panet' => $pages->panet($this->fetch($url)),
+            'youtube' => $this->parse($this->fetch($pages->youtubeFeed($url), PageParsers::YOUTUBE_HEADERS)),
             'bokra' => $pages->bokra($this->fetch($url, PageParsers::BOKRA_HEADERS)),
             default => $this->parse($this->fetch($url, ['Accept' => 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5'])),
         };
@@ -102,8 +106,11 @@ class FeedReader
             }
         }
 
-        return $this->item((string) $e->title, $link, (string) ($e->summary ?: $e->content),
-            self::media($e), (string) ($e->published ?: $e->updated));
+        // A YouTube video's text is in media:group/media:description.
+        $description = (string) ($e->summary ?: $e->content)
+            ?: (string) $e->children('http://search.yahoo.com/mrss/')->group->children('http://search.yahoo.com/mrss/')->description;
+
+        return $this->item((string) $e->title, $link, $description, self::media($e), (string) ($e->published ?: $e->updated));
     }
 
     public function item(string $title, string $url, string $description, string $image, string $date): array
@@ -122,6 +129,8 @@ class FeedReader
             'title' => mb_substr(self::plain($title), 0, 500),
             'url' => trim($url),
             'summary' => self::excerpt(self::withoutBoilerplate($description)) ?: null,
+            // The whole text, for a source whose items are short in full (jokes): FeedSource::full_text.
+            'text' => self::fullText($description) ?: null,
             'image' => preg_match('#^https?://#i', $image) ? mb_substr($image, 0, 1000) : null,
             'published_at' => $published,
         ];
@@ -153,7 +162,11 @@ class FeedReader
     /** The lines a site adds to every item of its feed: they say nothing about the news. */
     public static function withoutBoilerplate(string $html): string
     {
-        $text = self::plain($html);
+        return self::withoutTails(self::plain($html));
+    }
+
+    private static function withoutTails(string $text): string
+    {
         foreach ([
             '/\s*ScienceAlert stories are written, fact-checked.*$/su',
             '/\s*The post .{1,300} appeared first on .*$/su',
@@ -163,6 +176,16 @@ class FeedReader
         }
 
         return $text;
+    }
+
+    /** The whole text with its lines (a joke's dialogue), cut at a word when too long. */
+    public static function fullText(string $html): string
+    {
+        $text = html_entity_decode(strip_tags(preg_replace('/<(br|\/p|\/div|\/li)[^>]*>/i', "\n", $html)), ENT_QUOTES | ENT_HTML5);
+        $text = trim(preg_replace(["/[ \t\x{00A0}]+/u", "/ *\n */", "/\n{3,}/"], [' ', "\n", "\n\n"], $text));
+        $text = self::withoutTails($text);
+
+        return mb_strlen($text) <= self::FULL_TEXT_LENGTH ? $text : self::excerpt($text, self::FULL_TEXT_LENGTH);
     }
 
     public static function plain(string $html): string

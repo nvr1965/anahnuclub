@@ -81,7 +81,7 @@ class FeedCollector
                 'url_hash' => $hash,
                 'title_key' => $titleKey,
                 'title' => $item['title'],
-                'summary' => $item['summary'],
+                'summary' => $source->full_text ? ($item['text'] ?? $item['summary']) : $item['summary'],
                 'image' => $item['image'],
                 'published_at' => $item['published_at'],
                 // Straight to the author's queue, unless its curator wants to look at everything first.
