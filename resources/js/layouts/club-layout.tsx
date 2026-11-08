@@ -15,6 +15,8 @@ type Props = {
     full?: boolean;
     /** A page without side columns that should keep its full width (up to 1100px) whatever its content, such as a profile. */
     wide?: boolean;
+    /** `left` is the club's main menu, which Stream and Showcase replace with their side rail. Any other `left` is a section menu (admin, friends) they keep. */
+    mainMenu?: boolean;
 };
 
 /**
@@ -86,6 +88,24 @@ function ClubFrame({ children, left, right, full, wide }: Props) {
     );
 }
 
+/**
+ * Stream and Showcase body for pages that need room: a section menu (admin, friends) or a full-width page (profile, album).
+ * The narrow feed column and the end column would squeeze them and hide the section menu.
+ */
+function RoomyBody({ children, left }: { children: ReactNode; left?: ReactNode }) {
+    return (
+        <div className="flex min-w-0 flex-1 flex-col">
+            <main
+                className={`mx-auto grid w-full max-w-[1100px] gap-6 px-3 py-4 max-sm:pb-20 sm:px-4 lg:py-6 ${left ? 'grid-cols-[minmax(0,1fr)] lg:grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)]'}`}
+            >
+                {left && <aside className="sticky top-6 hidden max-h-[calc(100vh-3rem)] self-start overflow-y-auto lg:block">{left}</aside>}
+                <div className="min-w-0">{children}</div>
+            </main>
+            <SiteFooter />
+        </div>
+    );
+}
+
 /** A search box for the end column of Stream and Showcase. */
 function SearchBox({ className }: { className: string }) {
     const t = useT();
@@ -114,8 +134,21 @@ function SearchBox({ className }: { className: string }) {
     );
 }
 
-function StreamFrame({ children, right, full }: Props) {
+function StreamFrame({ children, left, right, full, wide, mainMenu }: Props) {
     if (full) return <FullFrame rail={{ variant: 'wide', from: 'lg' }}>{children}</FullFrame>;
+    const sectionMenu = mainMenu ? undefined : left;
+    if (wide || sectionMenu)
+        return (
+            <div className="bg-page min-h-screen text-slate-900 dark:text-neutral-100">
+                <ClubHeader className="lg:hidden" />
+                <div className="mx-auto flex max-w-[1400px]">
+                    <aside className="sticky top-0 hidden h-screen w-[88px] shrink-0 lg:block xl:w-[275px]">
+                        <SideRail variant="wide" />
+                    </aside>
+                    <RoomyBody left={sectionMenu}>{children}</RoomyBody>
+                </div>
+            </div>
+        );
 
     return (
         <div className="bg-page min-h-screen text-slate-900 dark:text-neutral-100">
@@ -137,16 +170,30 @@ function StreamFrame({ children, right, full }: Props) {
     );
 }
 
-function ShowcaseFrame({ children, right, full }: Props) {
+function ShowcaseFrame({ children, left, right, full, wide, mainMenu }: Props) {
     const { auth } = usePage<SharedData>().props;
     if (full) return <FullFrame rail={{ variant: 'icons', from: 'md' }}>{children}</FullFrame>;
+    const sectionMenu = mainMenu ? undefined : left;
+    const rail = (
+        <aside className="fixed inset-y-0 start-0 z-30 hidden w-[72px] border-e border-slate-200 bg-white md:block xl:w-[244px] dark:border-neutral-800 dark:bg-black">
+            <SideRail variant="icons" />
+        </aside>
+    );
+    if (wide || sectionMenu)
+        return (
+            <div className="bg-page min-h-screen text-slate-900 dark:text-neutral-100">
+                <ClubHeader className="md:hidden" />
+                {rail}
+                <div className="flex md:ms-[72px] xl:ms-[244px]">
+                    <RoomyBody left={sectionMenu}>{children}</RoomyBody>
+                </div>
+            </div>
+        );
 
     return (
         <div className="bg-page min-h-screen text-slate-900 dark:text-neutral-100">
             <ClubHeader className="md:hidden" />
-            <aside className="fixed inset-y-0 start-0 z-30 hidden w-[72px] border-e border-slate-200 bg-white md:block xl:w-[244px] dark:border-neutral-800 dark:bg-black">
-                <SideRail variant="icons" />
-            </aside>
+            {rail}
             <div className="md:ms-[72px] xl:ms-[244px]">
                 <div className="mx-auto flex max-w-[935px] justify-center gap-16 md:py-6">
                     <main className="w-full max-w-[470px] min-w-0 max-sm:pb-20">{children}</main>
