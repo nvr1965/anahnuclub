@@ -992,5 +992,9 @@
     "Welcomed a baby": "לידת תינוק",
     "Went on a trip": "טיול",
     "Retired": "פרישה לגמלאות",
-    "Anniversary": "יום נישואין"
+    "Anniversary": "יום נישואין",
+    ":n sec": ":n שנ׳",
+    ":n min": ":n דק׳",
+    "Declined": "נדחתה",
+    "No answer": "אין מענה"
 }

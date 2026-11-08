@@ -29,7 +29,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
     const t = useT();
     const { locale } = usePage<SharedData>().props;
     const [open, setOpen] = useState(false);
-    const [chats, setChats] = useState<{ conversations: ChatRow[]; requests: ChatRow[] } | null>(null);
+    const [chats, setChats] = useState<{ conversations: ChatRow[]; requests: ChatRow[]; friends?: Person[] } | null>(null);
     const [tab, setTab] = useState<Tab>('all');
     const [query, setQuery] = useState('');
 
@@ -40,7 +40,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
             const response = await fetch(route('messages.latest'), { headers: { Accept: 'application/json' } });
             setChats(await response.json());
         } catch {
-            setChats({ conversations: [], requests: [] });
+            setChats({ conversations: [], requests: [], friends: [] });
         }
     };
 
@@ -48,7 +48,26 @@ export function MessengerMenu({ className, children }: { className: string; chil
     const rows = (tab === 'requests' ? (chats?.requests ?? []) : (chats?.conversations ?? []))
         .filter((row) => tab !== 'unread' || row.unread)
         .filter((row) => !needle || row.with.name.toLocaleLowerCase().includes(needle) || row.last?.body.toLocaleLowerCase().includes(needle));
+    // Every friend is in the messenger: those there is no chat with yet follow the chats.
+    const friends = tab === 'all' ? (chats?.friends ?? []).filter((f) => !needle || f.name.toLocaleLowerCase().includes(needle)) : [];
     const close = () => setOpen(false);
+    const writeTo = async (person: Person) => {
+        close();
+        try {
+            const response = await fetch(route('messages.start', person.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                },
+            });
+            if (!response.ok) throw new Error();
+            const { id } = await response.json();
+            openChat(id, person);
+        } catch {
+            router.post(route('messages.start', person.id));
+        }
+    };
 
     return (
         <DropdownMenu open={open} onOpenChange={toggle}>
@@ -163,7 +182,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
                 <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-1">
                     {chats === null ? (
                         <p className="text-muted-foreground p-6 text-center text-sm">…</p>
-                    ) : rows.length === 0 ? (
+                    ) : rows.length === 0 && friends.length === 0 ? (
                         <p className="text-muted-foreground px-3 py-8 text-center text-[0.9375rem]">
                             {needle
                                 ? t('Nothing found.')
@@ -209,6 +228,24 @@ export function MessengerMenu({ className, children }: { className: string; chil
                                 {row.unread && <span className="bg-brand size-3 shrink-0 rounded-full" />}
                             </Link>
                         ))
+                    )}
+                    {chats !== null && friends.length > 0 && (
+                        <>
+                            <div className="text-muted-foreground px-2 pt-3 pb-1 text-[0.8125rem] font-semibold">{t('Friends')}</div>
+                            {friends.map((friend) => (
+                                <button
+                                    key={friend.id}
+                                    type="button"
+                                    onClick={() => writeTo(friend)}
+                                    className="flex w-full items-center gap-3 rounded-lg p-2 text-start hover:bg-slate-100 dark:hover:bg-neutral-800"
+                                >
+                                    <UserAvatar person={friend} className="size-14" />
+                                    <span dir="auto" className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">
+                                        {friend.name}
+                                    </span>
+                                </button>
+                            ))}
+                        </>
                     )}
                 </div>
 

@@ -992,5 +992,9 @@
     "Welcomed a baby": "Рождение ребёнка",
     "Went on a trip": "Путешествие",
     "Retired": "Выход на пенсию",
-    "Anniversary": "Годовщина"
+    "Anniversary": "Годовщина",
+    ":n sec": ":n сек",
+    ":n min": ":n мин",
+    "Declined": "Отклонён",
+    "No answer": "Нет ответа"
 }

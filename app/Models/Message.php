@@ -13,7 +13,7 @@ class Message extends Model
 
     protected array $translatable = ['body'];
 
-    protected $fillable = ['conversation_id', 'user_id', 'body', 'locale'];
+    protected $fillable = ['conversation_id', 'user_id', 'body', 'locale', 'call_id'];
 
     public function conversation(): BelongsTo
     {
@@ -23,6 +23,12 @@ class Message extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** A finished video or audio call shown in the chat as a line of its own. */
+    public function call(): BelongsTo
+    {
+        return $this->belongsTo(Call::class);
     }
 
     public function attachments(): HasMany
