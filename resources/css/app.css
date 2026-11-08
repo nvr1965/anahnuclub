@@ -302,6 +302,27 @@
         overflow-x: clip;
     }
 
+    /* Scrollbars as on Facebook: thin and quiet everywhere instead of the system's wide grey bars with arrows.
+       The side columns show theirs only while the pointer is over them; the space stays reserved, so nothing shifts. */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(0 0 0 / 0.22) transparent;
+    }
+    .dark,
+    .dark * {
+        scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+    }
+    aside,
+    .dark aside {
+        scrollbar-color: transparent transparent;
+    }
+    aside:hover {
+        scrollbar-color: rgb(0 0 0 / 0.22) transparent;
+    }
+    .dark aside:hover {
+        scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+    }
+
     /* The search box lights up when the menu's Search moves the cursor into it. */
     .search-box-flash {
         animation: search-box-flash 1.6s ease-out;
