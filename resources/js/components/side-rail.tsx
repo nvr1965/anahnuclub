@@ -89,7 +89,7 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
                                 </span>
                             )}
                         </span>
-                        <span className={name}>{item.label}</span>
+                        <span className={`${name} hyphens-auto`}>{item.label}</span>
                     </Link>
                 );
             })}
