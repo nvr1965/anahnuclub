@@ -1,7 +1,18 @@
 import { useT } from '@/lib/i18n';
 import { type Translatable } from '@/types';
+import { router } from '@inertiajs/react';
 import { Languages } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type MouseEvent, useEffect, useRef, useState } from 'react';
+
+/** Hashtags and friends named in a text open inside the site, not in a new tab like other links. */
+function openInside(e: MouseEvent<HTMLDivElement>) {
+    const link = (e.target as HTMLElement).closest('a');
+    if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin || !/^\/(hashtag|people)\//.test(url.pathname)) return;
+    e.preventDefault();
+    router.visit(url.pathname + url.search);
+}
 
 interface Props {
     item: Translatable;
@@ -47,7 +58,8 @@ export function TranslatedText({ item, fetched, original, clamp = false, titleCl
             <div
                 ref={bodyRef}
                 dir="auto"
-                className={`prose prose-sm prose-slate dark:prose-invert prose-a:text-brand prose-img:rounded-xl max-w-none break-words ${long && !expanded ? 'line-clamp-5' : ''}`}
+                onClick={openInside}
+                className={`prose prose-sm prose-slate dark:prose-invert prose-a:text-brand prose-img:rounded-xl max-w-none break-words [&_a[href^="/hashtag/"]]:no-underline [&_a[href^="/hashtag/"]]:hover:underline [&_a[href^="/people/"]]:font-semibold [&_a[href^="/people/"]]:no-underline [&_a[href^="/people/"]]:hover:underline ${long && !expanded ? 'line-clamp-5' : ''}`}
                 dangerouslySetInnerHTML={{ __html: body }}
             />
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">

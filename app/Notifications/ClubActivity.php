@@ -15,7 +15,7 @@ class ClubActivity extends Notification
         'post_liked', 'post_commented', 'comment_replied', 'comment_also', 'photo_liked', 'video_liked',
         'friend_request', 'friend_accepted', 'event_going', 'event_interested',
         'group_offer_admin', 'group_offer_moderator', 'group_offer_owner', 'group_offer_accepted', 'group_invite',
-        'post_shared', 'wall_post', 'level_up', 'badge_given',
+        'post_shared', 'wall_post', 'level_up', 'badge_given', 'post_tagged', 'post_mentioned',
     ];
 
     public function __construct(

@@ -134,6 +134,7 @@ class FeedController extends Controller
             ->select('posts.*')
             ->with([
                 'user', 'group', 'photos', 'video', 'event', 'linkPreview', 'wallUser',
+                'taggedUsers' => fn ($q) => $q->select('users.id', 'users.name'),
                 // A shared post, only when this reader may read it themself; else the share says it is gone.
                 'sharedPost' => fn ($q) => $q->visibleTo($viewer)
                     ->where(fn (Builder $q) => $q->whereNull('group_id')->orWhereHas('group', fn (Builder $g) => $g->where('published', true)->where('is_private', false)))

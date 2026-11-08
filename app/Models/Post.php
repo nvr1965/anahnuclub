@@ -6,6 +6,7 @@ use App\Jobs\FetchLinkPreview;
 use App\Models\Concerns\HasContentTranslations;
 use App\Support\Background;
 use App\Support\LinkPreviewFetcher;
+use App\Support\PostTags;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -20,9 +21,20 @@ class Post extends Model
 
     protected array $translatable = ['title', 'body'];
 
-    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'shared_post_id', 'wall_user_id', 'created_at', 'updated_at'];
+    protected $fillable = ['user_id', 'group_id', 'video_id', 'event_id', 'type', 'title', 'body', 'link_url', 'locale', 'legacy_source', 'legacy_id', 'audience', 'shared_post_id', 'wall_user_id', 'feeling', 'place', 'life_event', 'created_at', 'updated_at'];
 
     public const AUDIENCES = ['public', 'friends', 'except', 'specific', 'only_me'];
+
+    /** How the author feels, picked under "Feeling": "Anna — feeling happy". The page draws the face and words. */
+    public const FEELINGS = [
+        'happy', 'loved', 'blessed', 'grateful', 'excited', 'relaxed', 'proud', 'hopeful', 'in_love', 'festive',
+        'thoughtful', 'tired', 'sad', 'sick', 'angry', 'nostalgic',
+    ];
+
+    /** Life events, shown as a card above the words: "New job", "Aliyah"… */
+    public const LIFE_EVENTS = [
+        'new_job', 'graduated', 'moved', 'aliyah', 'engaged', 'married', 'baby', 'travel', 'retired', 'anniversary',
+    ];
 
     /** Where a post can be pinned, and the column that keeps when it was pinned there. */
     public const PIN_PLACES = ['feed' => 'pinned_at', 'profile' => 'profile_pinned_at', 'group' => 'group_pinned_at'];
@@ -38,6 +50,10 @@ class Post extends Model
             }
         });
         static::saved(function (Post $post) {
+            // Its #hashtags, so the hashtag's page finds it.
+            if ($post->wasRecentlyCreated || $post->wasChanged(['title', 'body'])) {
+                PostTags::syncHashtags($post);
+            }
             if (($post->wasRecentlyCreated || $post->wasChanged('link_url')) && $post->link_url !== '' && ! LinkPreview::where('url', $post->link_url)->exists()) {
                 // Right after the response for a new post. From the console (the import) it goes to the
                 // queue instead: "after the response" there means the end of the command, page after page.
@@ -148,6 +164,12 @@ class Post extends Model
         return $this->belongsToMany(User::class, 'post_audience');
     }
 
+    /** Friends tagged in the post: "with" beside the author's name, "mention" for an @name in the text. */
+    public function taggedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'post_user_tags')->withPivot('kind')->withTimestamps();
+    }
+
     /**
      * Only the posts $viewer may see by their audience: public ones, their own, and those their
      * friendship with the author opens. Guests see public posts only.
@@ -164,6 +186,8 @@ class Post extends Model
             $q->orWhere('posts.user_id', $viewer->id)
                 // What friends put on the viewer's profile, the viewer always sees.
                 ->orWhere('posts.wall_user_id', $viewer->id)
+                // And the posts they are tagged in.
+                ->orWhereExists(fn ($sub) => $sub->selectRaw('1')->from('post_user_tags')->whereColumn('post_user_tags.post_id', 'posts.id')->where('post_user_tags.user_id', $viewer->id))
                 ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'friends')->whereIn('posts.user_id', $friends))
                 // A post on a friend's profile is also read by that friend's friends, as on Facebook.
                 ->orWhere(fn (Builder $q) => $q->where('posts.audience', 'friends')->whereIn('posts.wall_user_id', $friends))

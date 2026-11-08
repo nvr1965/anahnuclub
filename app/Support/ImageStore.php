@@ -15,6 +15,10 @@ class ImageStore
      */
     public static function save(UploadedFile $file, string $folder, int $width, ?int $height = null): string
     {
+        // An animated GIF keeps its motion at full size; only its small copy (a crop) becomes a still.
+        if ($height === null && $file->getMimeType() === 'image/gif') {
+            return $file->storeAs($folder, Str::random(24).'.gif', 'public');
+        }
         $path = $folder.'/'.Str::random(24).'.jpg';
         $source = function_exists('imagecreatefromstring') ? @imagecreatefromstring((string) file_get_contents($file->getRealPath())) : false;
 

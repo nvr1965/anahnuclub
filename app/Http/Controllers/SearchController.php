@@ -8,8 +8,10 @@ use App\Models\Group;
 use App\Models\Page;
 use App\Models\User;
 use App\Models\Video;
+use App\Support\PostTags;
 use App\Support\TextSearch;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -23,9 +25,13 @@ class SearchController extends Controller
     /** How many of each kind the "All" tab shows. */
     private const PREVIEW = ['people' => 6, 'posts' => 5, 'groups' => 4, 'videos' => 4, 'events' => 4, 'pages' => 4];
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         $q = trim((string) $request->query('q'));
+        // "#шаббат" opens the hashtag's page.
+        if (str_starts_with($q, '#') && PostTags::isHashtag($q)) {
+            return redirect(PostTags::url($q));
+        }
         $type = in_array($request->query('type'), self::TYPES, true) ? $request->query('type') : 'all';
         $counts = array_fill_keys(self::TYPES, 0);
         $results = array_fill_keys(self::TYPES, []);

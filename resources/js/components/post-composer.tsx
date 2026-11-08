@@ -2,6 +2,8 @@ import { AudienceIcon, AudiencePicker, useAudienceLabels } from '@/components/au
 import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
 import { ExternalEmbed } from '@/components/external-embed';
 import { LinkPreview } from '@/components/link-preview';
+import { AddToPost, ExtrasChips, FeelingPicker, LifeEventPicker, PlacePicker, type PostExtras } from '@/components/post-extras';
+import { TagFriendsPicker, TagTextarea, type TaggedFriend, WithFriends } from '@/components/post-tags';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useCreateRequest } from '@/lib/create';
@@ -9,7 +11,7 @@ import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame, videoInfo } from '@/lib/shrink-image';
 import { type Audience, type EmbedCard, type LinkCard, type SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
-import { Camera, ChevronDown, Film, ImagePlus, X } from 'lucide-react';
+import { Camera, ChevronDown, Film, ImagePlus, UserPlus, X } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 
 const MAX_PHOTOS = 20;
@@ -19,7 +21,21 @@ const CLIP_SECONDS = 90;
 const CLIP_BYTES = 50 * 1024 * 1024;
 
 /** Reset after posting or cancelling. */
-const MEDIA = ['body', 'images', 'video', 'video_thumb', 'audience_default', 'clip', 'video_width', 'video_height', 'video_duration'] as const;
+const MEDIA = [
+    'body',
+    'feeling',
+    'place',
+    'life_event',
+    'images',
+    'video',
+    'video_thumb',
+    'audience_default',
+    'clip',
+    'video_width',
+    'video_height',
+    'video_duration',
+    'tagged_ids',
+] as const;
 
 /** "What's on your mind?" box: a pill that opens into a text area, with pictures or a video, picked or shot with the camera. */
 export function PostComposer({
@@ -45,6 +61,9 @@ export function PostComposer({
     const [clipError, setClipError] = useState('');
     const clipPicker = useRef<HTMLInputElement>(null);
     const [choosingAudience, setChoosingAudience] = useState(false);
+    // Friends the author is with, as on Facebook: "Anna — with Boris".
+    const [tagging, setTagging] = useState(false);
+    const [tagged, setTagged] = useState<TaggedFriend[]>([]);
     const audienceLabels = useAudienceLabels();
     const picker = useRef<HTMLInputElement>(null);
     const nativeCamera = useRef<HTMLInputElement>(null);
@@ -62,6 +81,10 @@ export function PostComposer({
         video_width: number | null;
         video_height: number | null;
         video_duration: number | null;
+        tagged_ids: number[];
+        feeling: PostExtras['feeling'];
+        place: string | null;
+        life_event: PostExtras['life_event'];
     }>({
         body: initialBody ?? '',
         group_id: groupId ?? null,
@@ -76,7 +99,14 @@ export function PostComposer({
         video_width: null,
         video_height: null,
         video_duration: null,
+        tagged_ids: [],
+        feeling: null,
+        place: null,
+        life_event: null,
     });
+    // "Add to your post": the window open for a feeling, a place or a life event.
+    const [picking, setPicking] = useState<keyof PostExtras | null>(null);
+    const gifPicker = useRef<HTMLInputElement>(null);
     // The first link typed shows as a card, as on Facebook; closing it keeps the link as text only.
     const [link, setLink] = useState<LinkCard | null>(null);
     // A post of Facebook, Instagram, YouTube… (its link or its "embed" code) shows as its player.
@@ -188,6 +218,7 @@ export function PostComposer({
             onSuccess: () => {
                 // The audience stays as chosen for the next post, as on Facebook.
                 form.reset(...MEDIA);
+                setTagged([]);
                 setLink(null);
                 setEmbed(null);
                 setDismissed(null);
@@ -197,7 +228,24 @@ export function PostComposer({
         });
     };
 
-    const empty = !form.data.body.trim() && form.data.images.length === 0 && !form.data.video;
+    const empty =
+        !form.data.body.trim() &&
+        form.data.images.length === 0 &&
+        !form.data.video &&
+        !form.data.feeling &&
+        !form.data.place &&
+        !form.data.life_event;
+    const addToPost = (action: 'photo' | 'tag' | 'feeling' | 'place' | 'life_event' | 'gif' | 'camera' | 'clip') =>
+        ({
+            photo: () => picker.current?.click(),
+            tag: () => setTagging(true),
+            feeling: () => setPicking('feeling'),
+            place: () => setPicking('place'),
+            life_event: () => setPicking('life_event'),
+            gif: () => gifPicker.current?.click(),
+            camera: openCamera,
+            clip: () => (cameraAvailable() ? setClipping(true) : clipPicker.current?.click()),
+        })[action]();
     const tool =
         'text-muted-foreground inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-neutral-800';
     const photoButton = (
@@ -219,6 +267,16 @@ export function PostComposer({
                     <Film className="size-5 text-fuchsia-600" /> <span className={open ? 'hidden sm:inline' : ''}>{t('Clip')}</span>
                 </button>
             )}
+            <button
+                type="button"
+                onClick={() => (setOpen(true), setTagging(true))}
+                className={tool}
+                title={t('Tag friends')}
+                aria-label={t('Tag friends')}
+            >
+                <UserPlus className="size-5 text-sky-600" />{' '}
+                <span className={open ? 'hidden lg:inline' : 'hidden sm:inline'}>{t('Tag friends')}</span>
+            </button>
         </div>
     );
 
@@ -245,6 +303,7 @@ export function PostComposer({
                 className="hidden"
                 onChange={(e) => addFiles(e.target.files)}
             />
+            <input ref={gifPicker} type="file" accept="image/gif" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
             <input ref={clipPicker} type="file" accept="video/*" className="hidden" onChange={(e) => addClip(e.target.files?.[0])} />
             {clipping && (
                 <CameraCapture
@@ -269,14 +328,16 @@ export function PostComposer({
                     <DefaultAvatarFallback />
                 </Avatar>
                 {open ? (
-                    <textarea
+                    // "@" names a friend, "#" makes a hashtag.
+                    <TagTextarea
                         dir="auto"
                         autoFocus
                         rows={form.data.images.length ? 2 : 4}
-                        className="flex-1 resize-none rounded-xl bg-slate-100 px-4 py-2.5 text-[0.9375rem] outline-none dark:bg-neutral-800"
+                        wrapperClassName="flex-1"
+                        className="w-full resize-none rounded-xl bg-slate-100 px-4 py-2.5 text-[0.9375rem] outline-none dark:bg-neutral-800"
                         placeholder={t("What's on your mind, :name?", { name: firstName })}
                         value={form.data.body}
-                        onChange={(e) => form.setData('body', e.target.value)}
+                        onChange={(body) => form.setData('body', body)}
                     />
                 ) : (
                     <button
@@ -290,8 +351,51 @@ export function PostComposer({
                 )}
             </div>
 
+            <TagFriendsPicker
+                open={tagging}
+                onClose={() => setTagging(false)}
+                value={tagged}
+                onDone={(friends) => {
+                    setTagged(friends);
+                    form.setData(
+                        'tagged_ids',
+                        friends.map((f) => f.id),
+                    );
+                    setTagging(false);
+                }}
+            />
+            <FeelingPicker
+                open={picking === 'feeling'}
+                onClose={() => setPicking(null)}
+                value={form.data.feeling}
+                onPick={(feeling) => (form.setData('feeling', feeling), setPicking(null))}
+            />
+            <PlacePicker
+                open={picking === 'place'}
+                onClose={() => setPicking(null)}
+                value={form.data.place}
+                onPick={(place) => (form.setData('place', place), setPicking(null))}
+            />
+            <LifeEventPicker
+                open={picking === 'life_event'}
+                onClose={() => setPicking(null)}
+                value={form.data.life_event}
+                onPick={(event) => (form.setData('life_event', event), setPicking(null))}
+            />
+            {open && (
+                <ExtrasChips
+                    value={{ feeling: form.data.feeling, place: form.data.place, life_event: form.data.life_event }}
+                    onOpen={setPicking}
+                    onRemove={(key) => form.setData(key, null)}
+                />
+            )}
+            {open && groupId && tagged.length > 0 && (
+                <div className="mt-2 ps-12 text-sm">
+                    <WithFriends people={tagged} linked={false} onClick={() => setTagging(true)} />
+                </div>
+            )}
             {open && !groupId && (
-                <div className="mt-2 ps-12">
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 ps-12">
                     <button
                         type="button"
                         onClick={() => setChoosingAudience(true)}
@@ -302,6 +406,11 @@ export function PostComposer({
                         {(form.data.audience === 'except' || form.data.audience === 'specific') && ` (${form.data.audience_ids.length})`}
                         <ChevronDown className="size-3.5" />
                     </button>
+                    {tagged.length > 0 && (
+                        <span className="text-sm">
+                            <WithFriends people={tagged} linked={false} onClick={() => setTagging(true)} />
+                        </span>
+                    )}
                     <AudiencePicker
                         open={choosingAudience}
                         onClose={() => setChoosingAudience(false)}
@@ -382,24 +491,36 @@ export function PostComposer({
             )}
 
             {open ? (
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-neutral-800">
-                    {photoButton}
-                    <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={() => (form.reset(...MEDIA), setClipError(''), setOpen(false), onCancel?.())}
-                            className="text-muted-foreground rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap hover:bg-slate-100 dark:hover:bg-neutral-800"
-                        >
-                            {t('Cancel')}
-                        </button>
-                        <button
-                            disabled={form.processing || preparing || empty}
-                            className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold whitespace-nowrap text-white disabled:opacity-40"
-                        >
-                            {form.processing ? (form.progress ? `${form.progress.percentage ?? 0}%` : t('Publishing…')) : t('Publish')}
-                        </button>
+                <>
+                    <AddToPost
+                        clip={!groupId}
+                        onAction={addToPost}
+                        active={{
+                            photo: form.data.images.length > 0 || !!form.data.video,
+                            tag: tagged.length > 0,
+                            feeling: !!form.data.feeling,
+                            place: !!form.data.place,
+                            life_event: !!form.data.life_event,
+                        }}
+                    />
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => (form.reset(...MEDIA), setTagged([]), setClipError(''), setOpen(false), onCancel?.())}
+                                className="text-muted-foreground rounded-md px-3 py-2 text-sm font-semibold whitespace-nowrap hover:bg-slate-100 dark:hover:bg-neutral-800"
+                            >
+                                {t('Cancel')}
+                            </button>
+                            <button
+                                disabled={form.processing || preparing || empty}
+                                className="bg-brand hover:bg-brand-dark rounded-md px-5 py-2 text-sm font-semibold whitespace-nowrap text-white disabled:opacity-40"
+                            >
+                                {form.processing ? (form.progress ? `${form.progress.percentage ?? 0}%` : t('Publishing…')) : t('Publish')}
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </>
             ) : (
                 <div className="mt-2 flex border-t border-slate-200 pt-2 dark:border-neutral-800">{photoButton}</div>
             )}

@@ -5,7 +5,22 @@ import { useT } from '@/lib/i18n';
 import { shortAgo } from '@/lib/relative-time';
 import { type Person, type Reaction, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Award, CalendarCheck, Crown, MessageCircle, PenLine, Share2, Shield, ShieldCheck, Star, ThumbsUp, UserCheck, UserPlus } from 'lucide-react';
+import {
+    AtSign,
+    Award,
+    CalendarCheck,
+    Crown,
+    MessageCircle,
+    PenLine,
+    Share2,
+    Shield,
+    ShieldCheck,
+    Star,
+    ThumbsUp,
+    UserCheck,
+    UserPlus,
+    UserRoundPlus,
+} from 'lucide-react';
 import { Fragment, type ReactNode, useState } from 'react';
 
 export interface ClubNotification {
@@ -79,6 +94,8 @@ const kinds: Record<string, { one: string; many?: string; reacted?: [string, str
     group_offer_accepted: { one: ':name accepted your offer in a group', icon: <UserCheck />, color: 'bg-indigo-500' },
     post_shared: { one: ':name shared your post', many: ':names shared your post', icon: <Share2 />, color: 'bg-brand' },
     wall_post: { one: ':name wrote on your profile', many: ':names wrote on your profile', icon: <PenLine />, color: 'bg-sky-500' },
+    post_tagged: { one: ':name tagged you in a post', many: ':names tagged you in a post', icon: <UserRoundPlus />, color: 'bg-sky-500' },
+    post_mentioned: { one: ':name mentioned you in a post', many: ':names mentioned you in a post', icon: <AtSign />, color: 'bg-sky-500' },
     level_up: { one: 'Congratulations! You reached a new level in the club: :badge', icon: <Award />, color: 'bg-amber-500' },
     badge_given: { one: ':name gave you the badge :badge', icon: <Award />, color: 'bg-amber-500' },
 };

@@ -100,8 +100,9 @@ class PeopleController extends Controller
         $posts = null;
         if ($tab === 'posts' && ! $blockedByMe) {
             $posts = FeedController::postQuery($request)
-                // The member's own posts and what friends put on their profile.
-                ->where(fn (Builder $q) => $q->where('user_id', $user->id)->orWhere('wall_user_id', $user->id))
+                // The member's own posts, what friends put on their profile, and the posts they are tagged in.
+                ->where(fn (Builder $q) => $q->where('user_id', $user->id)->orWhere('wall_user_id', $user->id)
+                    ->orWhereExists(fn ($t) => $t->selectRaw('1')->from('post_user_tags')->whereColumn('post_user_tags.post_id', 'posts.id')->where('post_user_tags.user_id', $user->id)))
                 // Posts in private groups stay inside those groups.
                 ->when(! $me, fn (Builder $q) => $q->whereDoesntHave('group', fn (Builder $g) => $g->where('is_private', true)))
                 ->pinnedFirst('profile')
