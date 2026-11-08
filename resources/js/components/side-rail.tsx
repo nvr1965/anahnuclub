@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n';
 import { focusSearchBox } from '@/lib/search-box';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, Ellipsis, Film, House, type LucideIcon, Menu, MessageCircle, PenLine, Plus, Search, Shield, UserRound, Users } from 'lucide-react';
+import { Bell, Ellipsis, Film, House, type LucideIcon, Menu, MessageCircle, PenLine, Plus, Search, UserRound, Users } from 'lucide-react';
 import { useEffect } from 'react';
 
 /**
@@ -39,8 +39,6 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
     ];
     if (auth.user)
         items.push({ label: t('My profile'), href: route('people.show', auth.user.id), match: `/people/${auth.user.id}`, icon: UserRound });
-    // Admins reach the admin pages straight from the rail, not only from the menu at the bottom.
-    if (auth.user?.is_admin) items.push({ label: t('Administration'), href: route('admin.index'), match: '/admin', icon: Shield });
 
     const wide = variant === 'wide';
     // Icons only below xl in Showcase; Stream shows names from lg, where the rail appears.
@@ -89,7 +87,7 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
                                 </span>
                             )}
                         </span>
-                        <span className={`${name} hyphens-auto`}>{item.label}</span>
+                        <span className={name}>{item.label}</span>
                     </Link>
                 );
             })}
@@ -135,7 +133,7 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
                         )}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-60" align="start" side="top">
-                        <UserMenuContent user={auth.user} />
+                        <UserMenuContent user={auth.user} languages="always" />
                     </DropdownMenuContent>
                 </DropdownMenu>
             )}

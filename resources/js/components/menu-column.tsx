@@ -5,20 +5,7 @@ import { useT } from '@/lib/i18n';
 import { installApp } from '@/lib/install-app';
 import { type SharedData, type Sidebar } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import {
-    CalendarDays,
-    Clapperboard,
-    Contact,
-    Film,
-    House,
-    Images,
-    MessageCircle,
-    Settings,
-    Shield,
-    Smartphone,
-    UserRound,
-    Users,
-} from 'lucide-react';
+import { CalendarDays, Clapperboard, Contact, Film, House, Images, MessageCircle, Settings, Smartphone, UserRound, Users } from 'lucide-react';
 
 /** Left column like Facebook's: you, the main sections, then your groups. */
 export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
@@ -104,14 +91,6 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
                 </span>
                 {t('Settings')}
             </Link>
-            {Boolean(auth.user?.is_admin) && (
-                <Link href={route('admin.index')} className={row}>
-                    <span className="bg-ink flex size-9 items-center justify-center rounded-full text-white">
-                        <Shield className="size-5" />
-                    </span>
-                    {t('Administration')}
-                </Link>
-            )}
             {installOffered && (
                 <button type="button" onClick={installApp} className={`${row} w-full text-start`}>
                     <span className="bg-brand-soft text-brand dark:bg-brand/20 flex size-9 items-center justify-center rounded-full">
