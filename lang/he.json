@@ -996,5 +996,8 @@
     ":n sec": ":n שנ׳",
     ":n min": ":n דק׳",
     "Declined": "נדחתה",
-    "No answer": "אין מענה"
+    "No answer": "אין מענה",
+    "Whole text": "טקסט מלא",
+    "Excerpt only": "רק תקציר",
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "כתובת RSS, ערוץ יוטיוב, ערוץ טלגרם https://t.me/s/… או panet.com / bokra.net"
 }

@@ -10,6 +10,8 @@
  * the admin page which of them answer; fix or switch off the others there.
  *
  * 'was' is the author's earlier name: feeds:setup renames an author that still has it (name, language, topic, profile line).
+ * 'was_group' moves an author that is still in that group to its 'group'. A source may carry options
+ * (['full_text' => true]: its items are posted whole, for jokes and recipes).
  * 'group' is the topic group the author posts in (the list 'groups' below: slug, name, description).
  * 'retired' are addresses given earlier that do not work: feeds:setup switches them off.
  */
@@ -93,10 +95,12 @@ return [
         ['מכון דוידסון', 'https://davidson.weizmann.ac.il/rss.xml', 'he'],
         ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
     ]],
-    ['slug' => 'ron', 'group' => 'science', 'name' => 'Ron', 'locale' => 'en', 'limit' => 2, 'topic' => 'Tech and startups', 'sources' => [
+    ['slug' => 'ron', 'group' => 'it', 'was_group' => 'science', 'name' => 'Ron', 'locale' => 'en', 'min' => 2, 'limit' => 3, 'topic' => 'IT, tech and startups', 'sources' => [
         ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
         ['Calcalist Tech', 'https://www.calcalistech.com/ctechnews/rss', 'en'],
         ['The Verge', 'https://www.theverge.com/rss/index.xml', 'en'],
+        ['TechCrunch', 'https://techcrunch.com/feed/', 'en'],
+        ['Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index', 'en'],
     ]],
     ['slug' => 'tali', 'group' => 'interesting', 'name' => 'טלי', 'was' => 'Тали', 'locale' => 'he', 'limit' => 1, 'topic' => 'בריאות: רק ממקורות רשמיים', 'sources' => [
         ['WHO', 'https://www.who.int/rss-feeds/news-english.xml', 'en'],
@@ -116,9 +120,20 @@ return [
         ['The Guardian · Travel', 'https://www.theguardian.com/travel/rss', 'en'],
     ]],
     // Recipes come from the curator: the "Add by hand" form on the admin page.
-    ['slug' => 'faina', 'group' => 'interesting', 'name' => 'Фаина', 'locale' => 'ru', 'limit' => 1, 'topic' => 'Кухня и рецепты', 'sources' => []],
+    // Recipes: the sites below and what the curator adds by hand.
+    ['slug' => 'faina', 'group' => 'cooking', 'was_group' => 'interesting', 'name' => 'Фаина', 'locale' => 'ru', 'min' => 1, 'limit' => 2, 'topic' => 'Кухня и рецепты', 'sources' => [
+        ['Bon Appétit', 'https://www.bonappetit.com/feed/rss', 'en'],
+        ['Foody', 'https://www.foody.co.il/feed', 'he'],
+    ]],
+    ['slug' => 'mia', 'group' => 'beauty', 'name' => 'Mia', 'locale' => 'en', 'min' => 1, 'limit' => 2, 'topic' => 'Beauty and self-care', 'sources' => [
+        ['Allure', 'https://www.allure.com/feed/rss', 'en'],
+        ['Glamour', 'https://www.glamour.com/feed/rss', 'en'],
+    ]],
     // Folk jokes, added by the curator by hand (a few hundred at once); jokes of other sites only as links.
-    ['slug' => 'izya', 'group' => 'humor', 'name' => 'Изя', 'locale' => 'ru', 'limit' => 2, 'topic' => 'Анекдоты и юмор', 'sources' => []],
+    // Jokes, whole: anekdot.ru's jokes of the day, YouTube channels the curator adds (Odessa jokes), and by hand.
+    ['slug' => 'izya', 'group' => 'humor', 'name' => 'Изя', 'locale' => 'ru', 'min' => 2, 'limit' => 3, 'topic' => 'Анекдоты и юмор', 'sources' => [
+        ['Анекдоты дня', 'https://www.anekdot.ru/rss/export_j.xml', 'ru', ['full_text' => true]],
+    ]],
     'groups' => [
         'israel' => ['Новости Израиля', 'Главное в Израиле за день: новости из проверенных источников, со ссылками.'],
         'arab-world' => ['Новости арабского мира', 'Арабы Израиля и арабский мир: Panet, Bokra, BBC Arabic и другие, со ссылками.'],
@@ -132,6 +147,9 @@ return [
         'interesting' => ['Интересно', 'Здоровье, культура и кино, путешествия, кухня: всё, что интересно почитать.'],
         'sport' => ['Спорт', 'Спортивные новости Израиля и мира.'],
         'humor' => ['Юмор и анекдоты', 'Анекдоты и весёлое: для настроения.'],
+        'beauty' => ['Красота', 'Уход, макияж, мода и забота о себе.'],
+        'cooking' => ['Кулинария', 'Рецепты и всё про еду.'],
+        'it' => ['IT и технологии', 'Новости IT, гаджеты, стартапы и программирование.'],
     ],
     'retired' => [
         // Fewer Russian sources: the authors write in the languages of their countries.

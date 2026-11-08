@@ -996,5 +996,8 @@
     ":n sec": ":n ث",
     ":n min": ":n د",
     "Declined": "مرفوضة",
-    "No answer": "لا رد"
+    "No answer": "لا رد",
+    "Whole text": "النص كاملاً",
+    "Excerpt only": "المقتطف فقط",
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "عنوان RSS، قناة يوتيوب، قناة تيليغرام https://t.me/s/… أو panet.com / bokra.net"
 }

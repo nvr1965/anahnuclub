@@ -81,6 +81,7 @@ class FeedController extends AdminController
                     'url' => $s->url,
                     'locale' => $s->locale,
                     'trusted' => $s->trusted,
+                    'full_text' => $s->full_text,
                     'active' => $s->active,
                     'fetched_at' => $s->fetched_at?->toIso8601String(),
                     'error' => $s->error,
@@ -153,6 +154,7 @@ class FeedController extends AdminController
             'url' => ['sometimes', 'url:http,https', 'max:1000'],
             'locale' => ['sometimes', 'nullable', 'string', 'max:8'],
             'trusted' => ['sometimes', 'boolean'],
+            'full_text' => ['sometimes', 'boolean'],
             'active' => ['sometimes', 'boolean'],
         ]));
 

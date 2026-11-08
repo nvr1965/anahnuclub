@@ -45,7 +45,7 @@ class FeedPublisher
             ->groupBy('feed_channel_id')->get()->keyBy('feed_channel_id');
 
         // Each author whose next planned moment has come; the one that waits longest goes first.
-        $channel = FeedChannel::query()->where('paused', false)->with('user')
+        $channel = FeedChannel::query()->where('paused', false)->with(['user', 'group'])
             ->whereHas('items', fn ($q) => $q->where('status', 'approved'))
             ->get()
             ->map(function (FeedChannel $c) use ($posted, $elapsed, $factor, $day, $from, $to) {
@@ -137,10 +137,22 @@ class FeedPublisher
         FeedItem::where('status', 'skipped')->where('created_at', '<', now()->subDays(2))->delete();
     }
 
-    /** The author's number of posts today: half of it on a day the members write a lot themselves. */
+    /**
+     * The author's number of posts today: its daily number, times feeds.frequency for news (the light topics,
+     * feeds.light_groups, keep theirs), and half of it on a day the members write a lot themselves.
+     * A part of a post is a post on some days: 2 × ⅔ is one post a day and two on every third day.
+     */
     public static function limitToday(FeedChannel $channel, string $day, float $factor = 1): int
     {
-        return $channel->daily_limit > 0 ? max(1, (int) round($channel->limitFor($day) * $factor)) : 0;
+        if ($channel->daily_limit <= 0) {
+            return 0;
+        }
+        $light = in_array($channel->group?->slug, config('feeds.light_groups', []), true);
+        $expected = $channel->limitFor($day) * $factor * ($light ? 1 : (float) config('feeds.frequency', 1));
+        $count = (int) floor($expected + 1e-9);
+        $part = $expected - $count;
+
+        return $count + ($part > 1e-9 && (crc32('part#'.$day.'#'.$channel->id) % 1000) / 1000 < $part ? 1 : 0);
     }
 
     /** The author's planned times today in the club's time zone, as "HH:MM". @return list<string> */

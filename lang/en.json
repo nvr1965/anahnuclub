@@ -996,5 +996,8 @@
     ":n sec": ":n sec",
     ":n min": ":n min",
     "Declined": "Declined",
-    "No answer": "No answer"
+    "No answer": "No answer",
+    "Whole text": "Whole text",
+    "Excerpt only": "Excerpt only",
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net"
 }

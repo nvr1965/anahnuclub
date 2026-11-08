@@ -31,6 +31,8 @@ class FeedsTest extends TestCase
     {
         parent::setUp();
         Queue::fake();
+        // The authors' whole daily numbers; the cut for news has its own test.
+        config(['feeds.frequency' => 1]);
         // 10:00 in Israel: inside the posting window.
         Carbon::setTestNow(Carbon::parse('2026-11-08 10:00', 'Asia/Jerusalem')->utc());
     }
@@ -273,6 +275,11 @@ class FeedsTest extends TestCase
         $this->assertSame('owner', $asia->roleOf($farik));
         $this->assertSame('Новости России', User::where('email', 'sergey@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
         $this->assertSame(1, Group::where('slug', 'central-asia')->count());
+        // Light topics: Фаина in "Кулинария", Mia in "Красота", Ron in "IT и технологии"; Изя's jokes whole.
+        $this->assertSame('Кулинария', User::where('email', 'faina@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        $this->assertSame('Красота', User::where('email', 'mia@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        $this->assertSame('IT и технологии', User::where('email', 'ron@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        $this->assertTrue(FeedSource::where('url', 'https://www.anekdot.ru/rss/export_j.xml')->value('full_text'));
         // Addresses that never worked are switched off; Telegram channels and Panet's front page are sources.
         $this->assertTrue(FeedSource::where('url', 'https://t.me/s/bokranews')->exists());
         $this->assertFalse(FeedSource::where('url', 'https://www.panet.co.il/rss/news')->where('active', true)->exists());
@@ -447,5 +454,53 @@ class FeedsTest extends TestCase
         $farik->forceFill(['name' => 'Фархад'])->save();
         $this->artisan('feeds:setup')->assertSuccessful();
         $this->assertSame('Фархад', $farik->fresh()->name);
+    }
+
+    public function test_news_authors_post_a_third_less_and_the_light_topics_keep_their_numbers()
+    {
+        config(['feeds.frequency' => 2 / 3]);
+        $news = $this->author(['daily_limit' => 3]);
+        $jokes = $this->author(['daily_limit' => 3]);
+        $jokes->update(['group_id' => Group::create(['name' => 'Юмор', 'slug' => 'humor'])->id]);
+        $rare = $this->author(['daily_limit' => 1]);
+
+        $days = collect(range(1, 60))->map(fn ($d) => Carbon::parse('2026-11-01')->addDays($d)->toDateString());
+        $this->assertSame(120, $days->sum(fn ($d) => FeedPublisher::limitToday($news, $d)));
+        $this->assertSame(180, $days->sum(fn ($d) => FeedPublisher::limitToday($jokes->fresh(), $d)));
+        // One post a day becomes a post on about two days of three.
+        $this->assertEqualsWithDelta(40, $days->sum(fn ($d) => FeedPublisher::limitToday($rare, $d)), 10);
+    }
+
+    public function test_a_youtube_channel_is_a_source()
+    {
+        Http::fake([
+            'www.youtube.com/@odessa*' => Http::response('<html><link rel="canonical" href="https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv"></html>'),
+            'www.youtube.com/feeds/*' => Http::response('<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">'
+                .'<entry><title>Одесский анекдот про Сару</title><link rel="alternate" href="https://www.youtube.com/watch?v=abc"/>'
+                .'<published>'.now()->subHour()->toAtomString().'</published>'
+                .'<media:group><media:thumbnail url="https://i.ytimg.com/vi/abc/hqdefault.jpg"/><media:description>Сара, ты где?</media:description></media:group></entry></feed>'),
+        ]);
+
+        $this->assertSame('youtube', \App\Feeds\PageParsers::kind('https://www.youtube.com/@odessa'));
+        $items = app(FeedReader::class)->read('https://www.youtube.com/@odessa');
+
+        $this->assertSame('Одесский анекдот про Сару', $items[0]['title']);
+        $this->assertSame('https://www.youtube.com/watch?v=abc', $items[0]['url']);
+        $this->assertSame('Сара, ты где?', $items[0]['summary']);
+        $this->assertSame('https://i.ytimg.com/vi/abc/hqdefault.jpg', $items[0]['image']);
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'channel_id=UCabcdefghijklmnopqrstuv'));
+    }
+
+    public function test_a_joke_is_posted_whole_with_its_lines()
+    {
+        $channel = $this->author();
+        $source = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'Анекдоты', 'url' => 'https://www.anekdot.ru/rss/export_j.xml', 'full_text' => true]);
+        $joke = '— Сара, где деньги?<br>— Моня, а ты их клал?<br>'.str_repeat('Длинная история про Привоз. ', 20);
+
+        app(FeedCollector::class)->store($source, [app(FeedReader::class)->item('Анекдот', 'https://www.anekdot.ru/id/1/', $joke, '', now()->toRssString())]);
+
+        $summary = FeedItem::first()->summary;
+        $this->assertStringStartsWith("— Сара, где деньги?\n— Моня, а ты их клал?\n", $summary);
+        $this->assertStringNotContainsString('…', $summary);
     }
 }

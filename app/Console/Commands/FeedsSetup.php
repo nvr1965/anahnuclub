@@ -73,6 +73,10 @@ class FeedsSetup extends Command
                 'daily_min' => $author['min'] ?? null,
                 'daily_limit' => $author['limit'],
             ]);
+            // Moved to another topic group since, unless the admin has put it elsewhere.
+            if (isset($author['was_group']) && $channel->group_id && Group::whereKey($channel->group_id)->value('slug') === $author['was_group']) {
+                $channel->group_id = null;
+            }
             if (! $channel->group_id && isset($author['group'], $groups[$author['group']])) {
                 $group = $this->topicGroup($author['group'], $groups[$author['group']], $user);
                 $channel->update(['group_id' => $group?->id]);
@@ -81,8 +85,9 @@ class FeedsSetup extends Command
             if ($group && ! $group->members()->whereKey($user->id)->exists()) {
                 $group->members()->attach($user->id, ['role' => 'admin', 'approved' => true]);
             }
-            foreach ($author['sources'] as [$name, $url, $locale]) {
-                FeedSource::firstOrCreate(['feed_channel_id' => $channel->id, 'url' => $url], ['name' => $name, 'locale' => $locale]);
+            foreach ($author['sources'] as $source) {
+                [$name, $url, $locale] = $source;
+                FeedSource::firstOrCreate(['feed_channel_id' => $channel->id, 'url' => $url], ['name' => $name, 'locale' => $locale] + ($source[3] ?? []));
             }
         }
         // Addresses given earlier that never worked: off, so they do not fill the admin page with errors.

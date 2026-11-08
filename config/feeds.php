@@ -12,6 +12,10 @@ return [
     // and the least between two posts of one author.
     'site_gap' => [10, 25],
     'author_gap' => 90,
+    // The authors' news is posted this much of their daily numbers (⅔: one and a half times less often);
+    // the light topics below keep their numbers. The news of our other sites (autopost) is not counted here.
+    'frequency' => 2 / 3,
+    'light_groups' => ['humor', 'beauty', 'cooking', 'it'],
     // When members wrote more posts than this in a day, the authors post half as much.
     'busy_members' => 30,
     // News not posted within this many hours leaves the queue (what a curator added by hand stays).
