@@ -42,11 +42,14 @@ class MessageController extends Controller
     /** The chats for the panel under the Messages tile in the top bar, as Messenger's dropdown on Facebook. */
     public function latest(Request $request): JsonResponse
     {
-        $rows = collect($this->conversations($request->user()));
+        $user = $request->user();
+        $rows = collect($this->conversations($user));
 
         return response()->json([
             'conversations' => $rows->where('request', false)->take(30)->values()->all(),
             'requests' => $rows->where('request', true)->take(20)->values()->all(),
+            // Every friend is in the messenger, not only those there was a chat with: the rest follow the chats.
+            'friends' => $this->friendsWithoutChat($user, $rows, 100),
         ]);
     }
 
@@ -85,7 +88,7 @@ class MessageController extends Controller
         $locale = app()->getLocale();
         $other = $conversation->users()->whereKeyNot($user->id)->first() ?? $user;
         $messages = $conversation->messages()
-            ->with(['attachments', 'contentTranslations' => fn ($q) => $q->where('locale', $locale)])
+            ->with(['attachments', 'call', 'contentTranslations' => fn ($q) => $q->where('locale', $locale)])
             ->latest('id')
             ->limit($limit)
             ->get()
@@ -100,6 +103,11 @@ class MessageController extends Controller
                 'files' => $m->attachments->map->card()->all(),
                 'mine' => $m->user_id === $user->id,
                 'created_at' => $m->created_at?->toIso8601String(),
+                'call' => $m->call ? [
+                    'video' => $m->call->video,
+                    'status' => $m->call->status,
+                    'seconds' => $m->call->seconds(),
+                ] : null,
                 'translation' => $m->user_id === $user->id ? null : TranslationPayload::for($m, $locale, $translator, in_array($m->id, $recent, true)),
             ]);
 
@@ -193,7 +201,7 @@ class MessageController extends Controller
     }
 
     /** Opens the chat with a member, starting one if needed. */
-    public function start(Request $request, User $user): RedirectResponse
+    public function start(Request $request, User $user): RedirectResponse|JsonResponse
     {
         $me = $request->user();
         abort_if($user->blocked || ($me->isBlockedWith($user) && ! $me->hasBlocked($user)), 404);
@@ -201,7 +209,10 @@ class MessageController extends Controller
         // A new chat needs leave to write; an old one opens anyway, to read it.
         abort_if(! $existing && ! $me->canMessage($user), 403);
 
-        return to_route('messages.show', Conversation::between($me, $user));
+        $conversation = Conversation::between($me, $user);
+
+        // The chats panel opens it in a small window at the bottom instead.
+        return $request->wantsJson() ? response()->json(['id' => $conversation->id]) : to_route('messages.show', $conversation);
     }
 
     /** Lets a request into the inbox. */
@@ -230,23 +241,28 @@ class MessageController extends Controller
         $contacts = $user->friends()->where('blocked', false)
             ->whereNotIn('id', $user->hiddenUserIds())
             ->onlineFirst()->orderBy('name')->limit(30)->get();
-        // Friends there is no chat with yet, so one can be started from here.
-        $friends = $user->friends()->where('blocked', false)
-            ->whereNotIn('id', $rows->pluck('with.id')->merge($user->hiddenUserIds()))
-            ->onlineFirst()->orderBy('name')->limit(200)->get();
 
         return [
             'conversations' => $rows->where('request', false)->values()->all(),
             'requests' => $rows->where('request', true)->values()->all(),
-            'friends' => $friends->map(fn (User $u) => PeopleController::card($u))->all(),
+            'friends' => $this->friendsWithoutChat($user, $rows, 300),
             'contacts' => $contacts->map(fn (User $u) => PeopleController::card($u))->all(),
         ];
+    }
+
+    /** Friends there is no chat with yet, so one can be started from the list: those on the site now first. */
+    private function friendsWithoutChat(User $user, Collection $rows, int $limit): array
+    {
+        return $user->friends()->where('blocked', false)
+            ->whereNotIn('id', $rows->pluck('with.id')->merge($user->hiddenUserIds()))
+            ->onlineFirst()->orderBy('name')->limit($limit)->get()
+            ->map(fn (User $u) => PeopleController::card($u))->all();
     }
 
     private function conversations(User $user): array
     {
         return $user->conversations()
-            ->with(['users', 'latestMessage.attachments'])
+            ->with(['users', 'latestMessage.attachments', 'latestMessage.call'])
             ->whereNotNull('last_message_at')
             ->whereDoesntHave('users', fn ($q) => $q->whereIn('users.id', $user->hiddenUserIds()))
             // A request that was turned down, with nothing newer since.
@@ -263,7 +279,14 @@ class MessageController extends Controller
                 return [
                     'id' => $c->id,
                     'with' => PeopleController::card($other),
-                    'last' => $last ? ['body' => mb_strimwidth($last->body !== '' ? $last->body : '📎 '.$last->attachments->pluck('name')->implode(', '), 0, 80, '…'), 'mine' => $last->user_id === $user->id, 'created_at' => $last->created_at?->toIso8601String()] : null,
+                    'last' => $last ? [
+                        'body' => $last->call
+                            ? $last->call->summary($user)
+                            : mb_strimwidth($last->body !== '' ? $last->body : '📎 '.$last->attachments->pluck('name')->implode(', '), 0, 80, '…'),
+                        // "You: Video call" reads oddly; a call says itself who it was for.
+                        'mine' => $last->user_id === $user->id && ! $last->call,
+                        'created_at' => $last->created_at?->toIso8601String(),
+                    ] : null,
                     'unread' => $last && $last->user_id !== $user->id && ($readAt === null || $last->created_at->gt($readAt)),
                     'request' => $pivot?->accepted_at === null,
                 ];

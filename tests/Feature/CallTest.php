@@ -147,4 +147,55 @@ class CallTest extends TestCase
         Http::assertSentCount(1);
         $this->assertStringStartsWith('stun:', $servers[0]['urls'][0]);
     }
+
+    public function test_finished_calls_are_written_into_the_chat_and_bring_it_up_the_list()
+    {
+        [$anna, $dana, $chat] = $this->friends();
+        $older = Conversation::between($anna, User::factory()->create());
+        $older->messages()->create(['user_id' => $anna->id, 'body' => 'hi']);
+        $older->update(['last_message_at' => now()->subMinute()]);
+
+        // A talk of five minutes.
+        $id = $this->actingAs($anna)->postJson("/messages/{$chat->id}/call", ['video' => true])->json('call.id');
+        $this->actingAs($dana)->postJson("/calls/$id/accept")->assertOk();
+        $this->travel(5)->minutes();
+        $this->postJson("/calls/$id/end")->assertOk();
+
+        $message = $chat->messages()->sole();
+        $this->assertSame($id, $message->call_id);
+        $this->assertSame($anna->id, $message->user_id);
+        $this->getJson("/messages/{$chat->id}/popup")
+            ->assertJsonPath('messages.0.call.video', true)
+            ->assertJsonPath('messages.0.call.status', 'ended')
+            ->assertJsonPath('messages.0.call.seconds', 300);
+        // Both were on the call: nothing unread, and the chat is now the latest.
+        $this->assertSame(0, $dana->fresh()->unreadMessagesCount());
+        $this->actingAs($anna)->getJson('/messages/latest')
+            ->assertJsonPath('conversations.0.id', $chat->id)
+            ->assertJsonPath('conversations.0.last.body', '📞 Видеозвонок · 5 мин');
+
+        // A call nobody answers is missed for Dana, unanswered for Anna.
+        $this->travel(1)->minutes();
+        $id = $this->actingAs($anna)->postJson("/messages/{$chat->id}/call", ['video' => false])->json('call.id');
+        $this->postJson("/calls/$id/end")->assertOk();
+        $this->assertSame(2, $chat->messages()->count());
+        $this->assertSame(1, $dana->fresh()->unreadMessagesCount());
+        $this->actingAs($dana)->getJson('/messages/latest')->assertJsonPath('conversations.0.last.body', '📞 Пропущенный звонок');
+        $this->actingAs($anna)->getJson('/messages/latest')->assertJsonPath('conversations.0.last.body', '📞 Аудиозвонок · Нет ответа');
+    }
+
+    public function test_every_friend_is_in_the_messenger_even_without_a_chat()
+    {
+        [$anna, $dana] = $this->friends();
+        $bob = User::factory()->create(['name' => 'Bob']);
+        DB::table('friendships')->insert(['user_id' => $bob->id, 'friend_id' => $anna->id, 'accepted' => true]);
+
+        // Dana has a chat (an empty one so far), Bob none: both are listed to write to.
+        $this->actingAs($anna)->getJson('/messages/latest')
+            ->assertJsonCount(0, 'conversations')
+            ->assertJsonCount(2, 'friends');
+
+        $id = $this->postJson("/people/{$bob->id}/message")->assertOk()->json('id');
+        $this->assertTrue(Conversation::find($id)->users()->whereKey($bob->id)->exists());
+    }
 }

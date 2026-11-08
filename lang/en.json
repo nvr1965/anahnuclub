@@ -992,5 +992,9 @@
     "Welcomed a baby": "Welcomed a baby",
     "Went on a trip": "Went on a trip",
     "Retired": "Retired",
-    "Anniversary": "Anniversary"
+    "Anniversary": "Anniversary",
+    ":n sec": ":n sec",
+    ":n min": ":n min",
+    "Declined": "Declined",
+    "No answer": "No answer"
 }

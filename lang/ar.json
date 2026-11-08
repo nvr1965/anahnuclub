@@ -992,5 +992,9 @@
     "Welcomed a baby": "مولود جديد",
     "Went on a trip": "رحلة",
     "Retired": "التقاعد",
-    "Anniversary": "ذكرى سنوية"
+    "Anniversary": "ذكرى سنوية",
+    ":n sec": ":n ث",
+    ":n min": ":n د",
+    "Declined": "مرفوضة",
+    "No answer": "لا رد"
 }

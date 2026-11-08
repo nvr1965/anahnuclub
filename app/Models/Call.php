@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 /** A video or audio call between the two members of a chat. */
 class Call extends Model
@@ -32,6 +33,61 @@ class Call extends Model
             'caller_seen_at' => 'datetime',
             'callee_seen_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Once a call is over it is written into the chat, whichever way it ended.
+        static::updated(function (Call $call) {
+            if ($call->wasChanged('status') && ! $call->isLive() && in_array($call->getOriginal('status'), ['ringing', 'active'], true)) {
+                $call->logInChat();
+            }
+        });
+    }
+
+    /**
+     * A line in the chat for the finished call ("Video call · 5 min", "Missed call"), as in
+     * Messenger. It brings the chat up the list like a message, and lights it up only for
+     * someone who missed the call (not for one who turned it down).
+     */
+    public function logInChat(): void
+    {
+        if (Message::where('call_id', $this->id)->exists()) {
+            return;
+        }
+        $message = Message::create([
+            'conversation_id' => $this->conversation_id,
+            'user_id' => $this->caller_id,
+            'body' => '',
+            'call_id' => $this->id,
+        ]);
+        Conversation::whereKey($this->conversation_id)->update(['last_message_at' => $message->created_at]);
+        DB::table('conversation_user')->where('conversation_id', $this->conversation_id)
+            ->whereIn('user_id', $this->answered_at || $this->status === 'declined' ? [$this->caller_id, $this->callee_id] : [$this->caller_id])
+            ->update(['last_read_at' => $message->created_at]);
+    }
+
+    /** How long the two talked, in seconds; null for a call nobody answered. */
+    public function seconds(): ?int
+    {
+        return $this->answered_at ? (int) max(0, $this->answered_at->diffInSeconds($this->ended_at ?? now(), true)) : null;
+    }
+
+    /** The call as a line in the chat list, in $locale, from $viewer's side. */
+    public function summary(User $viewer, ?string $locale = null): string
+    {
+        $kind = __($this->video ? 'Video call' : 'Audio call', [], $locale);
+        $seconds = $this->seconds();
+        if ($seconds !== null) {
+            return '📞 '.$kind.' · '.($seconds < 60
+                ? __(':n sec', ['n' => $seconds], $locale)
+                : __(':n min', ['n' => intdiv($seconds + 30, 60)], $locale));
+        }
+        if ($this->status === 'declined' || $this->caller_id === $viewer->id) {
+            return '📞 '.$kind.' · '.__($this->status === 'declined' ? 'Declined' : 'No answer', [], $locale);
+        }
+
+        return '📞 '.__('Missed call', [], $locale);
     }
 
     public function caller(): BelongsTo

@@ -83,10 +83,10 @@ export default function Messages({ conversations, requests, friends, contacts, c
     const rows = (tab === 'requests' ? requests : conversations)
         .filter((row) => tab !== 'unread' || row.unread)
         .filter((row) => matches(row.with) || (needle && row.last?.body.toLocaleLowerCase().includes(needle)));
-    // Searching also finds friends there is no chat with yet.
+    // Every friend is in the messenger: those there is no chat with yet follow the chats.
     const people = composing
         ? [...contacts, ...friends.filter((f) => !contacts.some((c) => c.id === f.id))].filter(matches)
-        : needle
+        : tab === 'all' || needle
           ? friends.filter(matches)
           : [];
     const startChat = (person: Person) => router.post(route('messages.start', person.id));
@@ -299,7 +299,7 @@ export default function Messages({ conversations, requests, friends, contacts, c
                                         onClick={() => startChat(friend)}
                                         className="flex w-full items-center gap-3 rounded-lg p-2 text-start hover:bg-slate-100 dark:hover:bg-neutral-800"
                                     >
-                                        <UserAvatar person={friend} className="size-11" />
+                                        <UserAvatar person={friend} className={composing ? 'size-11' : 'size-14'} />
                                         <span dir="auto" className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">
                                             {friend.name}
                                         </span>
