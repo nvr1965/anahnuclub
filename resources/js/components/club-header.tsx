@@ -158,7 +158,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
         >
             {!blue && !forum && <div className="from-header-from via-brand to-header-to h-1 bg-gradient-to-r" />}
             <div
-                className={`grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 sm:gap-3 sm:px-3 ${forum ? 'sm:h-14 sm:grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_minmax(0,640px)_1fr]' : 'sm:h-[4.25rem] sm:grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr]'}`}
+                className={`grid h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 px-2 sm:gap-3 sm:px-3 ${forum ? 'sm:h-14 sm:grid-cols-[auto_1fr_auto]' : 'sm:h-[4.25rem] sm:grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr]'}`}
             >
                 <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                     <Link href={auth.user ? route('dashboard') : route('home')} className="shrink-0" aria-label="anahnu.club">
@@ -193,7 +193,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                 {forum ? (
                     <form
                         onSubmit={search}
-                        className="hidden w-full items-center gap-2 rounded-full bg-slate-100 px-4 py-2.5 sm:flex dark:bg-neutral-800"
+                        className="hidden w-full max-w-[640px] items-center gap-2 justify-self-center rounded-full bg-slate-100 px-4 py-2.5 sm:flex dark:bg-neutral-800"
                     >
                         <img src="/images/logo-mark.png" alt="" className="size-6 rounded-full" />
                         <input
@@ -213,6 +213,15 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                 <div className="flex items-center justify-end gap-1.5 sm:gap-2">
                     {forum && auth.user && (
                         <>
+                            {/* Forum has no section tiles on wide screens, so the way back to the feed is a button of its own. */}
+                            <Link
+                                href={route('dashboard')}
+                                title={t('Feed')}
+                                aria-label={t('Feed')}
+                                className={`${round} max-sm:hidden ${page.url.startsWith('/feed') ? 'text-brand' : ''}`}
+                            >
+                                <House className="size-6" strokeWidth={page.url.startsWith('/feed') ? 2.6 : 2} />
+                            </Link>
                             <MessengerMenu className={`${round} max-sm:hidden`}>
                                 <MessageCircle className="size-6" />
                                 <Badge count={counts?.messages ?? 0} className="-end-1 -top-1" />
@@ -230,7 +239,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                             <Plus className="size-5 sm:size-6" strokeWidth={2.5} />
                         </CreateMenu>
                     )}
-                    <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 text-slate-900 max-sm:px-2.5 dark:bg-neutral-800 dark:text-neutral-100 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block" />
+                    <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 whitespace-nowrap text-slate-900 max-sm:px-2.5 dark:bg-neutral-800 dark:text-neutral-100 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block" />
                     {auth.user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger className="flex flex-col items-center gap-1 rounded-lg outline-none sm:w-14">

@@ -12,9 +12,11 @@ import { CalendarDays, Clapperboard, Film, Images, LogOut, Settings, Shield, Sma
 
 interface UserMenuContentProps {
     user: User;
+    /** phones: only where the top bar has no room for the language switcher; always: the side rail of Stream and Showcase, which has no top bar. */
+    languages?: 'phones' | 'always';
 }
 
-export function UserMenuContent({ user }: UserMenuContentProps) {
+export function UserMenuContent({ user, languages = 'phones' }: UserMenuContentProps) {
     const t = useT();
     const cleanup = useMobileNavigation();
 
@@ -26,8 +28,8 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* On phones the language choice lives here, the top bar has no room for it. */}
-            <div className="sm:hidden">
+            {/* On phones the language choice lives here, the top bar has no room for it; the side rail has no top bar at all. */}
+            <div className={languages === 'phones' ? 'sm:hidden' : ''}>
                 <LanguageSubmenu />
             </div>
             <SkinSubmenu />
