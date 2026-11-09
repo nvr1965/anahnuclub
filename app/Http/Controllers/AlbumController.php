@@ -26,8 +26,9 @@ class AlbumController extends Controller
         return Inertia::render('albums/show', [
             'album' => [
                 'id' => $album->id,
-                'name' => $album->name,
-                'description' => $album->description,
+                // In the reader's language, except for the owner, who edits the text as written.
+                'name' => $album->kind || $request->user()->is($owner) ? $album->name : $album->localized('name'),
+                'description' => $request->user()->is($owner) ? $album->description : $album->localized('description'),
                 'kind' => $album->kind,
                 'owner' => $owner ? PeopleController::card($owner) : null,
                 'mine' => $request->user()->is($owner),
@@ -40,7 +41,7 @@ class AlbumController extends Controller
                 ->withExists(['likes as liked' => fn ($q) => $q->where('user_id', $request->user()->id)])
                 ->latest('id')
                 ->get()
-                ->map(fn (Photo $p) => $p->card() + ['likes_count' => $p->likes_count, 'liked' => (bool) $p->liked, 'post_url' => $p->post_id ? route('posts.show', $p->post_id) : null]),
+                ->map(fn (Photo $p) => $p->card($request->user()->is($owner)) + ['likes_count' => $p->likes_count, 'liked' => (bool) $p->liked, 'post_url' => $p->post_id ? route('posts.show', $p->post_id) : null]),
             'open' => $request->integer('photo') ?: null,
         ]);
     }
@@ -144,7 +145,7 @@ class AlbumController extends Controller
             ->get()
             ->map(fn (Album $a) => [
                 'id' => $a->id,
-                'name' => $a->name,
+                'name' => $a->kind || $mine ? $a->name : $a->localized('name'),
                 'kind' => $a->kind,
                 'photos_count' => $a->photos_count,
                 'cover' => $a->latestPhoto?->card()['thumb'],

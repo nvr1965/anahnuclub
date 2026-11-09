@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\ContentTranslation;
+use App\Translation\Localized;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
@@ -29,5 +30,11 @@ trait HasContentTranslations
         return $this->contentTranslations
             ->first(fn (ContentTranslation $t) => $t->field === $field && $t->locale === $locale && $t->source_hash === $hash)
             ?->text;
+    }
+
+    /** The field in the reader's language when a translation is stored, else as written (see Localized). */
+    public function localized(string $field, ?string $locale = null): ?string
+    {
+        return Localized::text($this, $field, $locale);
     }
 }

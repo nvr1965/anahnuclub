@@ -24,6 +24,12 @@ class Group extends Model
         return ['is_private' => 'boolean', 'published' => 'boolean'];
     }
 
+    /** How a post, an event or a list names the group: in the reader's language. */
+    public function card(): array
+    {
+        return ['id' => $this->id, 'name' => $this->localized('name'), 'slug' => $this->slug];
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

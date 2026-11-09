@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasContentTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Album extends Model
 {
+    use HasContentTranslations;
+
+    /** Shown in the reader's language. */
+    protected array $translatable = ['name', 'description'];
+
     protected $fillable = ['user_id', 'group_id', 'name', 'description', 'kind', 'created_at', 'updated_at'];
 
     public function user(): BelongsTo

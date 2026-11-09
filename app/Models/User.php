@@ -21,8 +21,8 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     /** @use HasFactory<UserFactory> */
     use HasContentTranslations, HasFactory, Notifiable;
 
-    /** The city is shown in the reader's language. */
-    protected array $translatable = ['location'];
+    /** The city, the status line and the "about" are shown in the reader's language. */
+    protected array $translatable = ['location', 'status', 'about'];
 
     /**
      * The attributes that are mass assignable.

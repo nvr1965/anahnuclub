@@ -74,7 +74,7 @@
         </a>
         <div class="who">
             <a class="name" href="{{ $official || ! $post->user ? $url : route('people.show', $post->user->id) }}">
-                {{ $author }}@if ($post->group) <span class="date">▸</span> {{ $post->group->name }}@endif
+                {{ $author }}@if ($post->group) <span class="date">▸</span> {{ $post->group->localized('name') }}@endif
             </a>
             <a class="date" href="{{ $url }}" title="{{ $post->created_at?->toIso8601String() }}">{{ $date }}</a>
         </div>

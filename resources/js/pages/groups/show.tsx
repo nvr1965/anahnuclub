@@ -19,6 +19,7 @@ interface Group {
     avatar: string | null;
     is_private: boolean;
     description_text: string;
+    name_text: string;
     members_count: number;
     is_member: boolean;
     blocked: boolean;

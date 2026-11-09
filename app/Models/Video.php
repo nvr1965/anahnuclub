@@ -66,7 +66,7 @@ class Video extends Model
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
+            'title' => $this->localized('title'),
             'provider' => $this->provider,
             'embed_url' => $this->embedUrl(),
             'file_url' => $this->fileUrl(),

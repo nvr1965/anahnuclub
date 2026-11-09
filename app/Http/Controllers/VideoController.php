@@ -53,7 +53,8 @@ class VideoController extends Controller
         $video->load(['user', 'contentTranslations' => fn ($q) => $q->where('locale', $locale)])->loadCount('likes');
 
         return Inertia::render('videos/show', [
-            'video' => $video->card() + [
+            // The title as written: the page shows its translation beside a "show original".
+            'video' => ['title' => $video->title] + $video->card() + [
                 'description' => Html::clean($video->description ?? ''),
                 'description_text' => $video->description,
                 'author' => $video->user ? PeopleController::card($video->user) : null,
