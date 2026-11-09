@@ -44,10 +44,10 @@ class ClubAuthorInvited extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject($this->group
-                ? __(':author: :name invites to the group “:group”', $names + ['group' => $this->group->name])
+                ? __(':author: :name invites to the group “:group”', $names + ['group' => $this->group->localized('name')])
                 : __(':author: friend request from :name', $names))
             ->line($this->group
-                ? __(':name invited the club author :author into the group “:group”.', $names + ['group' => $this->group->name])
+                ? __(':name invited the club author :author into the group “:group”.', $names + ['group' => $this->group->localized('name')])
                 : __(':name asked the club author :author to be friends.', $names))
             ->line(__('Accept or decline it on the admin page "Feed filling", the Authors tab.'))
             ->action(__('Open the requests'), route('admin.feeds.index', ['tab' => 'authors']))

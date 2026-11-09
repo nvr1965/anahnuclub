@@ -28,10 +28,12 @@ class CommunitySidebar
                 ->where('is_private', false)
                 ->when($user, fn ($q) => $q->whereNotIn('groups.id', $user->blockedGroupIds()))
                 ->withCount('posts')
+                ->with('contentTranslations')
                 ->orderByDesc('posts_count')
                 ->limit(6)
                 ->get()
-                ->map(fn (Group $g) => ['name' => $g->name, 'slug' => $g->slug, 'posts_count' => $g->posts_count]),
+                // In the reader's language, as everything members wrote.
+                ->map(fn (Group $g) => ['name' => $g->localized('name'), 'slug' => $g->slug, 'posts_count' => $g->posts_count]),
             'photos' => self::photos($user),
         ];
     }

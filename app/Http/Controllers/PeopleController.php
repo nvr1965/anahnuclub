@@ -120,8 +120,9 @@ class PeopleController extends Controller
                 'badges' => Badges::special($user),
                 'avatar' => $user->avatar,
                 'cover' => $user->cover,
-                'status' => $user->status,
-                'about' => $user->about,
+                'status' => $me ? $user->status : $user->localized('status'),
+                // In the reader's language; to its owner as written, for the form.
+                'about' => $me ? $user->about : $user->localized('about'),
                 // Details are left out for viewers their audience does not include.
                 'location' => $user->shows('location', $viewer) ? $user->location : null,
                 'location_translated' => $user->shows('location', $viewer) ? app(ContentTranslator::class)->translate($user, 'location', app()->getLocale()) : null,

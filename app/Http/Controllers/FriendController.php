@@ -288,9 +288,9 @@ class FriendController extends Controller
 
         return array_merge($card, [
             'cover' => $user->cover,
-            'status' => $user->status,
-            'about' => $user->about,
-            'location' => $user->shows('location', $me) ? $user->location : null,
+            'status' => $user->localized('status'),
+            'about' => $user->localized('about'),
+            'location' => $user->shows('location', $me) ? $user->localized('location') : null,
             'joined_at' => $user->created_at?->toIso8601String(),
             'friends_count' => $user->shows('friends', $me) ? $user->friends()->where('blocked', false)->count() : null,
             'mutual_people' => User::query()->whereIn('id', $mutualIds->take(8))->get()->map(fn (User $u) => PeopleController::card($u))->values(),

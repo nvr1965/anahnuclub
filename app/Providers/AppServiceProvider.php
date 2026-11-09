@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Listeners\LogLogins;
+use App\Models\Album;
 use App\Models\Comment;
 use App\Models\Event;
 use App\Models\Group;
+use App\Models\LinkPreview;
 use App\Models\Message;
 use App\Models\Moment;
 use App\Models\Photo;
@@ -54,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
             'event' => Event::class,
             'photo' => Photo::class,
             'moment' => Moment::class,
+            'album' => Album::class,
+            'link_preview' => LinkPreview::class,
         ]);
     }
 }

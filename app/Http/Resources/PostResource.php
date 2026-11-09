@@ -37,7 +37,7 @@ class PostResource extends JsonResource
             // A club post names nobody to readers; its author still sees themself, to edit it.
             'author' => $official && ! $mine ? null : AuthorResource::make($this->whenLoaded('user')),
             'official' => $official,
-            'group' => $this->whenLoaded('group', fn () => $this->group?->only('id', 'name', 'slug')),
+            'group' => $this->whenLoaded('group', fn () => $this->group?->card()),
             // Put on a friend's profile: "Anna ▸ Boris".
             'wall' => $this->whenLoaded('wallUser', fn () => $this->wallUser?->only('id', 'name'), null),
             // Friends tagged beside the author's name: "Anna — with Boris and Vera".
@@ -122,7 +122,7 @@ class PostResource extends JsonResource
             'created_at' => $post->created_at?->toIso8601String(),
             'author' => $official ? null : ($post->user ? AuthorResource::make($post->user)->resolve($request) : null),
             'official' => $official,
-            'group' => $post->group?->only('id', 'name', 'slug'),
+            'group' => $post->group?->card(),
             'translation' => TranslationPayload::for($post, app()->getLocale(), app(ContentTranslator::class)),
             'url' => route('posts.show', $post->id),
             'audience' => $post->audience ?? 'public',

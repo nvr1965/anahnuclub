@@ -9,6 +9,8 @@ import { type FormEventHandler, useState } from 'react';
 export interface EditableGroup {
     slug: string;
     name: string;
+    /** The name as written, when `name` is shown translated. */
+    name_text?: string;
     description_text: string;
     is_private: boolean;
     avatar: string | null;
@@ -33,7 +35,7 @@ export function GroupForm({ group, isOwner = false }: { group?: EditableGroup; i
         remove_avatar: boolean;
         remove_cover: boolean;
     }>({
-        name: group?.name ?? '',
+        name: group?.name_text ?? group?.name ?? '',
         description: group?.description_text ?? '',
         is_private: group?.is_private ?? false,
         avatar: null,

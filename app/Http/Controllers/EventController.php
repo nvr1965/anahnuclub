@@ -32,7 +32,8 @@ class EventController extends Controller
         return Inertia::render('events/index', [
             'upcoming' => $base()->where(fn (Builder $q) => $q->where('starts_at', '>=', now()->startOfDay())->orWhere('ends_at', '>=', now()))->orderBy('starts_at')->limit(60)->get()->map(fn (Event $e) => self::card($e, $user)),
             'past' => $base()->where('starts_at', '<', now()->startOfDay())->where(fn (Builder $q) => $q->whereNull('ends_at')->orWhere('ends_at', '<', now()))->latest('starts_at')->limit(30)->get()->map(fn (Event $e) => self::card($e, $user)),
-            'groups' => $user->groups()->where('published', true)->orderBy('name')->get(['groups.id', 'groups.name']),
+            'groups' => $user->groups()->where('published', true)->orderBy('name')->with('contentTranslations')->get()
+                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->localized('name')]),
         ]);
     }
 
@@ -44,11 +45,12 @@ class EventController extends Controller
         $attendees = $event->attendees()->where('blocked', false)->orderByPivot('created_at')->get();
 
         return Inertia::render('events/show', [
-            'event' => self::card($event, $request->user()) + [
+            // The title as written: the page shows its translation beside a "show original".
+            'event' => ['title' => $event->title] + self::card($event, $request->user()) + [
                 'description' => Html::clean($event->description ?? ''),
                 'description_text' => $event->description,
                 'author' => $event->user ? PeopleController::card($event->user) : null,
-                'group' => $event->group?->only('id', 'name', 'slug'),
+                'group' => $event->group?->card(),
                 'group_id' => $event->group_id,
                 'mine' => $request->user()->id === $event->user_id,
                 'can_delete' => $request->user()->id === $event->user_id || $request->user()->is_admin,
@@ -57,7 +59,8 @@ class EventController extends Controller
             ],
             'going' => $attendees->where('pivot.status', 'going')->values()->map(fn (User $u) => PeopleController::card($u)),
             'interested' => $attendees->where('pivot.status', 'interested')->values()->map(fn (User $u) => PeopleController::card($u)),
-            'groups' => $request->user()->groups()->where('published', true)->orderBy('name')->get(['groups.id', 'groups.name']),
+            'groups' => $request->user()->groups()->where('published', true)->orderBy('name')->with('contentTranslations')->get()
+                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->localized('name')]),
         ]);
     }
 
@@ -117,7 +120,7 @@ class EventController extends Controller
     {
         return [
             'id' => $event->id,
-            'title' => $event->title,
+            'title' => $event->localized('title'),
             'location' => $event->location,
             'starts_at' => $event->starts_at?->toIso8601String(),
             'ends_at' => $event->ends_at?->toIso8601String(),

@@ -28,13 +28,14 @@ class GroupController extends Controller
             ->when($request->user(), fn ($query, $viewer) => $query->whereNotIn('id', $viewer->blockedGroupIds()))
             ->when($q !== '', fn ($query) => $query->matching($q))
             ->withCount(['members' => fn ($query) => $query->where('group_user.approved', true), 'posts'])
+            ->with('contentTranslations')
             ->orderByDesc('posts_count')
             ->orderBy('id')
             ->paginate(30)
             ->withQueryString()
             ->through(fn (Group $g) => [
                 'id' => $g->id,
-                'name' => $g->name,
+                'name' => $g->localized('name'),
                 'slug' => $g->slug,
                 'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null,
                 'members_count' => $g->members_count,
@@ -61,9 +62,11 @@ class GroupController extends Controller
         return Inertia::render('groups/show', [
             'group' => [
                 'id' => $group->id,
-                'name' => $group->name,
+                // Name and description in the reader's language; the settings form gets them as written.
+                'name' => $name = $group->localized('name'),
                 'slug' => $group->slug,
-                'description' => Html::clean($group->description),
+                'description' => Html::clean($description = $group->localized('description')),
+                'name_text' => $group->name,
                 'cover' => $group->cover_path ? asset('storage/'.$group->cover_path) : null,
                 'avatar' => $group->avatar_path ? asset('storage/'.$group->avatar_path) : null,
                 'is_private' => $group->is_private,
@@ -90,8 +93,8 @@ class GroupController extends Controller
             'sidebar' => CommunitySidebar::for($request->user()),
         ])->withViewData(['meta' => [
             'url' => route('groups.show', $group),
-            'title' => $group->name.' · anahnu.club',
-            'description' => mb_strimwidth(trim(strip_tags((string) $group->description)), 0, 200, '…') ?: __('The best social network without censorship'),
+            'title' => $name.' · anahnu.club',
+            'description' => mb_strimwidth(trim(strip_tags((string) $description)), 0, 200, '…') ?: __('The best social network without censorship'),
             'image' => $group->cover_path ? asset('storage/'.$group->cover_path) : SiteMeta::image(),
         ]]);
     }

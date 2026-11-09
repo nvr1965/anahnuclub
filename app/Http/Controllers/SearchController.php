@@ -118,6 +118,7 @@ class SearchController extends Controller
         TextSearch::orderByColumns($posts, ['title', 'body'], $terms)->latest()->orderByDesc('id');
 
         $groups = Group::query()
+            ->with('contentTranslations')
             ->where('published', true)
             ->where(fn (Builder $w) => $w->where('is_private', false)->orWhereIn('id', $myGroups))
             ->when($viewer, fn (Builder $w) => $w->whereNotIn('id', $viewer->blockedGroupIds()))
@@ -141,7 +142,7 @@ class SearchController extends Controller
         return [
             'people' => [$people, fn (Collection $c) => $c->map(fn (User $u) => PeopleController::card($u))],
             'posts' => [$posts, fn (Collection $c) => PostResource::collection($c)],
-            'groups' => [$groups, fn (Collection $c) => $c->map(fn (Group $g) => ['name' => $g->name, 'slug' => $g->slug, 'members_count' => $g->members_count, 'is_private' => $g->is_private])],
+            'groups' => [$groups, fn (Collection $c) => $c->map(fn (Group $g) => ['name' => $g->localized('name'), 'slug' => $g->slug, 'members_count' => $g->members_count, 'is_private' => $g->is_private])],
             'videos' => [$videos, fn (Collection $c) => $c->map(fn (Video $v) => $v->card() + ['author' => $v->user ? PeopleController::card($v->user) : null])],
             'events' => [$events, fn (Collection $c) => $c->map(fn (Event $e) => EventController::card($e, $viewer))],
         ];
