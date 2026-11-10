@@ -1,6 +1,7 @@
 import { useInstallOffered } from '@/components/install-app';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
+import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { installApp } from '@/lib/install-app';
 import { type SharedData, type Sidebar } from '@/types';
@@ -103,13 +104,24 @@ export function MenuColumn({ groups }: { groups?: Sidebar['groups'] }) {
             {groups && groups.length > 0 && (
                 <>
                     <div className="mx-2 my-3 border-t border-slate-300 dark:border-neutral-700" />
-                    <h3 className="text-muted-foreground px-2 pb-1 text-sm font-semibold">{t('Your groups')}</h3>
+                    <div className="flex items-baseline justify-between gap-2 px-2 pb-1">
+                        <h3 className="text-muted-foreground text-sm font-semibold">{t('Your groups')}</h3>
+                        <Link href={route('groups.index')} className="text-brand shrink-0 text-sm hover:underline">
+                            {t('See all')}
+                        </Link>
+                    </div>
                     {groups.map((group) => (
-                        <Link key={group.slug} href={route('groups.show', group.slug)} className={row}>
-                            <span className="from-brand to-brand-dark flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-sm text-white">
-                                {group.name.trim().charAt(0).toUpperCase()}
-                            </span>
-                            <span dir="auto" className="truncate">
+                        <Link key={group.slug} href={route('groups.show', group.slug)} title={group.name} className={row}>
+                            <img
+                                src={group.avatar || defaultImages.group}
+                                alt=""
+                                loading="lazy"
+                                onError={(e) => {
+                                    if (!e.currentTarget.src.endsWith(defaultImages.group)) e.currentTarget.src = defaultImages.group;
+                                }}
+                                className="size-9 shrink-0 rounded-lg bg-slate-200 object-cover dark:bg-neutral-700"
+                            />
+                            <span dir="auto" className="min-w-0 truncate">
                                 {group.name}
                             </span>
                         </Link>

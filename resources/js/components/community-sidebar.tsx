@@ -1,5 +1,6 @@
 import { ClubCard } from '@/components/club-card';
 import { UserAvatar } from '@/components/user-avatar';
+import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -27,13 +28,28 @@ export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
 
             {sidebar.groups.length > 0 && (
                 <ClubCard title={t('Groups')}>
-                    <ul className="space-y-2 text-sm">
+                    <ul className="space-y-1 text-sm">
                         {sidebar.groups.map((group) => (
-                            <li key={group.slug} className="flex items-center justify-between gap-2">
-                                <Link href={route('groups.show', group.slug)} className="hover:text-brand truncate">
-                                    {group.name}
+                            <li key={group.slug}>
+                                <Link
+                                    href={route('groups.show', group.slug)}
+                                    title={group.name}
+                                    className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
+                                >
+                                    <img
+                                        src={group.avatar || defaultImages.group}
+                                        alt=""
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            if (!e.currentTarget.src.endsWith(defaultImages.group)) e.currentTarget.src = defaultImages.group;
+                                        }}
+                                        className="size-8 shrink-0 rounded-lg bg-slate-200 object-cover dark:bg-neutral-700"
+                                    />
+                                    <span dir="auto" className="min-w-0 truncate font-medium">
+                                        {group.name}
+                                    </span>
+                                    <span className="text-muted-foreground ms-auto shrink-0 text-xs">{group.posts_count}</span>
                                 </Link>
-                                <span className="text-muted-foreground shrink-0 text-xs">{group.posts_count}</span>
                             </li>
                         ))}
                     </ul>
