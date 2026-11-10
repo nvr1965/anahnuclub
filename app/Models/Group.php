@@ -15,7 +15,8 @@ class Group extends Model
 {
     use HasContentTranslations;
 
-    protected array $translatable = ['name', 'description'];
+    /** Each group has its language (club groups are made one per language), so its name and description are not translated. */
+    protected array $translatable = [];
 
     protected $fillable = ['owner_id', 'name', 'slug', 'description', 'locale', 'avatar_path', 'cover_path', 'is_private', 'published'];
 
@@ -24,10 +25,10 @@ class Group extends Model
         return ['is_private' => 'boolean', 'published' => 'boolean'];
     }
 
-    /** How a post, an event or a list names the group: in the reader's language. */
+    /** How a post, an event or a list names the group: as written, in the group's own language. */
     public function card(): array
     {
-        return ['id' => $this->id, 'name' => $this->localized('name'), 'slug' => $this->slug];
+        return ['id' => $this->id, 'name' => $this->name, 'slug' => $this->slug];
     }
 
     public function getRouteKeyName(): string

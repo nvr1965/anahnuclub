@@ -12,7 +12,7 @@ use App\Translation\Translator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** Group names, link titles, captions and profile lines are shown in the reader's language. */
+/** Captions, album names and profile lines are shown in the reader's language; group names and link cards as written. */
 class LocalizedLabelsTest extends TestCase
 {
     use RefreshDatabase;
@@ -26,39 +26,26 @@ class LocalizedLabelsTest extends TestCase
         $this->app->instance(Translator::class, $this->fake);
     }
 
-    public function test_group_names_follow_the_readers_language_everywhere()
+    public function test_group_names_and_link_cards_stay_in_their_own_language()
     {
         $reader = User::factory()->create(['locale' => 'en']);
-        $group = Group::create(['owner_id' => $reader->id, 'name' => 'Интересные новости', 'slug' => 'news', 'description' => '<p>Новости Израиля</p>', 'published' => true]);
+        $group = Group::create(['owner_id' => $reader->id, 'name' => 'Новости Израиля', 'slug' => 'news', 'description' => '<p>Главное за день</p>', 'locale' => 'ru', 'published' => true]);
         $group->members()->attach($reader->id, ['role' => 'owner', 'approved' => true]);
-        Post::create(['user_id' => $reader->id, 'group_id' => $group->id, 'body' => 'Hello']);
-
-        // The first page asks for the translation (here it is made at once; on the site, right after the page).
-        $this->actingAs($reader)->get('/feed')->assertOk();
-        $this->get('/feed')->assertInertia(fn ($page) => $page
-            ->where('sidebar.groups.0.name', '[en] Интересные новости')
-            ->where('posts.data.0.group.name', '[en] Интересные новости'));
-
-        $this->get('/groups')->assertInertia(fn ($page) => $page->where('groups.data.0.name', '[en] Интересные новости'));
-
-        $this->get('/groups/news')->assertInertia(fn ($page) => $page
-            ->where('group.name', '[en] Интересные новости')
-            ->where('group.description', fn ($d) => str_contains($d, '[en]'))
-            // The settings form keeps the name as written.
-            ->where('group.name_text', 'Интересные новости'));
-
-        // Translated once per language and kept: the pages above asked the services for two texts only.
-        $this->assertSame(2, $this->fake->calls);
-    }
-
-    public function test_nothing_is_translated_for_a_reader_of_the_same_language()
-    {
-        $reader = User::factory()->create(['locale' => 'ru']);
-        $group = Group::create(['owner_id' => $reader->id, 'name' => 'Интересные новости', 'slug' => 'news', 'published' => true]);
-        $group->members()->attach($reader->id, ['role' => 'owner', 'approved' => true]);
+        LinkPreview::create(['url' => 'https://example.com/a', 'title' => 'Авария под Хайфой', 'description' => 'Двое пострадавших']);
+        Post::create(['user_id' => $reader->id, 'group_id' => $group->id, 'body' => 'https://example.com/a', 'locale' => 'en']);
 
         $this->actingAs($reader)->get('/feed')->assertInertia(fn ($page) => $page
-            ->where('sidebar.groups.0.name', 'Интересные новости'));
+            ->where('sidebar.groups.0.name', 'Новости Израиля')
+            ->where('posts.data.0.group.name', 'Новости Израиля')
+            // The link card is the site's own: it is not translated (only the post's text is).
+            ->where('posts.data.0.link.title', 'Авария под Хайфой')
+            ->where('posts.data.0.link.description', 'Двое пострадавших'));
+        $this->get('/groups')->assertInertia(fn ($page) => $page->where('groups.data.0.name', 'Новости Израиля'));
+        $this->get('/groups/news')->assertInertia(fn ($page) => $page
+            ->where('group.name', 'Новости Израиля')
+            ->where('group.description', fn ($d) => str_contains($d, 'Главное за день')));
+
+        // Nothing of it went to the translation services.
         $this->assertSame(0, $this->fake->calls);
     }
 
@@ -80,24 +67,19 @@ class LocalizedLabelsTest extends TestCase
             }
         });
         $reader = User::factory()->create(['locale' => 'en']);
-        $group = Group::create(['owner_id' => $reader->id, 'name' => 'Новости', 'slug' => 'news', 'published' => true]);
-        $group->members()->attach($reader->id, ['role' => 'owner', 'approved' => true]);
+        $owner = User::factory()->create(['locale' => 'ru']);
+        $album = Album::create(['user_id' => $owner->id, 'name' => 'Отпуск']);
 
-        $this->actingAs($reader)->get('/feed')->assertInertia(fn ($page) => $page->where('sidebar.groups.0.name', 'Новости'));
+        $this->actingAs($reader)->get("/albums/{$album->id}")->assertInertia(fn ($page) => $page->where('album.name', 'Отпуск'));
         $calls = app(Translator::class)->calls;
-        $this->get('/feed')->assertOk();
+        $this->get("/albums/{$album->id}")->assertOk();
         $this->assertSame($calls, app(Translator::class)->calls);
     }
 
-    public function test_link_titles_and_photo_captions_are_translated()
+    public function test_album_names_and_photo_captions_are_translated()
     {
         $reader = User::factory()->create(['locale' => 'en']);
-        $preview = LinkPreview::create(['url' => 'https://example.com/a', 'title' => 'Авария под Хайфой', 'description' => 'Двое пострадавших']);
-        Post::create(['user_id' => $reader->id, 'body' => 'https://example.com/a']);
-
-        $this->actingAs($reader)->get('/feed')->assertInertia(fn ($page) => $page
-            ->where('posts.data.0.link.title', '[en] Авария под Хайфой')
-            ->where('posts.data.0.link.description', '[en] Двое пострадавших'));
+        $this->actingAs($reader);
 
         $owner = User::factory()->create(['locale' => 'ru']);
         $album = Album::create(['user_id' => $owner->id, 'name' => 'Отпуск']);

@@ -34,7 +34,7 @@ class BlockController extends Controller
                 ->whereIn('id', $user->blockedGroupIds())
                 ->orderBy('name')
                 ->get()
-                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->localized('name'), 'slug' => $g->slug]),
+                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->name, 'slug' => $g->slug]),
         ]);
     }
 

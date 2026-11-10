@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PostResource;
-use App\Jobs\TranslateContent;
 use App\Models\Group;
 use App\Models\User;
-use App\Support\Background;
 use App\Support\Html;
 use App\Support\ImageStore;
 use App\Support\SiteMeta;
@@ -28,14 +26,13 @@ class GroupController extends Controller
             ->when($request->user(), fn ($query, $viewer) => $query->whereNotIn('id', $viewer->blockedGroupIds()))
             ->when($q !== '', fn ($query) => $query->matching($q))
             ->withCount(['members' => fn ($query) => $query->where('group_user.approved', true), 'posts'])
-            ->with('contentTranslations')
             ->orderByDesc('posts_count')
             ->orderBy('id')
             ->paginate(30)
             ->withQueryString()
             ->through(fn (Group $g) => [
                 'id' => $g->id,
-                'name' => $g->localized('name'),
+                'name' => $g->name,
                 'slug' => $g->slug,
                 'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null,
                 'members_count' => $g->members_count,
@@ -62,10 +59,10 @@ class GroupController extends Controller
         return Inertia::render('groups/show', [
             'group' => [
                 'id' => $group->id,
-                // Name and description in the reader's language; the settings form gets them as written.
-                'name' => $name = $group->localized('name'),
+                // Name and description as written, in the group's own language.
+                'name' => $name = $group->name,
                 'slug' => $group->slug,
-                'description' => Html::clean($description = $group->localized('description')),
+                'description' => Html::clean($description = $group->description),
                 'name_text' => $group->name,
                 'cover' => $group->cover_path ? asset('storage/'.$group->cover_path) : null,
                 'avatar' => $group->avatar_path ? asset('storage/'.$group->avatar_path) : null,
@@ -116,7 +113,6 @@ class GroupController extends Controller
         $group->update(['slug' => trim($group->id.'-'.Str::limit(Str::slug($data['name'], '-', $group->locale ?? 'en'), 60, ''), '-')]);
         $group->members()->attach($me->id, ['role' => 'owner', 'approved' => true]);
         $this->pictures($request, $group);
-        Background::run(new TranslateContent($group));
 
         return to_route('groups.show', $group);
     }
@@ -138,9 +134,6 @@ class GroupController extends Controller
             }
         }
         $this->pictures($request, $group);
-        if ($group->wasChanged(['name', 'description'])) {
-            Background::run(new TranslateContent($group));
-        }
 
         return back();
     }

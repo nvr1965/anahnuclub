@@ -32,8 +32,8 @@ class EventController extends Controller
         return Inertia::render('events/index', [
             'upcoming' => $base()->where(fn (Builder $q) => $q->where('starts_at', '>=', now()->startOfDay())->orWhere('ends_at', '>=', now()))->orderBy('starts_at')->limit(60)->get()->map(fn (Event $e) => self::card($e, $user)),
             'past' => $base()->where('starts_at', '<', now()->startOfDay())->where(fn (Builder $q) => $q->whereNull('ends_at')->orWhere('ends_at', '<', now()))->latest('starts_at')->limit(30)->get()->map(fn (Event $e) => self::card($e, $user)),
-            'groups' => $user->groups()->where('published', true)->orderBy('name')->with('contentTranslations')->get()
-                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->localized('name')]),
+            'groups' => $user->groups()->where('published', true)->orderBy('name')->get()
+                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->name]),
         ]);
     }
 
@@ -59,8 +59,8 @@ class EventController extends Controller
             ],
             'going' => $attendees->where('pivot.status', 'going')->values()->map(fn (User $u) => PeopleController::card($u)),
             'interested' => $attendees->where('pivot.status', 'interested')->values()->map(fn (User $u) => PeopleController::card($u)),
-            'groups' => $request->user()->groups()->where('published', true)->orderBy('name')->with('contentTranslations')->get()
-                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->localized('name')]),
+            'groups' => $request->user()->groups()->where('published', true)->orderBy('name')->get()
+                ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->name]),
         ]);
     }
 

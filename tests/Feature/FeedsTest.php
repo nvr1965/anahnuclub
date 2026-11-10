@@ -5,9 +5,10 @@ namespace Tests\Feature;
 use App\Feeds\FeedCollector;
 use App\Feeds\FeedPublisher;
 use App\Feeds\FeedReader;
+use App\Feeds\PageParsers;
+use App\Http\Controllers\FriendController;
 use App\Models\FeedChannel;
 use App\Models\FeedItem;
-use App\Http\Controllers\FriendController;
 use App\Models\FeedSource;
 use App\Models\Group;
 use App\Models\LinkPreview;
@@ -15,12 +16,14 @@ use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\ClubAuthorInvited;
+use App\Support\Badges;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FeedsTest extends TestCase
@@ -252,6 +255,7 @@ class FeedsTest extends TestCase
 
     public function test_setup_creates_the_authors_once()
     {
+        Storage::fake('public');
         $this->artisan('feeds:setup')->assertSuccessful();
         $count = FeedChannel::count();
         $this->artisan('feeds:setup')->assertSuccessful();
@@ -264,25 +268,78 @@ class FeedsTest extends TestCase
         $this->assertStringContainsString('Autor bei AnahnuClub', User::where('email', 'dietrich@authors.anahnu.club')->value('about'));
         $this->assertStringContainsString('AnahnuClub muallifi', $farik->about);
         $this->assertSame('Айгүл', User::where('email', 'aigul@authors.anahnu.club')->value('name'));
-        $this->assertContains('club-author', \App\Support\Badges::special($farik->fresh()));
+        $this->assertContains('club-author', Badges::special($farik->fresh()));
         $this->assertGreaterThan(0, $farik->feedChannel()->first()->sources()->count());
 
-        // Topic groups: Фарик and Айгуль write in "Средняя Азия", Сергей in "Новости России"; made once.
+        // Topic groups, one language each: Farik writes in the Uzbek group, Гульнара in the Russian "Средняя Азия"; made once.
         $asia = Group::firstWhere('slug', 'central-asia');
         $this->assertSame('Средняя Азия', $asia->name);
-        $this->assertSame($asia->id, $farik->feedChannel()->first()->group_id);
-        $this->assertSame($asia->id, User::where('email', 'aigul@authors.anahnu.club')->first()->feedChannel()->first()->group_id);
-        $this->assertSame('owner', $asia->roleOf($farik));
+        $this->assertSame('ru', $asia->locale);
+        $gulnara = User::where('email', 'gulnara@authors.anahnu.club')->first();
+        $this->assertSame($asia->id, $gulnara->feedChannel()->first()->group_id);
+        $this->assertSame('owner', $asia->roleOf($gulnara));
+        $this->assertSame('O‘zbekiston yangiliklari', $farik->feedChannel()->first()->group->name);
         $this->assertSame('Новости России', User::where('email', 'sergey@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
         $this->assertSame(1, Group::where('slug', 'central-asia')->count());
-        // Light topics: Фаина in "Кулинария", Mia in "Красота", Ron in "IT и технологии"; Изя's jokes whole.
-        $this->assertSame('Кулинария', User::where('email', 'faina@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
-        $this->assertSame('Красота', User::where('email', 'mia@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
-        $this->assertSame('IT и технологии', User::where('email', 'ron@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        // Israel news in Russian (Марина) and in Hebrew (דוד) are two groups.
+        $this->assertSame('Новости Израиля', User::where('email', 'marina@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        $this->assertSame('חדשות ישראל', User::where('email', 'david@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        // Light topics: Linda in "Cooking", Mia in "Beauty", Ron in "Tech & IT"; Изя's jokes whole.
+        $linda = User::where('email', 'faina@authors.anahnu.club')->first();
+        $this->assertSame(['Linda', 'en'], [$linda->name, $linda->locale]);
+        $this->assertSame('Cooking', $linda->feedChannel()->first()->group->name);
+        $this->assertSame('Beauty', User::where('email', 'mia@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        $this->assertSame('Tech & IT', User::where('email', 'ron@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        // Each club group has its picture.
+        $this->assertSame(0, Group::whereIn('slug', ['central-asia', 'israel', 'israel-he', 'cooking'])->whereNull('avatar_path')->count());
         $this->assertTrue(FeedSource::where('url', 'https://www.anekdot.ru/rss/export_j.xml')->value('full_text'));
         // Addresses that never worked are switched off; Telegram channels and Panet's front page are sources.
         $this->assertTrue(FeedSource::where('url', 'https://t.me/s/bokranews')->exists());
         $this->assertFalse(FeedSource::where('url', 'https://www.panet.co.il/rss/news')->where('active', true)->exists());
+    }
+
+    public function test_setup_splits_the_club_groups_by_language()
+    {
+        Storage::fake('public');
+        // As before: דוד and Марина both in "Новости Израиля" (owned by דוד), Фаина in "Кулинария" with a Hebrew source.
+        $make = fn (string $slug, string $name, string $locale) => User::forceCreate(['name' => $name, 'username' => $slug, 'email' => $slug.'@authors.anahnu.club', 'password' => 'x', 'locale' => $locale]);
+        $david = $make('david', 'דוד', 'he');
+        $marina = $make('marina', 'Марина', 'ru');
+        $faina = $make('faina', 'Фаина', 'ru');
+        $israel = Group::create(['owner_id' => $david->id, 'name' => 'Новости Израиля', 'slug' => 'israel', 'locale' => 'ru']);
+        $cooking = Group::create(['owner_id' => $faina->id, 'name' => 'Кулинария', 'slug' => 'cooking', 'locale' => 'ru']);
+        $israel->members()->attach([$david->id => ['role' => 'owner', 'approved' => true], $marina->id => ['role' => 'admin', 'approved' => true]]);
+        $davidChannel = FeedChannel::create(['user_id' => $david->id, 'group_id' => $israel->id, 'topic' => 'x', 'daily_limit' => 3]);
+        FeedChannel::create(['user_id' => $marina->id, 'group_id' => $israel->id, 'topic' => 'x', 'daily_limit' => 2]);
+        $fainaChannel = FeedChannel::create(['user_id' => $faina->id, 'group_id' => $cooking->id, 'topic' => 'x', 'daily_limit' => 2]);
+        $foody = FeedSource::create(['feed_channel_id' => $fainaChannel->id, 'name' => 'Foody', 'url' => 'https://www.foody.co.il/feed', 'locale' => 'he']);
+        $waiting = FeedItem::create(['feed_channel_id' => $fainaChannel->id, 'feed_source_id' => $foody->id, 'title' => 'מתכון', 'url' => 'https://www.foody.co.il/1', 'status' => 'approved']);
+        $hebrew = Post::create(['user_id' => $david->id, 'group_id' => $israel->id, 'body' => 'חדשות', 'locale' => 'he']);
+        $russian = Post::create(['user_id' => $marina->id, 'group_id' => $israel->id, 'body' => 'Новости', 'locale' => 'ru']);
+
+        $this->artisan('feeds:setup')->assertSuccessful();
+
+        $hebrewGroup = Group::firstWhere('slug', 'israel-he');
+        $this->assertSame(['חדשות ישראל', 'he'], [$hebrewGroup->name, $hebrewGroup->locale]);
+        $this->assertSame($hebrewGroup->id, $davidChannel->fresh()->group_id);
+        // The Hebrew news moved to the Hebrew group; the Russian group is Марина's now, without דוד.
+        $this->assertSame($hebrewGroup->id, $hebrew->fresh()->group_id);
+        $this->assertSame($israel->id, $russian->fresh()->group_id);
+        $this->assertSame($marina->id, $israel->fresh()->owner_id);
+        $this->assertFalse($israel->members()->whereKey($david->id)->exists());
+        // "Кулинария" writes in English now, as Linda; her Hebrew source is off, with what waited from it.
+        $this->assertSame(['Cooking', 'en'], [$cooking->fresh()->name, $cooking->fresh()->locale]);
+        $this->assertSame('Linda', $faina->fresh()->name);
+        $this->assertFalse($foody->fresh()->active);
+        $this->assertSame('skipped', $waiting->fresh()->status);
+        // Every club group got its picture.
+        $this->assertNotNull($cooking->fresh()->avatar_path);
+        Storage::disk('public')->assertExists($hebrewGroup->avatar_path);
+
+        // Run again: nothing moves back.
+        $this->artisan('feeds:setup')->assertSuccessful();
+        $this->assertSame($hebrewGroup->id, $hebrew->fresh()->group_id);
+        $this->assertSame(1, Group::where('slug', 'israel-he')->count());
     }
 
     public function test_an_author_in_a_topic_group_posts_there_and_still_to_everyone()
@@ -336,12 +393,12 @@ class FeedsTest extends TestCase
 
     public function test_telegram_channels_and_sites_without_rss_are_read_from_their_pages()
     {
-        $this->assertSame('telegram', \App\Feeds\PageParsers::kind('https://t.me/kunuzru'));
-        $this->assertSame('https://t.me/s/kunuzru', \App\Feeds\PageParsers::telegramUrl('https://t.me/kunuzru'));
-        $this->assertSame('https://t.me/s/kunuzru', \App\Feeds\PageParsers::telegramUrl('@kunuzru'));
-        $this->assertSame('panet', \App\Feeds\PageParsers::kind('https://panet.com/'));
-        $this->assertSame('feed', \App\Feeds\PageParsers::kind('https://www.panet.co.il/rss/news'));
-        $this->assertSame('bokra', \App\Feeds\PageParsers::kind('https://bokra.net/'));
+        $this->assertSame('telegram', PageParsers::kind('https://t.me/kunuzru'));
+        $this->assertSame('https://t.me/s/kunuzru', PageParsers::telegramUrl('https://t.me/kunuzru'));
+        $this->assertSame('https://t.me/s/kunuzru', PageParsers::telegramUrl('@kunuzru'));
+        $this->assertSame('panet', PageParsers::kind('https://panet.com/'));
+        $this->assertSame('feed', PageParsers::kind('https://www.panet.co.il/rss/news'));
+        $this->assertSame('bokra', PageParsers::kind('https://bokra.net/'));
 
         $post = fn ($n, $text, $extra = '') => '<div class="tgme_widget_message_bubble">'.$extra
             .'<div class="tgme_widget_message_text js-message_text" dir="auto">'.$text.'</div>'
@@ -440,6 +497,7 @@ class FeedsTest extends TestCase
 
     public function test_setup_renames_an_author_into_its_own_language_once()
     {
+        Storage::fake('public');
         $this->artisan('feeds:setup')->assertSuccessful();
         $farik = User::where('email', 'farik@authors.anahnu.club')->first();
         $farik->forceFill(['name' => 'Фарик', 'locale' => 'ru'])->save();
@@ -481,7 +539,7 @@ class FeedsTest extends TestCase
                 .'<media:group><media:thumbnail url="https://i.ytimg.com/vi/abc/hqdefault.jpg"/><media:description>Сара, ты где?</media:description></media:group></entry></feed>'),
         ]);
 
-        $this->assertSame('youtube', \App\Feeds\PageParsers::kind('https://www.youtube.com/@odessa'));
+        $this->assertSame('youtube', PageParsers::kind('https://www.youtube.com/@odessa'));
         $items = app(FeedReader::class)->read('https://www.youtube.com/@odessa');
 
         $this->assertSame('Одесский анекдот про Сару', $items[0]['title']);

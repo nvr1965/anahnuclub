@@ -56,7 +56,7 @@ class GroupInviteController extends Controller
             ->reject(fn (User $u) => $u->is($me) || $me->isBlockedWith($u))
             ->each(function (User $u) use ($group, $me) {
                 $group->invitations()->updateOrCreate(['user_id' => $u->id], ['from_id' => $me->id]);
-                ClubActivity::send($u, 'group_invite', $me, route('groups.show', $group), 'group:'.$group->id, $group->localized('name', $u->ui_locale ?? $u->locale));
+                ClubActivity::send($u, 'group_invite', $me, route('groups.show', $group), 'group:'.$group->id, $group->name);
                 if ($u->isClubAuthor()) {
                     ClubAuthorInvited::send($u, $me, $group);
                 }

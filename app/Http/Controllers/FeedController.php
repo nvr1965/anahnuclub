@@ -144,9 +144,7 @@ class FeedController extends Controller
                 'comments.user',
                 'contentTranslations' => fn ($q) => $q->where('locale', $locale),
                 'comments.contentTranslations' => fn ($q) => $q->where('locale', $locale),
-                // Group names, link titles and photo captions are shown in the reader's language too.
-                'group.contentTranslations' => fn ($q) => $q->where('locale', $locale),
-                'linkPreview.contentTranslations' => fn ($q) => $q->where('locale', $locale),
+                // Photo captions are shown in the reader's language too (group names and link cards stay as written).
                 'photos.contentTranslations' => fn ($q) => $q->where('locale', $locale),
             ])
             // Each post's audience: public, friends, some friends, or the author only.

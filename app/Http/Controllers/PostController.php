@@ -189,8 +189,8 @@ class PostController extends Controller
     {
         return response()->json($request->user()->groups()
             ->wherePivot('approved', true)->where('published', true)
-            ->orderByDesc('group_user.created_at')->limit(500)->with('contentTranslations')->get()
-            ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->localized('name'), 'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null, 'is_private' => $g->is_private])->values());
+            ->orderByDesc('group_user.created_at')->limit(500)->get()
+            ->map(fn (Group $g) => ['id' => $g->id, 'name' => $g->name, 'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null, 'is_private' => $g->is_private])->values());
     }
 
     /** The card for a link being typed into a new post, read now if it is not known yet. */

@@ -3,15 +3,18 @@
 namespace App\Console\Commands;
 
 use App\Models\FeedChannel;
+use App\Models\FeedItem;
 use App\Models\FeedSource;
 use App\Models\Group;
+use App\Models\Post;
 use App\Models\User;
 use App\Support\Badges;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Creates the club's authors (Фарик, Али, Витрих…) and their sources from database/seeders/feeds.php.
+ * Creates the club's authors (Farik, علي, Dietrich…), their sources and their groups (one language each) from database/seeders/feeds.php.
  * Run again at any time: it only adds what is missing, so an admin's changes stay.
  */
 class FeedsSetup extends Command
@@ -56,14 +59,14 @@ class FeedsSetup extends Command
                 $this->line('Author '.$author['name'].' created.');
             }
             // Renamed in the list since: the name in the author's own language, and its language and topic with it.
-            if (isset($author['was']) && $user->name === $author['was']) {
+            if (isset($author['was']) && in_array($old = $user->name, (array) $author['was'], true)) {
                 $user->forceFill([
                     'name' => $author['name'],
                     'locale' => $author['locale'],
                     'about' => strtr(self::ABOUT[$author['locale']] ?? self::ABOUT['en'], [':name' => $author['name'], ':topic' => $author['topic']]),
                 ])->save();
                 $user->feedChannel()->update(['topic' => $author['topic']]);
-                $this->line('Author '.$author['was'].' is now '.$author['name'].'.');
+                $this->line('Author '.$old.' is now '.$author['name'].'.');
             }
             // The "Club author" badge beside the name: a club account, not a private person.
             Badges::set($user, 'club-author', true);
@@ -89,7 +92,15 @@ class FeedsSetup extends Command
                 [$name, $url, $locale] = $source;
                 FeedSource::firstOrCreate(['feed_channel_id' => $channel->id, 'url' => $url], ['name' => $name, 'locale' => $locale] + ($source[3] ?? []));
             }
+            // Sources in another language than the author's (or given to another author): off, with their waiting news.
+            if (! empty($author['dropped'])) {
+                $dropped = FeedSource::where('feed_channel_id', $channel->id)->whereIn('url', $author['dropped']);
+                FeedItem::whereIn('feed_source_id', (clone $dropped)->select('id'))->whereIn('status', ['new', 'approved'])
+                    ->update(['status' => 'skipped', 'reason' => 'source off']);
+                $dropped->update(['active' => false]);
+            }
         }
+        $this->tidyGroups($groups);
         // Addresses given earlier that never worked: off, so they do not fill the admin page with errors.
         FeedSource::whereIn('url', $retired)->update(['active' => false]);
         $this->info(FeedChannel::count().' authors, '.FeedSource::count().' sources.');
@@ -98,27 +109,78 @@ class FeedsSetup extends Command
     }
 
     /**
-     * The topic group "Новости России", "Интересно"…: made once, by its first author, open to everyone.
+     * The topic group "Новости России", "חדשות ישראל"…: made once, by its first author, open to everyone.
      * A group of a member that happens to have the same address is left alone; the author then posts in the feed.
+     * A club group that still has its earlier name ('was') gets the new name, description and language.
      */
     private function topicGroup(string $slug, array $group, User $author): ?Group
     {
         $existing = Group::firstWhere('slug', $slug);
         if ($existing) {
-            return FeedChannel::where('group_id', $existing->id)->exists() ? $existing : null;
+            return FeedChannel::where('group_id', $existing->id)->exists() || isset($group['was']) && $existing->name === $group['was'] ? $existing : null;
         }
-        [$name, $description] = $group;
         $created = Group::create([
             'owner_id' => $author->id,
-            'name' => $name,
+            'name' => $group['name'],
             'slug' => $slug,
-            'description' => $description,
-            'locale' => 'ru',
+            'description' => $group['description'],
+            'locale' => $group['locale'],
         ]);
         $created->members()->attach($author->id, ['role' => 'owner', 'approved' => true]);
-        $this->line('Group '.$name.' created.');
+        $this->line('Group '.$group['name'].' created.');
 
         return $created;
+    }
+
+    /**
+     * The club's groups after the authors are in place: one language each (renamed from an earlier name,
+     * the language set), owned by an author that writes there, with no club author that no longer writes
+     * there, with a picture; and the authors' earlier posts in a family moved to the group of their language.
+     *
+     * @param  array<string, array<string, string>>  $config
+     */
+    private function tidyGroups(array $config): void
+    {
+        $authors = FeedChannel::query()->whereNotNull('group_id')->get(['user_id', 'group_id']);
+        $clubAuthorIds = FeedChannel::query()->pluck('user_id');
+        $families = [];
+        foreach ($config as $slug => $settings) {
+            $group = Group::firstWhere('slug', $slug);
+            $writers = $group ? $authors->where('group_id', $group->id)->pluck('user_id') : collect();
+            if (! $group || $writers->isEmpty()) {
+                continue;
+            }
+            if (isset($settings['was']) && $group->name === $settings['was']) {
+                $group->fill(['name' => $settings['name'], 'description' => $settings['description']]);
+                $this->line('Group '.$settings['was'].' is now '.$settings['name'].'.');
+            }
+            $group->locale = $settings['locale'];
+            // Club authors that write elsewhere now leave; the group's owner is one that writes here.
+            $leaving = $group->members()->whereIn('users.id', $clubAuthorIds)->whereNotIn('users.id', $writers)->pluck('users.id');
+            $group->members()->detach($leaving);
+            if ($clubAuthorIds->contains($group->owner_id) && ! $writers->contains($group->owner_id)) {
+                $group->owner_id = $writers->first();
+            }
+            $group->members()->syncWithoutDetaching([$group->owner_id => ['role' => 'owner', 'approved' => true]]);
+            if (! $group->avatar_path && isset($settings['avatar']) && is_file($picture = resource_path('club-groups/'.$settings['avatar'].'.png'))) {
+                $path = 'group-avatars/club-'.$slug.'.png';
+                Storage::disk('public')->put($path, (string) file_get_contents($picture));
+                $group->avatar_path = $path;
+            }
+            $group->save();
+            if (isset($settings['family'])) {
+                $families[$settings['family']][$settings['locale']] = $group->id;
+            }
+        }
+        Group::forgetRoles();
+
+        foreach ($families as $byLocale) {
+            foreach ($byLocale as $locale => $groupId) {
+                Post::whereIn('group_id', array_values($byLocale))->where('group_id', '!=', $groupId)
+                    ->whereIn('user_id', $clubAuthorIds)->where('locale', $locale)
+                    ->update(['group_id' => $groupId]);
+            }
+        }
     }
 
     private function freeUsername(string $slug): string

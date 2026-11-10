@@ -3,7 +3,6 @@
 use App\Jobs\TranslateContent;
 use App\Jobs\TranslateInterface;
 use App\Models\Comment;
-use App\Models\Group;
 use App\Models\LoginLog;
 use App\Models\Moment;
 use App\Models\Post;
@@ -29,9 +28,6 @@ Schedule::call(function () {
                 && TranslateContent::dispatch($item));
     }
 })->everyMinute()->name('translate-new-content')->withoutOverlapping(5);
-// Group names and descriptions are shown everywhere (the side column, post headers, search), so every
-// group is kept translated into the languages the club reads in; only what is missing reaches the services.
-Schedule::call(fn () => Group::where('published', true)->get()->each(fn (Group $g) => TranslateContent::dispatch($g)))->dailyAt('04:10')->name('translate-groups')->withoutOverlapping(30);
 // Interface translation of an added language stops when the services hit their daily limits; pick it up again.
 Schedule::call([TranslateInterface::class, 'resumeAll'])->hourly()->name('translate-interface')->withoutOverlapping();
 // A link whose page could not be read (site down, or it turned this server away) is tried again.
