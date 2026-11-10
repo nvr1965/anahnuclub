@@ -342,6 +342,27 @@ class FeedsTest extends TestCase
         $this->assertSame(1, Group::where('slug', 'israel-he')->count());
     }
 
+    public function test_setup_gives_each_author_a_picture_and_a_cover_but_keeps_one_set_by_hand()
+    {
+        Storage::fake('public');
+        $izya = User::forceCreate(['name' => 'Изя', 'username' => 'izya', 'email' => 'izya@authors.anahnu.club', 'password' => 'x', 'locale' => 'ru', 'avatar_path' => 'avatars/by-admin.jpg']);
+
+        $this->artisan('feeds:setup')->assertSuccessful();
+
+        $authors = User::where('email', 'like', '%@authors.anahnu.club')->get();
+        $this->assertCount(count(glob(resource_path('club-authors/*.png'))), $authors);
+        foreach ($authors as $author) {
+            $this->assertNotNull($author->cover_path, $author->name);
+            Storage::disk('public')->assertExists($author->cover_path);
+            if (! $author->is($izya)) {
+                Storage::disk('public')->assertExists($author->avatar_path);
+            }
+        }
+        // The picture an admin set stays; Изя still gets the cover he had none of.
+        $this->assertSame('avatars/by-admin.jpg', $izya->fresh()->avatar_path);
+        $this->assertSame('covers/club-izya.jpg', $izya->fresh()->cover_path);
+    }
+
     public function test_an_author_in_a_topic_group_posts_there_and_still_to_everyone()
     {
         $channel = $this->author();

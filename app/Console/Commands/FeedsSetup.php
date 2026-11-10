@@ -70,6 +70,7 @@ class FeedsSetup extends Command
             }
             // The "Club author" badge beside the name: a club account, not a private person.
             Badges::set($user, 'club-author', true);
+            $this->pictures($user, $author['slug']);
 
             $channel = FeedChannel::firstOrCreate(['user_id' => $user->id], [
                 'topic' => $author['topic'],
@@ -180,6 +181,22 @@ class FeedsSetup extends Command
                     ->whereIn('user_id', $clubAuthorIds)->where('locale', $locale)
                     ->update(['group_id' => $groupId]);
             }
+        }
+    }
+
+    /**
+     * The author's drawn picture and profile cover (resources/club-authors/<slug>.png, covers/<slug>.jpg),
+     * in the topic and language of its group; only where there is none yet, so a picture an admin set stays.
+     */
+    private function pictures(User $user, string $slug): void
+    {
+        foreach (['avatar_path' => ['avatars', $slug.'.png'], 'cover_path' => ['covers', 'covers/'.$slug.'.jpg']] as $column => [$folder, $file]) {
+            if ($user->{$column} || ! is_file($picture = resource_path('club-authors/'.$file))) {
+                continue;
+            }
+            $path = $folder.'/club-'.$slug.'.'.pathinfo($file, PATHINFO_EXTENSION);
+            Storage::disk('public')->put($path, (string) file_get_contents($picture));
+            $user->forceFill([$column => $path])->save();
         }
     }
 
