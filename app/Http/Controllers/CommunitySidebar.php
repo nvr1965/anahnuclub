@@ -31,7 +31,12 @@ class CommunitySidebar
                 ->orderByDesc('posts_count')
                 ->limit(6)
                 ->get()
-                ->map(fn (Group $g) => ['name' => $g->name, 'slug' => $g->slug, 'posts_count' => $g->posts_count]),
+                ->map(fn (Group $g) => [
+                    'name' => $g->name,
+                    'slug' => $g->slug,
+                    'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null,
+                    'posts_count' => $g->posts_count,
+                ]),
             'photos' => self::photos($user),
         ];
     }
