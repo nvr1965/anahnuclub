@@ -33,7 +33,7 @@ class GroupRoleController extends Controller
         abort_if($group->roleOf($user) === $data['role'], 422);
 
         $group->roleOffers()->updateOrCreate(['user_id' => $user->id], ['from_id' => $me->id, 'role' => $data['role']]);
-        ClubActivity::send($user, 'group_offer_'.$data['role'], $me, route('groups.show', $group), 'group:'.$group->id, $group->localized('name', $user->ui_locale ?? $user->locale));
+        ClubActivity::send($user, 'group_offer_'.$data['role'], $me, route('groups.show', $group), 'group:'.$group->id, $group->name);
 
         return back();
     }
@@ -62,7 +62,7 @@ class GroupRoleController extends Controller
         });
         Group::forgetRoles();
         ClubActivity::retract($me, 'group_offer_'.$offer->role, $offer->from, 'group:'.$group->id);
-        ClubActivity::send($offer->from, 'group_offer_accepted', $me, route('groups.show', $group), 'group:'.$group->id, $group->localized('name', $offer->from->ui_locale ?? $offer->from->locale));
+        ClubActivity::send($offer->from, 'group_offer_accepted', $me, route('groups.show', $group), 'group:'.$group->id, $group->name);
 
         return back();
     }

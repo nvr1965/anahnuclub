@@ -12,18 +12,18 @@
  * 'was' is the author's earlier name: feeds:setup renames an author that still has it (name, language, topic, profile line).
  * 'was_group' moves an author that is still in that group to its 'group'. A source may carry options
  * (['full_text' => true]: its items are posted whole, for jokes and recipes).
- * 'group' is the topic group the author posts in (the list 'groups' below: slug, name, description).
+ * 'group' is the topic group the author posts in (the list 'groups' below). Each club group has one language, and its
+ * author writes in it: "Новости Израиля" in Russian, "חדשות ישראל" in Hebrew. 'dropped' are the author's earlier
+ * sources in another language (or given to another author): feeds:setup switches them off for this author.
  * 'retired' are addresses given earlier that do not work: feeds:setup switches them off.
  */
 return [
-    ['slug' => 'david', 'group' => 'israel', 'name' => 'דוד', 'locale' => 'he', 'limit' => 3, 'topic' => 'ישראל: החדשות העיקריות', 'sources' => [
+    ['slug' => 'david', 'group' => 'israel-he', 'was_group' => 'israel', 'name' => 'דוד', 'locale' => 'he', 'limit' => 3, 'topic' => 'ישראל: החדשות העיקריות', 'sources' => [
         ['Ynet', 'https://www.ynet.co.il/Integration/StoryRss2.xml', 'he'],
         ['Kan News', 'https://www.kan.org.il/rss/', 'he'],
-        ['Times of Israel', 'https://www.timesofisrael.com/feed/', 'en'],
-        ['Jerusalem Post', 'https://www.jpost.com/rss/rssfeedsheadlines.aspx', 'en'],
         ['Israel Hayom', 'https://www.israelhayom.co.il/rss.xml', 'he'],
         ['Haaretz · Telegram', 'https://t.me/s/haaretz_news', 'he'],
-    ]],
+    ], 'dropped' => ['https://www.timesofisrael.com/feed/', 'https://www.jpost.com/rss/rssfeedsheadlines.aspx']],
     ['slug' => 'marina', 'group' => 'israel', 'name' => 'Марина', 'locale' => 'ru', 'min' => 1, 'limit' => 2, 'topic' => 'Израиль по-русски, репатриантам: деньги, права, иврит', 'sources' => [
         ['NEWSru.co.il', 'https://www.newsru.co.il/il/www/news/rss.xml', 'ru'],
         ['Вести', 'https://www.vesty.co.il/rss', 'ru'],
@@ -40,19 +40,20 @@ return [
         ['BBC Arabic', 'https://feeds.bbci.co.uk/arabic/rss.xml', 'ar'],
         ['الجزيرة', 'https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9', 'ar'],
         ['عرب 48', 'https://www.arab48.com/rss', 'ar'],
-        ['Arab News', 'https://www.arabnews.com/rss.xml', 'en'],
-    ]],
-    ['slug' => 'farik', 'group' => 'central-asia', 'name' => 'Farik', 'was' => 'Фарик', 'locale' => 'uz', 'min' => 1, 'limit' => 2, 'topic' => 'O‘zbekiston: yangiliklar va qiziqarli voqealar', 'sources' => [
+    ], 'dropped' => ['https://www.arabnews.com/rss.xml']],
+    ['slug' => 'farik', 'group' => 'uzbekistan', 'was_group' => 'central-asia', 'name' => 'Farik', 'was' => 'Фарик', 'locale' => 'uz', 'min' => 1, 'limit' => 2, 'topic' => 'O‘zbekiston: yangiliklar va qiziqarli voqealar', 'sources' => [
         ['Kun.uz', 'https://kun.uz/news/rss', 'uz'],
         ['Daryo', 'https://daryo.uz/feed/', 'uz'],
         ['Gazeta.uz', 'https://www.gazeta.uz/oz/rss/', 'uz'],
         ['BBC O‘zbek', 'https://feeds.bbci.co.uk/uzbek/rss.xml', 'uz'],
         ['Kun.uz · Telegram', 'https://t.me/s/kunuzofficial', 'uz'],
-        ['Podrobno.uz', 'https://podrobno.uz/rss/', 'ru'],
-    ]],
-    ['slug' => 'aigul', 'group' => 'central-asia', 'name' => 'Айгүл', 'was' => 'Айгуль', 'locale' => 'kk', 'limit' => 1, 'topic' => 'Қазақстан, Қырғызстан, Тәжікстан', 'sources' => [
+    ], 'dropped' => ['https://podrobno.uz/rss/']],
+    ['slug' => 'aigul', 'group' => 'kazakhstan', 'was_group' => 'central-asia', 'name' => 'Айгүл', 'was' => 'Айгуль', 'locale' => 'kk', 'limit' => 1, 'topic' => 'Қазақстан жаңалықтары', 'sources' => [
         ['Tengrinews · қазақша', 'https://kaz.tengrinews.kz/news.rss', 'kk'],
-        ['BBC Кыргыз', 'https://feeds.bbci.co.uk/kyrgyz/rss.xml', 'ky'],
+    ], 'dropped' => ['https://feeds.bbci.co.uk/kyrgyz/rss.xml', 'https://tengrinews.kz/news.rss', 'https://24.kg/rss/', 'https://asiaplustj.info/ru/rss']],
+    // Central Asia in Russian: the Russian sources Farik and Айгүл had.
+    ['slug' => 'gulnara', 'group' => 'central-asia', 'name' => 'Гульнара', 'locale' => 'ru', 'min' => 1, 'limit' => 2, 'topic' => 'Средняя Азия по-русски: Узбекистан, Казахстан, Кыргызстан, Таджикистан', 'sources' => [
+        ['Podrobno.uz', 'https://podrobno.uz/rss/', 'ru'],
         ['Tengrinews', 'https://tengrinews.kz/news.rss', 'ru'],
         ['24.kg', 'https://24.kg/rss/', 'ru'],
         ['Asia-Plus', 'https://asiaplustj.info/ru/rss', 'ru'],
@@ -78,7 +79,7 @@ return [
         ['CBC', 'https://www.cbc.ca/webfeed/rss/rss-topstories', 'en'],
         ['AP News', 'https://feedx.net/rss/ap.xml', 'en'],
     ]],
-    ['slug' => 'camille', 'group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
+    ['slug' => 'camille', 'group' => 'france', 'was_group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
         ['France 24', 'https://www.france24.com/fr/rss', 'fr'],
         ['Le Monde', 'https://www.lemonde.fr/rss/une.xml', 'fr'],
         ['Euronews', 'https://fr.euronews.com/rss', 'fr'],
@@ -96,35 +97,33 @@ return [
         ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
     ]],
     ['slug' => 'ron', 'group' => 'it', 'was_group' => 'science', 'name' => 'Ron', 'locale' => 'en', 'min' => 2, 'limit' => 3, 'topic' => 'IT, tech and startups', 'sources' => [
-        ['Geektime', 'https://www.geektime.co.il/feed/', 'he'],
         ['Calcalist Tech', 'https://www.calcalistech.com/ctechnews/rss', 'en'],
         ['The Verge', 'https://www.theverge.com/rss/index.xml', 'en'],
         ['TechCrunch', 'https://techcrunch.com/feed/', 'en'],
         ['Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index', 'en'],
-    ]],
-    ['slug' => 'tali', 'group' => 'interesting', 'name' => 'טלי', 'was' => 'Тали', 'locale' => 'he', 'limit' => 1, 'topic' => 'בריאות: רק ממקורות רשמיים', 'sources' => [
+    ], 'dropped' => ['https://www.geektime.co.il/feed/']],
+    // Her sources are English, as the group "Interesting": she writes in English.
+    ['slug' => 'tali', 'group' => 'interesting', 'name' => 'Tali', 'was' => ['טלי', 'Тали'], 'locale' => 'en', 'limit' => 1, 'topic' => 'Health: from official sources only', 'sources' => [
         ['WHO', 'https://www.who.int/rss-feeds/news-english.xml', 'en'],
         ['ScienceDaily', 'https://www.sciencedaily.com/rss/health_medicine.xml', 'en'],
-        ['מכון דוידסון', 'https://davidson.weizmann.ac.il/rss.xml', 'he'],
-    ]],
+    ], 'dropped' => ['https://davidson.weizmann.ac.il/rss.xml']],
     ['slug' => 'vera', 'group' => 'interesting', 'name' => 'Vera', 'was' => 'Вера', 'locale' => 'en', 'limit' => 1, 'topic' => 'Culture and cinema', 'sources' => [
         ['The Guardian · Culture', 'https://www.theguardian.com/culture/rss', 'en'],
         ['Variety', 'https://variety.com/feed/', 'en'],
     ]],
     ['slug' => 'moshe', 'group' => 'sport', 'name' => 'משה', 'locale' => 'he', 'limit' => 1, 'topic' => 'ספורט', 'sources' => [
         ['Sport5', 'https://www.sport5.co.il/RSS.aspx', 'he'],
-        ['BBC Sport', 'https://feeds.bbci.co.uk/sport/rss.xml', 'en'],
-    ]],
+    ], 'dropped' => ['https://feeds.bbci.co.uk/sport/rss.xml']],
     ['slug' => 'asya', 'group' => 'interesting', 'name' => 'Asya', 'was' => 'Ася', 'locale' => 'en', 'limit' => 1, 'topic' => 'Travel', 'sources' => [
         ['Lonely Planet', 'https://www.lonelyplanet.com/news/feed/atom/', 'en'],
         ['The Guardian · Travel', 'https://www.theguardian.com/travel/rss', 'en'],
     ]],
     // Recipes come from the curator: the "Add by hand" form on the admin page.
     // Recipes: the sites below and what the curator adds by hand.
-    ['slug' => 'faina', 'group' => 'cooking', 'was_group' => 'interesting', 'name' => 'Фаина', 'locale' => 'ru', 'min' => 1, 'limit' => 2, 'topic' => 'Кухня и рецепты', 'sources' => [
+    // Was Фаина: her recipes are English, so is her name.
+    ['slug' => 'faina', 'group' => 'cooking', 'was_group' => 'interesting', 'name' => 'Linda', 'was' => 'Фаина', 'locale' => 'en', 'min' => 1, 'limit' => 2, 'topic' => 'Cooking and recipes', 'sources' => [
         ['Bon Appétit', 'https://www.bonappetit.com/feed/rss', 'en'],
-        ['Foody', 'https://www.foody.co.il/feed', 'he'],
-    ]],
+    ], 'dropped' => ['https://www.foody.co.il/feed']],
     ['slug' => 'mia', 'group' => 'beauty', 'name' => 'Mia', 'locale' => 'en', 'min' => 1, 'limit' => 2, 'topic' => 'Beauty and self-care', 'sources' => [
         ['Allure', 'https://www.allure.com/feed/rss', 'en'],
         ['Glamour', 'https://www.glamour.com/feed/rss', 'en'],
@@ -134,22 +133,32 @@ return [
     ['slug' => 'izya', 'group' => 'humor', 'name' => 'Изя', 'locale' => 'ru', 'min' => 2, 'limit' => 3, 'topic' => 'Анекдоты и юмор', 'sources' => [
         ['Анекдоты дня', 'https://www.anekdot.ru/rss/export_j.xml', 'ru', ['full_text' => true]],
     ]],
+    /*
+     * The club's groups, one language each: 'name' and 'description' in it, 'locale', the picture 'avatar'
+     * (resources/club-groups/<avatar>.png). 'was' is the group's earlier name: a group that still has it is renamed
+     * (and gets the new description and language). Groups of one 'family' are one topic in several languages:
+     * an author's earlier posts in the family move to the group of their language.
+     */
     'groups' => [
-        'israel' => ['Новости Израиля', 'Главное в Израиле за день: новости из проверенных источников, со ссылками.'],
-        'arab-world' => ['Новости арабского мира', 'Арабы Израиля и арабский мир: Panet, Bokra, BBC Arabic и другие, со ссылками.'],
-        'central-asia' => ['Средняя Азия', 'Узбекистан, Казахстан, Кыргызстан, Таджикистан: новости и интересное.'],
-        'russia' => ['Новости России', 'Россия: новости из проверенных источников, со ссылками.'],
-        'ukraine' => ['Новости Украины', 'Україна: новини з перевірених джерел, з посиланнями.'],
-        'europe' => ['Европа', 'Германия, Франция и вся Европа: новости на языке оригинала, с переводом.'],
-        'america' => ['США и Канада', 'Новости Северной Америки, со ссылками на источники.'],
-        'world' => ['В мире', 'Главное в мире за день.'],
-        'science' => ['Наука и технологии', 'Открытия, космос, техника и стартапы.'],
-        'interesting' => ['Интересно', 'Здоровье, культура и кино, путешествия, кухня: всё, что интересно почитать.'],
-        'sport' => ['Спорт', 'Спортивные новости Израиля и мира.'],
-        'humor' => ['Юмор и анекдоты', 'Анекдоты и весёлое: для настроения.'],
-        'beauty' => ['Красота', 'Уход, макияж, мода и забота о себе.'],
-        'cooking' => ['Кулинария', 'Рецепты и всё про еду.'],
-        'it' => ['IT и технологии', 'Новости IT, гаджеты, стартапы и программирование.'],
+        'israel' => ['name' => 'Новости Израиля', 'description' => 'Главное в Израиле за день: новости из проверенных источников, со ссылками.', 'locale' => 'ru', 'family' => 'israel', 'avatar' => 'israel'],
+        'israel-he' => ['name' => 'חדשות ישראל', 'description' => 'החדשות העיקריות בישראל מהיום, ממקורות בדוקים ועם קישורים.', 'locale' => 'he', 'family' => 'israel', 'avatar' => 'israel-he'],
+        'arab-world' => ['name' => 'أخبار العالم العربي', 'was' => 'Новости арабского мира', 'description' => 'العرب في إسرائيل والعالم العربي: بانيت، بكرا، بي بي سي عربي وغيرها، مع الروابط.', 'locale' => 'ar', 'avatar' => 'arab-world'],
+        'central-asia' => ['name' => 'Средняя Азия', 'description' => 'Узбекистан, Казахстан, Кыргызстан, Таджикистан: новости по-русски, со ссылками.', 'locale' => 'ru', 'family' => 'central-asia', 'avatar' => 'central-asia'],
+        'uzbekistan' => ['name' => 'O‘zbekiston yangiliklari', 'description' => 'O‘zbekistondagi asosiy yangiliklar va qiziqarli voqealar, havolalar bilan.', 'locale' => 'uz', 'family' => 'central-asia', 'avatar' => 'uzbekistan'],
+        'kazakhstan' => ['name' => 'Қазақстан жаңалықтары', 'description' => 'Қазақстандағы басты жаңалықтар, тексерілген дереккөздерден, сілтемелерімен.', 'locale' => 'kk', 'family' => 'central-asia', 'avatar' => 'kazakhstan'],
+        'russia' => ['name' => 'Новости России', 'description' => 'Россия: новости из проверенных источников, со ссылками.', 'locale' => 'ru', 'avatar' => 'russia'],
+        'ukraine' => ['name' => 'Новини України', 'was' => 'Новости Украины', 'description' => 'Україна: новини з перевірених джерел, з посиланнями.', 'locale' => 'uk', 'avatar' => 'ukraine'],
+        'europe' => ['name' => 'Nachrichten aus Deutschland', 'was' => 'Европа', 'description' => 'Deutschland und Europa: Nachrichten aus geprüften Quellen, mit Links.', 'locale' => 'de', 'family' => 'europe', 'avatar' => 'germany'],
+        'france' => ['name' => 'France et Europe', 'description' => 'L’actualité de la France et de l’Europe, de sources vérifiées, avec les liens.', 'locale' => 'fr', 'family' => 'europe', 'avatar' => 'france'],
+        'america' => ['name' => 'USA & Canada', 'was' => 'США и Канада', 'description' => 'North American news from checked sources, with links.', 'locale' => 'en', 'avatar' => 'america'],
+        'world' => ['name' => 'World News', 'was' => 'В мире', 'description' => 'The main world news of the day.', 'locale' => 'en', 'avatar' => 'world'],
+        'science' => ['name' => 'מדע', 'was' => 'Наука и технологии', 'description' => 'תגליות, חלל, טבע ורפואה: מדע בעברית ממקורות בדוקים.', 'locale' => 'he', 'avatar' => 'science'],
+        'interesting' => ['name' => 'Interesting', 'was' => 'Интересно', 'description' => 'Health, culture and cinema, travel: things worth reading.', 'locale' => 'en', 'avatar' => 'interesting'],
+        'sport' => ['name' => 'ספורט', 'was' => 'Спорт', 'description' => 'חדשות הספורט בישראל ובעולם.', 'locale' => 'he', 'avatar' => 'sport'],
+        'humor' => ['name' => 'Юмор и анекдоты', 'description' => 'Анекдоты и весёлое: для настроения.', 'locale' => 'ru', 'avatar' => 'humor'],
+        'beauty' => ['name' => 'Beauty', 'was' => 'Красота', 'description' => 'Skin care, make-up, fashion and self-care.', 'locale' => 'en', 'avatar' => 'beauty'],
+        'cooking' => ['name' => 'Cooking', 'was' => 'Кулинария', 'description' => 'Recipes and everything about food.', 'locale' => 'en', 'avatar' => 'cooking'],
+        'it' => ['name' => 'Tech & IT', 'was' => 'IT и технологии', 'description' => 'IT news, gadgets, startups and programming.', 'locale' => 'en', 'avatar' => 'it'],
     ],
     'retired' => [
         // Fewer Russian sources: the authors write in the languages of their countries.

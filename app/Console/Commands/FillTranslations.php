@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Comment;
-use App\Models\Group;
 use App\Models\Language;
 use App\Models\Post;
 use App\Translation\ContentTranslator;
@@ -92,7 +91,6 @@ class FillTranslations extends Command
     /** @return iterable<Model> */
     private function models(): iterable
     {
-        yield from Group::with('contentTranslations')->orderBy('id')->lazy();
         yield from Post::with('contentTranslations')->lazyByIdDesc(100);
         yield from Comment::with('contentTranslations')->lazyByIdDesc(100);
     }
