@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Translation\InterfaceStrings;
 use App\Translation\Providers\DeepL;
 use App\Translation\Providers\Gemini;
+use App\Translation\Providers\LibreTranslate;
 use App\Translation\Providers\Microsoft;
 use App\Translation\Providers\MyMemory;
 use App\Translation\Providers\Provider;
@@ -17,6 +18,7 @@ use App\Translation\TranslatorChain;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class TranslatorChainTest extends TestCase
@@ -153,6 +155,23 @@ class TranslatorChainTest extends TestCase
         ])]);
 
         $this->assertSame(['Salom', 'Rahmat'], (new Gemini('k', 'm'))->translateMany(['Hello', 'Thanks'], 'uz', 'en'));
+    }
+
+    public function test_gemini_tries_again_when_the_model_is_overloaded()
+    {
+        Sleep::fake();
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
+            ->push(['error' => ['message' => 'The model is overloaded']], 503)
+            ->push(['candidates' => [['content' => ['parts' => [['text' => '["Salom"]']]]]]])]);
+
+        $this->assertSame(['Salom'], (new Gemini('k', 'm'))->translateMany(['Hello'], 'uz', 'en'));
+    }
+
+    public function test_a_libretranslate_address_without_https_still_works()
+    {
+        Http::fake(['https://libre.example/translate' => Http::response(['translatedText' => ['Salom']])]);
+
+        $this->assertSame(['Salom'], (new LibreTranslate('libre.example/'))->translateMany(['Hello'], 'uz', 'en'));
     }
 
     public function test_admins_correct_interface_texts_and_machine_translation_leaves_them_alone()

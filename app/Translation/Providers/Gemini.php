@@ -3,8 +3,11 @@
 namespace App\Translation\Providers;
 
 use App\Models\Language;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 /** Google Gemini: many languages DeepL lacks (Uzbek, Georgian, Persian, ...); the API has a free tier. */
 class Gemini extends Provider
@@ -26,8 +29,11 @@ class Gemini extends Provider
             .'Answer with a JSON array of strings only, same length and order.'."\n\n"
             .json_encode(array_values($texts), JSON_UNESCAPED_UNICODE);
 
+        // "503 model overloaded" and timeouts pass in seconds, so try twice more before giving up.
         $response = Http::withHeaders(['x-goog-api-key' => $this->apiKey])
             ->timeout(60)
+            ->retry([3000, 10000], when: fn (Throwable $e) => $e instanceof ConnectionException
+                || ($e instanceof RequestException && in_array($e->response->status(), [429, 500, 503], true)))
             ->post('https://generativelanguage.googleapis.com/v1beta/models/'.$this->model.':generateContent', [
                 'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
                 'generationConfig' => ['temperature' => 0.1, 'responseMimeType' => 'application/json'],
