@@ -1,0 +1,6 @@
+import{c as l,j as e}from"./app-Bm_Fje46.js";import{C as n}from"./club-layout-ox7OZQWb.js";/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const d=[["path",{d:"M21 12a9 9 0 1 1-6.219-8.56",key:"13zald"}]],m=l("LoaderCircle",d);function o({children:a,title:s,description:t}){return e.jsx(n,{children:e.jsxs("div",{className:"mx-auto mt-6 w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-neutral-900 dark:ring-neutral-800",children:[e.jsx("div",{className:"from-header-from via-brand to-header-to h-1 bg-gradient-to-r"}),e.jsxs("div",{className:"flex flex-col items-center gap-2 pt-8",children:[e.jsx("img",{src:"/images/logo-mark.png",alt:"",className:"size-16 rounded-full"}),e.jsx("span",{className:"text-brand text-2xl font-bold tracking-tight",children:"anahnu.club"})]}),e.jsxs("div",{className:"space-y-6 px-6 pt-4 pb-6 sm:px-8 sm:pb-8",children:[e.jsxs("div",{className:"space-y-1 text-center",children:[e.jsx("h1",{className:"text-xl font-semibold",children:s}),e.jsx("p",{className:"text-muted-foreground text-sm",children:t})]}),a]})]})})}function x({children:a,title:s,description:t,...r}){return e.jsx(o,{title:s,description:t,...r,children:a})}export{x as A,m as L};
