@@ -40,7 +40,6 @@
     ":name takes messages from friends only.": ":name מקבל הודעות מחברים בלבד.",
     ":name will be offered to take over “:group”. You will stay on as an admin once they accept.": ":name יקבל הצעה לקבל את הקבוצה „:group”. לאחר שיסכים, תישארו בה מנהלים.",
     ":provider did not share your email address. Please sign up with your email instead.": ":provider לא שיתף את כתובת הדוא\"ל שלכם. אנא הירשמו באמצעות דוא\"ל.",
-    "A community without borders. Write in your language, read in yours.": "קהילה ללא גבולות. כתבו בשפה שלכם, קראו בשפה שלכם.",
     "A letter could not be sent: :error": "לא ניתן היה לשלוח מכתב: :error",
     "A new member has signed up on :site.": "חבר חדש נרשם ב-:site.",
     "A new verification link has been sent to the email address you provided during registration.": "קישור אימות חדש נשלח לכתובת הדוא\"ל שציינתם בהרשמה.",
@@ -294,7 +293,6 @@
     "Join me on anahnu.club, the best social network without censorship!": "הצטרפו אליי ל-anahnu.club, הרשת החברתית הטובה ביותר ללא צנזורה!",
     "Join me on anahnu.club, the community of our people!": "הצטרפו אליי ל-anahnu.club, הקהילה של האנשים שלנו!",
     "Join the group “:name” on anahnu.club": "הצטרפו לקבוצה „:name” ב-anahnu.club",
-    "Join us!": "הצטרפו אלינו!",
     "Joined :date": "הצטרף/ה ב-:date",
     "Registered :date": "הרשמה :date",
     "Keep these placeholders in the text: :list": "השאירו בטקסט את הסימונים האלה: :list",
@@ -999,5 +997,12 @@
     "No answer": "אין מענה",
     "Whole text": "טקסט מלא",
     "Excerpt only": "רק תקציר",
-    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "כתובת RSS, ערוץ יוטיוב, ערוץ טלגרם https://t.me/s/… או panet.com / bokra.net"
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "כתובת RSS, ערוץ יוטיוב, ערוץ טלגרם https://t.me/s/… או panet.com / bokra.net",
+    "A community without borders": "קהילה ללא גבולות",
+    "Write in your language, read in yours. We translate the rest.": "כתבו בשפה שלכם, קראו בשפה שלכם. את השאר אנחנו נתרגם.",
+    "Automatic translation of posts and messages": "תרגום אוטומטי של פוסטים והודעות",
+    "Interest groups and news": "קבוצות עניין וחדשות",
+    "Our people are already here": "החבר׳ה שלנו כבר כאן",
+    "Create an account for free": "פתיחת חשבון בחינם",
+    "Already with us? Log in": "כבר איתנו? התחברו"
 }
