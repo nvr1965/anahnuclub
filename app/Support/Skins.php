@@ -17,6 +17,9 @@ class Skins
 
     public const COOKIE = 'skin';
 
+    /** Signing in, signing up and the password pages always look like the club itself, whatever style is chosen. */
+    public const CLUB_ONLY_ROUTES = ['login', 'register', 'password.request', 'password.reset', 'verification.notice', 'password.confirm'];
+
     /** @return list<string> the styles members may choose, set in the admin; the default is always among them */
     public static function enabled(): array
     {
@@ -33,10 +36,13 @@ class Skins
         return in_array($skin, self::ALL, true) ? $skin : 'club';
     }
 
-    /** The member's choice, else the guest's (a cookie), else the site's default. */
+    /** 'club' on the sign-in pages; elsewhere the member's choice, else the guest's (a cookie), else the site's default. */
     public static function current(?Request $request = null): string
     {
         $request ??= request();
+        if ($request->routeIs(...self::CLUB_ONLY_ROUTES)) {
+            return 'club';
+        }
         $enabled = self::enabled();
         foreach ([$request->user()?->ui_skin, $request->cookie(self::COOKIE)] as $choice) {
             if (is_string($choice) && in_array($choice, $enabled, true)) {

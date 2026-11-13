@@ -65,4 +65,18 @@ class SkinTest extends TestCase
 
         $this->actingAs(User::factory()->create())->patch('/admin/skins', ['default' => 'club', 'enabled' => []])->assertForbidden();
     }
+
+    public function test_the_sign_in_pages_always_show_the_club_style()
+    {
+        Setting::put('skin_default', 'forum');
+
+        foreach (['/login', '/register', '/forgot-password'] as $url) {
+            $this->withCookie(Skins::COOKIE, 'showcase')->get($url)
+                ->assertSee('data-skin="club"', false)
+                ->assertInertia(fn ($page) => $page->where('skin', 'club'));
+        }
+
+        // Everywhere else the chosen style stays.
+        $this->get('/')->assertSee('data-skin="forum"', false);
+    }
 }
