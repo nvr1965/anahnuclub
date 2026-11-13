@@ -323,6 +323,14 @@ class FeedsTest extends TestCase
         // Israel news in Russian (Марина) and in Hebrew (דוד) are two groups.
         $this->assertSame('Новости Израиля', User::where('email', 'marina@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
         $this->assertSame('חדשות ישראל', User::where('email', 'david@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
+        // Latin America in Spanish: Lucía in "Noticias de América Latina", from Spanish sources.
+        $lucia = User::where('email', 'lucia@authors.anahnu.club')->first();
+        $this->assertSame(['Lucía', 'es'], [$lucia->name, $lucia->locale]);
+        $this->assertStringContainsString('autor/a de AnahnuClub', $lucia->about);
+        $latam = $lucia->feedChannel()->first()->group;
+        $this->assertSame(['Noticias de América Latina', 'es'], [$latam->name, $latam->locale]);
+        $this->assertNotNull($latam->avatar_path);
+        $this->assertSame(['es'], $lucia->feedChannel()->first()->sources()->pluck('locale')->unique()->values()->all());
         // Light topics: Linda in "Cooking", Mia in "Beauty", Ron in "Tech & IT"; Изя's jokes whole.
         $linda = User::where('email', 'faina@authors.anahnu.club')->first();
         $this->assertSame(['Linda', 'en'], [$linda->name, $linda->locale]);
