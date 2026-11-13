@@ -138,6 +138,22 @@ class AdminTest extends TestCase
         $this->patch('/admin/languages/en', ['enabled' => false])->assertStatus(422);
     }
 
+    public function test_languages_can_be_put_in_another_order_shown_everywhere()
+    {
+        $codes = Language::orderBy('sort')->pluck('code')->all();
+        $new = array_reverse($codes);
+
+        $this->actingAs($this->admin)->put('/admin/languages/order', ['codes' => $new])->assertRedirect();
+        $this->assertSame($new, Language::orderBy('sort')->pluck('code')->all());
+        $this->get('/feed')->assertInertia(fn ($page) => $page
+            ->where('languages', fn ($rows) => collect($rows)->pluck('code')->all() === array_values(array_filter($new, fn ($c) => Language::isEnabled($c)))));
+
+        // Only real languages, and only by an administrator.
+        $this->put('/admin/languages/order', ['codes' => ['xx']])->assertSessionHasErrors('codes.0');
+        $this->actingAs(User::factory()->create())->put('/admin/languages/order', ['codes' => $codes])->assertForbidden();
+        $this->assertSame($new, Language::orderBy('sort')->pluck('code')->all());
+    }
+
     public function test_the_main_administrator_cannot_be_blocked_demoted_or_deleted()
     {
         $other = User::factory()->create();

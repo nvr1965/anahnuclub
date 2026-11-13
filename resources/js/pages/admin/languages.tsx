@@ -3,7 +3,7 @@ import AdminLayout from '@/layouts/admin-layout';
 import { useT } from '@/lib/i18n';
 import { inviteBlob, type InviteTexts } from '@/lib/invite-image';
 import { Link, router, useForm } from '@inertiajs/react';
-import { Image as ImageIcon, Languages, Plus, RefreshCw, Repeat, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Image as ImageIcon, Languages, Plus, RefreshCw, Repeat, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface Row {
@@ -119,6 +119,13 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
         );
     };
 
+    // Swaps a language with its neighbour and saves the new order at once.
+    const move = (index: number, by: number) => {
+        const codes = languages.map((l) => l.code);
+        [codes[index], codes[index + by]] = [codes[index + by], codes[index]];
+        send('put', route('admin.languages.order'), { codes });
+    };
+
     const field =
         'focus:border-brand rounded-md border border-slate-300 bg-white px-3 py-2 text-[0.9375rem] outline-none dark:border-neutral-700 dark:bg-neutral-900';
 
@@ -126,8 +133,30 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
         <AdminLayout title={t('Languages')}>
             <div className="space-y-4">
                 <div className={`${card} divide-y dark:divide-neutral-800`}>
-                    {languages.map((language) => (
+                    {languages.map((language, index) => (
                         <div key={language.code} className="flex flex-wrap items-center gap-3 p-3">
+                            <div className="flex flex-col">
+                                <button
+                                    type="button"
+                                    aria-label={t('Up')}
+                                    title={t('Up')}
+                                    disabled={index === 0}
+                                    className="text-muted-foreground rounded p-0.5 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
+                                    onClick={() => move(index, -1)}
+                                >
+                                    <ArrowUp className="size-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label={t('Down')}
+                                    title={t('Down')}
+                                    disabled={index === languages.length - 1}
+                                    className="text-muted-foreground rounded p-0.5 hover:bg-slate-100 disabled:opacity-30 dark:hover:bg-neutral-800"
+                                    onClick={() => move(index, 1)}
+                                >
+                                    <ArrowDown className="size-4" />
+                                </button>
+                            </div>
                             <input
                                 type="checkbox"
                                 className="accent-brand size-4"

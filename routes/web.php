@@ -253,6 +253,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('translators/{translator}/check', [Admin\TranslatorController::class, 'check'])->name('translators.check');
     Route::get('languages', [Admin\LanguageController::class, 'index'])->name('languages.index');
     Route::post('languages', [Admin\LanguageController::class, 'store'])->name('languages.store');
+    Route::put('languages/order', [Admin\LanguageController::class, 'order'])->name('languages.order');
     Route::patch('languages/{language}', [Admin\LanguageController::class, 'update'])->name('languages.update');
     Route::get('languages/{language}/texts', [Admin\LanguageController::class, 'texts'])->name('languages.texts');
     Route::put('languages/{language}/texts', [Admin\LanguageController::class, 'correct'])->name('languages.correct');
