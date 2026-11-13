@@ -93,6 +93,15 @@ class BadgesTest extends TestCase
         $this->actingAs($admin)->put("/admin/users/{$author->id}/badges", ['badge' => 'club-author', 'on' => false]);
         $this->assertSame('beta-tester', Badges::primary($author->fresh()));
 
+        // The profile offers the administrator every special badge to give, and a member none.
+        $this->actingAs($admin)->put("/admin/users/{$author->id}/badges", ['badge' => 'inner-circle', 'on' => true]);
+        $this->actingAs($admin)->put("/admin/users/{$author->id}/badges", ['badge' => 'ambassador', 'on' => true]);
+        $this->assertSame(['inner-circle', 'ambassador', 'beta-tester'], Badges::special($author->fresh()));
+        $this->actingAs($admin)->get("/people/{$author->id}")
+            ->assertInertia(fn ($page) => $page->where('profile.special_badges', Badges::SPECIAL));
+        $this->actingAs($author)->get("/people/{$admin->id}")
+            ->assertInertia(fn ($page) => $page->where('profile.special_badges', null));
+
         // Members cannot give badges.
         $this->actingAs($author)->put("/admin/users/{$admin->id}/badges", ['badge' => 'founder', 'on' => true])->assertForbidden();
     }

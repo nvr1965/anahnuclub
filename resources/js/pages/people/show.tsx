@@ -5,9 +5,16 @@ import { PhotoViewer } from '@/components/photo-viewer';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
-import { UserBadge } from '@/components/user-badge';
+import { BADGES, UserBadge } from '@/components/user-badge';
 import { VideoGrid } from '@/components/video-grid';
 import ClubLayout from '@/layouts/club-layout';
 import { albumName } from '@/lib/albums';
@@ -17,6 +24,7 @@ import { relativeTime } from '@/lib/relative-time';
 import { type Paginated, type Person, type PhotoItem, type Post, type SharedData, type VideoItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    Award,
     Ban,
     Cake,
     Camera,
@@ -47,6 +55,8 @@ interface Profile {
     /** The level earned by posting, and the special badges the club gave. */
     level: string;
     badges: string[];
+    /** Every special badge there is, in rank order; sent to administrators only. */
+    special_badges?: string[];
     avatar: string | null;
     cover: string | null;
     status: string | null;
@@ -95,7 +105,7 @@ const secondary = `${button} bg-slate-200 text-slate-900 hover:bg-slate-300 dark
 
 export default function PersonShow({ profile, tab, posts, friends, photos, albums, videos }: Props) {
     const t = useT();
-    const { locale, skin } = usePage<SharedData>().props;
+    const { locale, skin, auth } = usePage<SharedData>().props;
     // Showcase puts the member's photos first, as big squares.
     const showcase = skin === 'showcase';
     const [editing, setEditing] = useState(false);
@@ -227,6 +237,7 @@ export default function PersonShow({ profile, tab, posts, friends, photos, album
                                     </DropdownMenu>
                                 </>
                             )}
+                            {Boolean(auth.user?.is_admin) && <BadgeButton profile={profile} specials={profile.special_badges ?? []} />}
                         </div>
                     </div>
 
@@ -518,6 +529,35 @@ function PhotoGrid({ photos, className }: { photos: Photo[]; className: string }
 }
 
 /** Add friend → Request sent → Friends, with accept / decline when they asked first. */
+/** For an administrator: gives or takes the club's special badges right from the member's profile. */
+function BadgeButton({ profile, specials }: { profile: Profile; specials: string[] }) {
+    const t = useT();
+    const toggle = (badge: string, on: boolean) =>
+        router.put(route('admin.users.badge', profile.id), { badge, on }, { preserveScroll: true, preserveState: true });
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger className={secondary} aria-label={t('Give or take badges')} title={t('Give or take badges')}>
+                <Award className="size-4" /> {t('Badges')}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{t('Give or take badges')}</DropdownMenuLabel>
+                {specials.map((badge) => (
+                    <DropdownMenuCheckboxItem
+                        key={badge}
+                        checked={profile.badges.includes(badge)}
+                        onCheckedChange={(on) => toggle(badge, on === true)}
+                        onSelect={(e) => e.preventDefault()}
+                    >
+                        <UserBadge badge={badge} />
+                        <span className="text-muted-foreground ms-1 text-xs">{BADGES[badge] ? t(BADGES[badge].hint) : ''}</span>
+                    </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 function FriendButton({ profile }: { profile: Profile }) {
     const t = useT();
     const add = () => router.post(route('friends.store', profile.id), {}, { preserveScroll: true });

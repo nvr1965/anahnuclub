@@ -24,7 +24,7 @@ class Badges
     public const LEVELS = ['member', 'club-member', 'co-author', 'author', 'top-author'];
 
     /** Given by an administrator, in the order they win the place beside the name. */
-    public const SPECIAL = ['club-author', 'founder', 'moderator', 'translator', 'beta-tester', 'verified', 'partner'];
+    public const SPECIAL = ['club-author', 'founder', 'moderator', 'inner-circle', 'ambassador', 'translator', 'beta-tester', 'verified', 'partner'];
 
     /** What a level asks for; every number must be reached. An administrator can change them. */
     public const DEFAULT_THRESHOLDS = [
