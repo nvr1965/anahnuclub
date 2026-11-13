@@ -82,7 +82,10 @@ class InviteImage
             return Storage::disk('public')->url(self::path($code)).'?v='.Storage::disk('public')->lastModified(self::path($code));
         }
 
-        return asset('images/invite/'.(is_file(public_path("images/invite/$code.jpg")) ? $code : 'en').'.jpg');
+        $file = 'images/invite/'.(is_file(public_path("images/invite/$code.jpg")) ? $code : 'en').'.jpg';
+
+        // The address changes with the picture, so networks that keep previews by address fetch the new one.
+        return asset($file).'?v='.substr(md5_file(public_path($file)), 0, 8);
     }
 
     /** A fingerprint of the picture's texts in this language, so a picture drawn from older texts is known to be out of date. */
