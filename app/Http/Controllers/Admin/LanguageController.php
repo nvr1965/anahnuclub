@@ -10,6 +10,7 @@ use App\Translation\Translator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -69,6 +70,26 @@ class LanguageController extends AdminController
         abort_if(! $enabled && (Language::enabled()->count() <= 1 || $language->code === config('app.fallback_locale')), 422, 'This language must stay on.');
 
         $language->update(['enabled' => $enabled]);
+
+        return back();
+    }
+
+    /** The order languages are listed in everywhere: the language switcher, the admin pages, the forms. */
+    public function order(Request $request): RedirectResponse
+    {
+        $codes = $request->validate([
+            'codes' => ['required', 'array'],
+            'codes.*' => ['required', 'string', 'distinct', 'exists:languages,code'],
+        ])['codes'];
+
+        // Languages left out of the list keep their place after the ones given.
+        $rest = Language::whereNotIn('code', $codes)->orderBy('sort')->pluck('code')->all();
+        DB::transaction(function () use ($codes, $rest) {
+            foreach ([...array_values($codes), ...$rest] as $i => $code) {
+                Language::whereKey($code)->update(['sort' => $i + 1]);
+            }
+        });
+        Cache::memo()->forget('languages.enabled');
 
         return back();
     }
