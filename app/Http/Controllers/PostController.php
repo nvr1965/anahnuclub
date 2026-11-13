@@ -394,7 +394,7 @@ class PostController extends Controller
             'image' => $post->photos->first()?->card()['url']
                 ?? (isset($image[1]) ? url($image[1]) : null)
                 ?? $post->video?->thumbUrl()
-                ?? ($post->linkPreview?->image ?: null)
+                ?? $post->linkPreview?->imageUrl()
                 ?? ($clip ? (new Video(['provider' => $clip[0], 'provider_id' => $clip[1]]))->thumbUrl() : null)
                 ?? SiteMeta::image(),
             'content' => [

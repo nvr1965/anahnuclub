@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\LinkPreview;
+use App\Support\LinkImage;
 use App\Support\LinkPreviewFetcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -28,6 +29,8 @@ class FetchLinkPreview implements ShouldQueue
             return;
         }
         $found = $fetcher->fetch($this->url) ?? ['title' => null, 'description' => null, 'image' => null, 'site_name' => null];
-        $known ? $known->fill($found)->touch() : LinkPreview::firstOrCreate(['url' => $this->url], $found);
+        $known ? $known->fill($found)->touch() : $known = LinkPreview::firstOrCreate(['url' => $this->url], $found);
+        // Our own copy of the picture, so the card never sends visitors' browsers to the other site.
+        LinkImage::store($known);
     }
 }
