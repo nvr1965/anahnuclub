@@ -79,6 +79,14 @@ return [
         ['CBC', 'https://www.cbc.ca/webfeed/rss/rss-topstories', 'en'],
         ['AP News', 'https://feedx.net/rss/ap.xml', 'en'],
     ]],
+    // Latin America in Spanish: the region's own and the big international Spanish services.
+    ['slug' => 'lucia', 'group' => 'latam', 'name' => 'Lucía', 'locale' => 'es', 'min' => 1, 'limit' => 2, 'topic' => 'América Latina: las noticias del día', 'sources' => [
+        ['BBC News Mundo', 'https://feeds.bbci.co.uk/mundo/rss.xml', 'es'],
+        ['El País América', 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/america/portada', 'es'],
+        ['Infobae', 'https://www.infobae.com/arc/outboundfeeds/rss/', 'es'],
+        ['DW Español', 'https://rss.dw.com/xml/rss-sp-all', 'es'],
+        ['France 24 Español', 'https://www.france24.com/es/rss', 'es'],
+    ]],
     ['slug' => 'camille', 'group' => 'france', 'was_group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
         ['France 24', 'https://www.france24.com/fr/rss', 'fr'],
         ['Le Monde', 'https://www.lemonde.fr/rss/une.xml', 'fr'],
@@ -150,6 +158,7 @@ return [
         'ukraine' => ['name' => 'Новини України', 'was' => 'Новости Украины', 'description' => 'Україна: новини з перевірених джерел, з посиланнями.', 'locale' => 'uk', 'avatar' => 'ukraine'],
         'europe' => ['name' => 'Nachrichten aus Deutschland', 'was' => 'Европа', 'description' => 'Deutschland und Europa: Nachrichten aus geprüften Quellen, mit Links.', 'locale' => 'de', 'family' => 'europe', 'avatar' => 'germany'],
         'france' => ['name' => 'France et Europe', 'description' => 'L’actualité de la France et de l’Europe, de sources vérifiées, avec les liens.', 'locale' => 'fr', 'family' => 'europe', 'avatar' => 'france'],
+        'latam' => ['name' => 'Noticias de América Latina', 'description' => 'Lo principal de México, Centro y Sudamérica y el Caribe, de fuentes verificadas y con enlaces.', 'locale' => 'es', 'avatar' => 'latam'],
         'america' => ['name' => 'USA & Canada', 'was' => 'США и Канада', 'description' => 'North American news from checked sources, with links.', 'locale' => 'en', 'avatar' => 'america'],
         'world' => ['name' => 'World News', 'was' => 'В мире', 'description' => 'The main world news of the day.', 'locale' => 'en', 'avatar' => 'world'],
         'science' => ['name' => 'מדע', 'was' => 'Наука и технологии', 'description' => 'תגליות, חלל, טבע ורפואה: מדע בעברית ממקורות בדוקים.', 'locale' => 'he', 'avatar' => 'science'],

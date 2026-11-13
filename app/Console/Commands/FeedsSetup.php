@@ -31,6 +31,7 @@ class FeedsSetup extends Command
         'ar' => ':name · كاتب في AnahnuClub. :topic: مختارات من مصادر موثوقة مع الروابط.',
         'en' => ':name · AnahnuClub author. :topic: picks from checked sources, with links.',
         'de' => ':name · Autor bei AnahnuClub. :topic: Auswahl aus geprüften Quellen, mit Links.',
+        'es' => ':name · autor/a de AnahnuClub. :topic: una selección de fuentes verificadas, con enlaces.',
         'fr' => ':name · auteur d’AnahnuClub. :topic : une sélection de sources vérifiées, avec les liens.',
         'uz' => ':name · AnahnuClub muallifi. :topic: ishonchli manbalardan saralangan xabarlar, havolalar bilan.',
         'kk' => ':name · AnahnuClub авторы. :topic: тексерілген дереккөздерден іріктеме, сілтемелерімен.',
