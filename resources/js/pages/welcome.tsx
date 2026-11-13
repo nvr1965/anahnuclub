@@ -56,7 +56,7 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
                         href={route('register')}
                         className="bg-cta hover:bg-cta-dark mt-7 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[0.9375rem] font-semibold text-white shadow-lg"
                     >
-                        <UserPlus className="size-4" /> {t('Create an account for free')}
+                        <UserPlus className="size-4" /> {t('Create an account')}
                     </Link>
                 </div>
 
