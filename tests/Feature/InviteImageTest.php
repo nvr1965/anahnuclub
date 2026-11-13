@@ -100,7 +100,7 @@ class InviteImageTest extends TestCase
         // A drawing from older texts gives way to the site's own picture when that one is up to date.
         Storage::disk('public')->put('invite/ru.jpg', 'old');
         $this->assertFalse(InviteImage::current('ru'));
-        $this->assertStringContainsString('images/invite/ru.jpg', InviteImage::url('ru'));
+        $this->assertStringContainsString('images/invite/ru.jpg?v='.substr(md5_file(public_path('images/invite/ru.jpg')), 0, 8), InviteImage::url('ru'));
 
         // So does a picture drawn before pictures remembered their texts.
         $this->post('/admin/languages/kk/invite-image', ['image' => UploadedFile::fake()->image('kk.jpg', 1200, 630)]);
