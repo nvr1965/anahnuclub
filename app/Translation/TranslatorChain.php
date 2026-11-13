@@ -151,6 +151,9 @@ class TranslatorChain implements Translator
                 continue;
             }
             if (! $provider->supports($targetLocale)) {
+                // Said in the error too, so it is clear why a service higher up did not take the text.
+                $errors[] = $entry['id'].': does not know '.$targetLocale;
+
                 continue;
             }
             try {
