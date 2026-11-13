@@ -17,21 +17,23 @@ use App\Http\Controllers\GroupInviteController;
 use App\Http\Controllers\GroupRoleController;
 use App\Http\Controllers\HashtagController;
 use App\Http\Controllers\LikeController;
+use App\Http\Controllers\LinkImageController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\PushController;
 use App\Http\Controllers\MomentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PushController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\SkinController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\SkinController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\WelcomeController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [FeedController::class, 'welcome'])->name('home');
@@ -43,9 +45,12 @@ Route::get('images/{path}', function (string $path) {
     return redirect('/storage/joomla/images/'.$path, 301);
 })->where('path', '.*');
 
+// The picture of a shared link, from our server rather than the other site's (LinkImage).
+Route::get('link-previews/{linkPreview}/image', LinkImageController::class)->middleware('throttle:120,1')->name('link-previews.image');
+
 // News from our other sites (nofinfo.com), sent by their servers with a secret key.
 Route::post('api/autopost', AutopostController::class)
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->withoutMiddleware([ValidateCsrfToken::class])
     ->middleware('throttle:60,1')
     ->name('autopost');
 
@@ -60,7 +65,7 @@ Route::post('locale', [LocaleController::class, 'update'])->name('locale.update'
 Route::post('skin', [SkinController::class, 'update'])->middleware('throttle:30,1')->name('skin.update');
 // From the service worker, which has no session token: the old subscription address proves the device.
 Route::post('push/subscriptions/renew', [PushController::class, 'renew'])
-    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+    ->withoutMiddleware(ValidateCsrfToken::class)
     ->middleware('throttle:10,1')->name('push.renew');
 Route::post('translations', TranslationController::class)->middleware('throttle:60,1')->name('translations');
 
@@ -168,7 +173,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::post('calls/{call}/accept', [CallController::class, 'accept'])->name('calls.accept');
     // Also from the "Decline" button on the call's notification, sent by the service worker, which has no session token.
     Route::post('calls/{call}/decline', [CallController::class, 'decline'])
-        ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)->name('calls.decline');
+        ->withoutMiddleware(ValidateCsrfToken::class)->name('calls.decline');
     Route::post('calls/{call}/end', [CallController::class, 'end'])->name('calls.end');
     Route::post('messages/{conversation}/decline', [MessageController::class, 'decline'])->name('messages.decline');
     Route::post('people/{user}/message-block', [BlockController::class, 'blockMessages'])->name('blocks.messages.store');

@@ -10,6 +10,7 @@ use App\Support\LinkPreviewFetcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LinkPreviewTest extends TestCase
@@ -25,9 +26,21 @@ class LinkPreviewTest extends TestCase
         </head><body></body></html>
         HTML;
 
+    private static function jpeg(int $width = 800, int $height = 420): string
+    {
+        ob_start();
+        imagejpeg(imagecreatetruecolor($width, $height));
+
+        return (string) ob_get_clean();
+    }
+
     public function test_a_post_with_a_link_shows_the_page_as_a_card()
     {
-        Http::fake(['http://93.184.216.34/*' => Http::response(self::PAGE, 200, ['Content-Type' => 'text/html; charset=utf-8'])]);
+        Storage::fake('public');
+        Http::fake([
+            'http://93.184.216.34/img/*' => Http::response(self::jpeg(), 200, ['Content-Type' => 'image/jpeg']),
+            'http://93.184.216.34/*' => Http::response(self::PAGE, 200, ['Content-Type' => 'text/html; charset=utf-8']),
+        ]);
         $user = User::factory()->create();
 
         $this->actingAs($user)->post('/posts', ['body' => 'Смотрите http://93.184.216.34/news?id=176361.'])->assertRedirect();
@@ -37,8 +50,50 @@ class LinkPreviewTest extends TestCase
         $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page
             ->where('post.data.link.title', 'Марокко: министр уволена через два дня')
             ->where('post.data.link.description', 'Разногласия по поводу & прочего')
-            ->where('post.data.link.image', 'http://93.184.216.34/img/cover.jpg')
             ->where('post.data.link.domain', '93.184.216.34'));
+
+        // The picture is ours: visitors' browsers never contact the other site's picture server.
+        $preview = LinkPreview::firstWhere('url', 'http://93.184.216.34/news?id=176361');
+        $this->assertSame('http://93.184.216.34/img/cover.jpg', $preview->image);
+        Storage::disk('public')->assertExists($preview->image_path);
+        $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page
+            ->where('post.data.link.image', Storage::disk('public')->url($preview->image_path)));
+    }
+
+    public function test_a_card_picture_not_copied_yet_is_copied_when_first_shown()
+    {
+        Storage::fake('public');
+        Http::fake(['http://93.184.216.34/*' => Http::response(self::jpeg(), 200, ['Content-Type' => 'image/jpeg'])]);
+        // As a news post stores it, without reading the page.
+        $preview = LinkPreview::create(['url' => 'https://meduza.io/news/1', 'title' => 'Сбой', 'image' => 'http://93.184.216.34/unsafe/original']);
+        $this->assertSame(route('link-previews.image', $preview), $preview->card()['image']);
+
+        $this->get(route('link-previews.image', $preview))->assertRedirect();
+        $preview->refresh();
+        Storage::disk('public')->assertExists($preview->image_path);
+        $this->assertSame(Storage::disk('public')->url($preview->image_path), $preview->card()['image']);
+        $this->get(route('link-previews.image', $preview))->assertRedirect(Storage::disk('public')->url($preview->image_path));
+        Http::assertSentCount(1);
+
+        // A new picture for the page replaces our copy.
+        $old = $preview->image_path;
+        $preview->update(['image' => 'http://93.184.216.34/unsafe/other']);
+        Storage::disk('public')->assertMissing($old);
+        $this->assertNull($preview->image_path);
+    }
+
+    public function test_only_public_pictures_are_copied_and_a_failure_is_not_retried_at_once()
+    {
+        Storage::fake('public');
+        Http::fake(['http://93.184.216.34/*' => Http::response('<html>not a picture</html>', 200, ['Content-Type' => 'image/jpeg'])]);
+        $private = LinkPreview::create(['url' => 'https://a.example/1', 'image' => 'http://127.0.0.1/a.jpg']);
+        $fake = LinkPreview::create(['url' => 'https://a.example/2', 'image' => 'http://93.184.216.34/a.jpg']);
+
+        $this->get(route('link-previews.image', $private))->assertNotFound();
+        $this->get(route('link-previews.image', $fake))->assertNotFound();
+        $this->get(route('link-previews.image', $fake))->assertNotFound();
+        Http::assertSentCount(1);
+        $this->assertNull($fake->fresh()->image_path);
     }
 
     public function test_a_page_without_a_preview_picture_shows_the_picture_of_its_article()
@@ -66,7 +121,8 @@ class LinkPreviewTest extends TestCase
         Http::assertNothingSent();
 
         $card->forceFill(['updated_at' => now()->subHours(2)])->saveQuietly();
-        $this->getJson('/link-preview?url=http://93.184.216.34/news')->assertJsonPath('link.image', 'http://93.184.216.34/img/cover.jpg');
+        $this->getJson('/link-preview?url=http://93.184.216.34/news')->assertJsonPath('link.image', route('link-previews.image', $card));
+        $this->assertSame('http://93.184.216.34/img/cover.jpg', $card->fresh()->image);
     }
 
     public function test_private_addresses_are_never_fetched()

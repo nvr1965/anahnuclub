@@ -266,7 +266,7 @@ class LinkPreviewFetcher
         );
     }
 
-    private static function absolute(string $href, string $base): string
+    public static function absolute(string $href, string $base): string
     {
         if (preg_match('~^https?://~i', $href)) {
             return $href;
