@@ -178,6 +178,41 @@ class FeedsTest extends TestCase
         $this->assertSame(2, Post::count());
     }
 
+    public function test_each_author_posts_in_its_own_time_zone_and_is_online_when_it_posts()
+    {
+        $jake = $this->author(['daily_limit' => 1, 'timezone' => 'America/New_York']);
+        $david = $this->author(['daily_limit' => 1]);
+        foreach ([$jake, $david] as $c) {
+            FeedItem::create(['feed_channel_id' => $c->id, 'summary' => 'Новость '.$c->id, 'status' => 'approved']);
+        }
+        $publisher = app(FeedPublisher::class);
+
+        // 22:30 in New York is 05:30 in Israel: Jake posts his day's news, the Israeli author is still asleep.
+        Carbon::setTestNow(Carbon::parse('2026-11-08 22:30', 'America/New_York')->utc());
+        $item = $publisher->publishNext();
+        $this->assertSame($jake->id, $item?->feed_channel_id);
+        $this->assertTrue($jake->user->fresh()->isOnline(), 'seen online when he posts');
+        $this->assertFalse($david->user->fresh()->isOnline());
+
+        // 03:00 in New York: Jake does not post, whatever the time in Israel.
+        Carbon::setTestNow(Carbon::parse('2026-11-09 03:00', 'America/New_York')->utc());
+        FeedItem::create(['feed_channel_id' => $jake->id, 'summary' => 'Ещё', 'status' => 'approved']);
+        FeedItem::where('feed_channel_id', $david->id)->delete();
+        $this->assertNull($publisher->publishNext());
+    }
+
+    public function test_the_admin_sets_an_authors_time_zone()
+    {
+        $channel = $this->author();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+
+        $this->patch("/admin/feeds/authors/{$channel->id}", ['timezone' => 'America/Bogota'])->assertSessionHasNoErrors();
+        $this->assertSame('America/Bogota', $channel->fresh()->timezone);
+        $this->patch("/admin/feeds/authors/{$channel->id}", ['timezone' => 'Mars/Olympus'])->assertSessionHasErrors('timezone');
+        $this->patch("/admin/feeds/authors/{$channel->id}", ['timezone' => null]);
+        $this->assertSame('Asia/Jerusalem', $channel->fresh()->tz());
+    }
+
     public function test_an_author_posts_no_more_than_its_daily_number()
     {
         $channel = $this->author(['daily_limit' => 1]);
@@ -270,6 +305,10 @@ class FeedsTest extends TestCase
         $this->assertSame('Айгүл', User::where('email', 'aigul@authors.anahnu.club')->value('name'));
         $this->assertContains('club-author', Badges::special($farik->fresh()));
         $this->assertGreaterThan(0, $farik->feedChannel()->first()->sources()->count());
+        // Each author lives by its own clock; the Israeli ones by the club's.
+        $this->assertSame('Asia/Tashkent', $farik->feedChannel()->first()->timezone);
+        $this->assertSame('America/New_York', User::where('email', 'jake@authors.anahnu.club')->first()->feedChannel()->first()->tz());
+        $this->assertSame('Asia/Jerusalem', User::where('email', 'david@authors.anahnu.club')->first()->feedChannel()->first()->tz());
 
         // Topic groups, one language each: Farik writes in the Uzbek group, Гульнара in the Russian "Средняя Азия"; made once.
         $asia = Group::firstWhere('slug', 'central-asia');

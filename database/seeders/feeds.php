@@ -16,6 +16,8 @@
  * author writes in it: "Новости Израиля" in Russian, "חדשות ישראל" in Hebrew. 'dropped' are the author's earlier
  * sources in another language (or given to another author): feeds:setup switches them off for this author.
  * 'retired' are addresses given earlier that do not work: feeds:setup switches them off.
+ * 'timezone' is where the author lives: it posts (and is seen online) in its own daytime, by its own clock.
+ * Without one, the club's (Israel); feeds:setup sets it where the admin has not chosen one.
  */
 return [
     ['slug' => 'david', 'group' => 'israel-he', 'was_group' => 'israel', 'name' => 'דוד', 'locale' => 'he', 'limit' => 3, 'topic' => 'ישראל: החדשות העיקריות', 'sources' => [
@@ -41,50 +43,50 @@ return [
         ['الجزيرة', 'https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9', 'ar'],
         ['عرب 48', 'https://www.arab48.com/rss', 'ar'],
     ], 'dropped' => ['https://www.arabnews.com/rss.xml']],
-    ['slug' => 'farik', 'group' => 'uzbekistan', 'was_group' => 'central-asia', 'name' => 'Farik', 'was' => 'Фарик', 'locale' => 'uz', 'min' => 1, 'limit' => 2, 'topic' => 'O‘zbekiston: yangiliklar va qiziqarli voqealar', 'sources' => [
+    ['slug' => 'farik', 'group' => 'uzbekistan', 'was_group' => 'central-asia', 'name' => 'Farik', 'was' => 'Фарик', 'locale' => 'uz', 'timezone' => 'Asia/Tashkent', 'min' => 1, 'limit' => 2, 'topic' => 'O‘zbekiston: yangiliklar va qiziqarli voqealar', 'sources' => [
         ['Kun.uz', 'https://kun.uz/news/rss', 'uz'],
         ['Daryo', 'https://daryo.uz/feed/', 'uz'],
         ['Gazeta.uz', 'https://www.gazeta.uz/oz/rss/', 'uz'],
         ['BBC O‘zbek', 'https://feeds.bbci.co.uk/uzbek/rss.xml', 'uz'],
         ['Kun.uz · Telegram', 'https://t.me/s/kunuzofficial', 'uz'],
     ], 'dropped' => ['https://podrobno.uz/rss/']],
-    ['slug' => 'aigul', 'group' => 'kazakhstan', 'was_group' => 'central-asia', 'name' => 'Айгүл', 'was' => 'Айгуль', 'locale' => 'kk', 'limit' => 1, 'topic' => 'Қазақстан жаңалықтары', 'sources' => [
+    ['slug' => 'aigul', 'group' => 'kazakhstan', 'was_group' => 'central-asia', 'name' => 'Айгүл', 'was' => 'Айгуль', 'locale' => 'kk', 'timezone' => 'Asia/Almaty', 'limit' => 1, 'topic' => 'Қазақстан жаңалықтары', 'sources' => [
         ['Tengrinews · қазақша', 'https://kaz.tengrinews.kz/news.rss', 'kk'],
     ], 'dropped' => ['https://feeds.bbci.co.uk/kyrgyz/rss.xml', 'https://tengrinews.kz/news.rss', 'https://24.kg/rss/', 'https://asiaplustj.info/ru/rss']],
     // Central Asia in Russian: the Russian sources Farik and Айгүл had.
-    ['slug' => 'gulnara', 'group' => 'central-asia', 'name' => 'Гульнара', 'locale' => 'ru', 'min' => 1, 'limit' => 2, 'topic' => 'Средняя Азия по-русски: Узбекистан, Казахстан, Кыргызстан, Таджикистан', 'sources' => [
+    ['slug' => 'gulnara', 'group' => 'central-asia', 'name' => 'Гульнара', 'locale' => 'ru', 'timezone' => 'Asia/Tashkent', 'min' => 1, 'limit' => 2, 'topic' => 'Средняя Азия по-русски: Узбекистан, Казахстан, Кыргызстан, Таджикистан', 'sources' => [
         ['Podrobno.uz', 'https://podrobno.uz/rss/', 'ru'],
         ['Tengrinews', 'https://tengrinews.kz/news.rss', 'ru'],
         ['24.kg', 'https://24.kg/rss/', 'ru'],
         ['Asia-Plus', 'https://asiaplustj.info/ru/rss', 'ru'],
     ]],
-    ['slug' => 'sergey', 'group' => 'russia', 'name' => 'Сергей', 'locale' => 'ru', 'limit' => 3, 'topic' => 'Россия', 'sources' => [
+    ['slug' => 'sergey', 'group' => 'russia', 'name' => 'Сергей', 'locale' => 'ru', 'timezone' => 'Europe/Moscow', 'limit' => 3, 'topic' => 'Россия', 'sources' => [
         ['BBC Русская служба', 'https://feeds.bbci.co.uk/russian/rss.xml', 'ru'],
         ['DW по-русски', 'https://rss.dw.com/xml/rss-ru-all', 'ru'],
         ['Медуза', 'https://meduza.io/rss/all', 'ru'],
         ['РБК', 'https://rssexport.rbc.ru/rbcnews/news/30/full.rss', 'ru'],
     ]],
-    ['slug' => 'oksana', 'group' => 'ukraine', 'name' => 'Оксана', 'locale' => 'uk', 'limit' => 3, 'topic' => 'Україна', 'sources' => [
+    ['slug' => 'oksana', 'group' => 'ukraine', 'name' => 'Оксана', 'locale' => 'uk', 'timezone' => 'Europe/Kyiv', 'limit' => 3, 'topic' => 'Україна', 'sources' => [
         ['Українська правда', 'https://www.pravda.com.ua/rss/', 'uk'],
         ['BBC News Україна', 'https://feeds.bbci.co.uk/ukrainian/rss.xml', 'uk'],
         ['Hromadske', 'https://hromadske.ua/rss', 'uk'],
     ]],
-    ['slug' => 'dietrich', 'group' => 'europe', 'name' => 'Dietrich', 'locale' => 'de', 'min' => 1, 'limit' => 2, 'topic' => 'Deutschland', 'sources' => [
+    ['slug' => 'dietrich', 'group' => 'europe', 'name' => 'Dietrich', 'locale' => 'de', 'timezone' => 'Europe/Berlin', 'min' => 1, 'limit' => 2, 'topic' => 'Deutschland', 'sources' => [
         ['Tagesschau', 'https://www.tagesschau.de/xml/rss2/', 'de'],
         ['DW', 'https://rss.dw.com/xml/rss-de-all', 'de'],
         ['Spiegel', 'https://www.spiegel.de/schlagzeilen/index.rss', 'de'],
     ]],
-    ['slug' => 'jake', 'group' => 'america', 'name' => 'Jake', 'locale' => 'en', 'limit' => 3, 'topic' => 'USA and Canada', 'sources' => [
+    ['slug' => 'jake', 'group' => 'america', 'name' => 'Jake', 'locale' => 'en', 'timezone' => 'America/New_York', 'limit' => 3, 'topic' => 'USA and Canada', 'sources' => [
         ['NPR', 'https://feeds.npr.org/1001/rss.xml', 'en'],
         ['CBC', 'https://www.cbc.ca/webfeed/rss/rss-topstories', 'en'],
         ['AP News', 'https://feedx.net/rss/ap.xml', 'en'],
     ]],
-    ['slug' => 'camille', 'group' => 'france', 'was_group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
+    ['slug' => 'camille', 'group' => 'france', 'was_group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'timezone' => 'Europe/Paris', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
         ['France 24', 'https://www.france24.com/fr/rss', 'fr'],
         ['Le Monde', 'https://www.lemonde.fr/rss/une.xml', 'fr'],
         ['Euronews', 'https://fr.euronews.com/rss', 'fr'],
     ]],
-    ['slug' => 'lev', 'group' => 'world', 'name' => 'Leo', 'was' => 'Лев', 'locale' => 'en', 'limit' => 2, 'topic' => 'The world today', 'sources' => [
+    ['slug' => 'lev', 'group' => 'world', 'name' => 'Leo', 'was' => 'Лев', 'locale' => 'en', 'timezone' => 'Europe/London', 'limit' => 2, 'topic' => 'The world today', 'sources' => [
         ['BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml', 'en'],
         ['Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml', 'en'],
         ['DW', 'https://rss.dw.com/xml/rss-en-all', 'en'],
@@ -107,24 +109,24 @@ return [
         ['WHO', 'https://www.who.int/rss-feeds/news-english.xml', 'en'],
         ['ScienceDaily', 'https://www.sciencedaily.com/rss/health_medicine.xml', 'en'],
     ], 'dropped' => ['https://davidson.weizmann.ac.il/rss.xml']],
-    ['slug' => 'vera', 'group' => 'interesting', 'name' => 'Vera', 'was' => 'Вера', 'locale' => 'en', 'limit' => 1, 'topic' => 'Culture and cinema', 'sources' => [
+    ['slug' => 'vera', 'group' => 'interesting', 'name' => 'Vera', 'was' => 'Вера', 'locale' => 'en', 'timezone' => 'Europe/London', 'limit' => 1, 'topic' => 'Culture and cinema', 'sources' => [
         ['The Guardian · Culture', 'https://www.theguardian.com/culture/rss', 'en'],
         ['Variety', 'https://variety.com/feed/', 'en'],
     ]],
     ['slug' => 'moshe', 'group' => 'sport', 'name' => 'משה', 'locale' => 'he', 'limit' => 1, 'topic' => 'ספורט', 'sources' => [
         ['Sport5', 'https://www.sport5.co.il/RSS.aspx', 'he'],
     ], 'dropped' => ['https://feeds.bbci.co.uk/sport/rss.xml']],
-    ['slug' => 'asya', 'group' => 'interesting', 'name' => 'Asya', 'was' => 'Ася', 'locale' => 'en', 'limit' => 1, 'topic' => 'Travel', 'sources' => [
+    ['slug' => 'asya', 'group' => 'interesting', 'name' => 'Asya', 'was' => 'Ася', 'locale' => 'en', 'timezone' => 'Europe/London', 'limit' => 1, 'topic' => 'Travel', 'sources' => [
         ['Lonely Planet', 'https://www.lonelyplanet.com/news/feed/atom/', 'en'],
         ['The Guardian · Travel', 'https://www.theguardian.com/travel/rss', 'en'],
     ]],
     // Recipes come from the curator: the "Add by hand" form on the admin page.
     // Recipes: the sites below and what the curator adds by hand.
     // Was Фаина: her recipes are English, so is her name.
-    ['slug' => 'faina', 'group' => 'cooking', 'was_group' => 'interesting', 'name' => 'Linda', 'was' => 'Фаина', 'locale' => 'en', 'min' => 1, 'limit' => 2, 'topic' => 'Cooking and recipes', 'sources' => [
+    ['slug' => 'faina', 'group' => 'cooking', 'was_group' => 'interesting', 'name' => 'Linda', 'was' => 'Фаина', 'locale' => 'en', 'timezone' => 'America/New_York', 'min' => 1, 'limit' => 2, 'topic' => 'Cooking and recipes', 'sources' => [
         ['Bon Appétit', 'https://www.bonappetit.com/feed/rss', 'en'],
     ], 'dropped' => ['https://www.foody.co.il/feed']],
-    ['slug' => 'mia', 'group' => 'beauty', 'name' => 'Mia', 'locale' => 'en', 'min' => 1, 'limit' => 2, 'topic' => 'Beauty and self-care', 'sources' => [
+    ['slug' => 'mia', 'group' => 'beauty', 'name' => 'Mia', 'locale' => 'en', 'timezone' => 'America/New_York', 'min' => 1, 'limit' => 2, 'topic' => 'Beauty and self-care', 'sources' => [
         ['Allure', 'https://www.allure.com/feed/rss', 'en'],
         ['Glamour', 'https://www.glamour.com/feed/rss', 'en'],
     ]],
