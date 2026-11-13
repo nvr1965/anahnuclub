@@ -70,13 +70,13 @@ class SkinTest extends TestCase
     {
         Setting::put('skin_default', 'forum');
 
+        // Everywhere else the site's style stays.
+        $this->get('/')->assertSee('data-skin="forum"', false);
+
         foreach (['/login', '/register', '/forgot-password'] as $url) {
             $this->withCookie(Skins::COOKIE, 'showcase')->get($url)
                 ->assertSee('data-skin="club"', false)
                 ->assertInertia(fn ($page) => $page->where('skin', 'club'));
         }
-
-        // Everywhere else the chosen style stays.
-        $this->get('/')->assertSee('data-skin="forum"', false);
     }
 }
