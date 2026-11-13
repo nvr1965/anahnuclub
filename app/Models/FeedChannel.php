@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 /** A club author: an account run by the club that posts news of one country or topic. */
 class FeedChannel extends Model
 {
-    protected $fillable = ['user_id', 'group_id', 'topic', 'timezone', 'daily_min', 'daily_limit', 'stop_words', 'auto_approve', 'paused'];
+    protected $fillable = ['user_id', 'group_id', 'topic', 'timezone', 'daily_min', 'daily_limit', 'every_days', 'stop_words', 'auto_approve', 'paused'];
 
     protected $casts = ['auto_approve' => 'boolean', 'paused' => 'boolean'];
 

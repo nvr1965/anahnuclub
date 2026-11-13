@@ -32,6 +32,7 @@ class FeedsSetup extends Command
         'en' => ':name · AnahnuClub author. :topic: picks from checked sources, with links.',
         'de' => ':name · Autor bei AnahnuClub. :topic: Auswahl aus geprüften Quellen, mit Links.',
         'es' => ':name · autor/a de AnahnuClub. :topic: una selección de fuentes verificadas, con enlaces.',
+        'fa' => ':name · نویسنده AnahnuClub. :topic: گزیده‌ای از منابع معتبر، با لینک.',
         'fr' => ':name · auteur d’AnahnuClub. :topic : une sélection de sources vérifiées, avec les liens.',
         'uz' => ':name · AnahnuClub muallifi. :topic: ishonchli manbalardan saralangan xabarlar, havolalar bilan.',
         'kk' => ':name · AnahnuClub авторы. :topic: тексерілген дереккөздерден іріктеме, сілтемелерімен.',
@@ -55,7 +56,8 @@ class FeedsSetup extends Command
                     'email_verified_at' => now(),
                     'rules_accepted_at' => now(),
                     // Said openly on the profile, in the author's language: a club account, not a private person.
-                    'about' => strtr(self::ABOUT[$author['locale']] ?? self::ABOUT['en'], [':name' => $author['name'], ':topic' => $author['topic']]),
+                    // An author with its own line ('about') says it itself, as the one of the Iranian state media.
+                    'about' => strtr($author['about'] ?? self::ABOUT[$author['locale']] ?? self::ABOUT['en'], [':name' => $author['name'], ':topic' => $author['topic']]),
                 ]);
                 $this->line('Author '.$author['name'].' created.');
             }
@@ -77,6 +79,7 @@ class FeedsSetup extends Command
                 'topic' => $author['topic'],
                 'daily_min' => $author['min'] ?? null,
                 'daily_limit' => $author['limit'],
+                'every_days' => $author['every'] ?? 1,
             ]);
             // The author's own time zone, unless the admin has chosen one.
             if (! $channel->timezone && isset($author['timezone'])) {

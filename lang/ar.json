@@ -932,6 +932,7 @@
     "Group: :name": "المجموعة: :name",
     "In queue": "في الدور",
     "Club authors post by themselves from :from:00 to :to:00 of their own time zone: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.": "ينشر كتّاب النادي بأنفسهم من :from:00 حتى :to:00 بتوقيتهم المحلي: حتى ثلاثة أخبار جديدة من كل مصدر في كل مرة، ويختار كل كاتب الخبر الرئيسي في أوقاته. ما لم يُنشر خلال 12 ساعة يخرج من الدور.",
+    "Spread over days": "موزعة على أيام",
     "Time zone": "المنطقة الزمنية",
     "Its time now: :time": "الساعة عنده الآن: :time",
     "By name": "حسب الاسم",

@@ -932,6 +932,7 @@
     "Group: :name": "קבוצה: :name",
     "In queue": "בתור",
     "Club authors post by themselves from :from:00 to :to:00 of their own time zone: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.": "כותבי המועדון מפרסמים בעצמם מ-:from:00 עד :to:00 לפי השעון המקומי שלהם: עד שלוש ידיעות טריות מכל מקור בכל סבב, וכל כותב בוחר את הידיעה העיקרית בשעות שלו. מה שלא פורסם תוך 12 שעות יוצא מהתור.",
+    "Spread over days": "מתפרס על ימים",
     "Time zone": "אזור זמן",
     "Its time now: :time": "השעה אצלו עכשיו: :time",
     "By name": "לפי שם",

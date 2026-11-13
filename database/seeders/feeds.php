@@ -16,6 +16,8 @@
  * author writes in it: "Новости Израиля" in Russian, "חדשות ישראל" in Hebrew. 'dropped' are the author's earlier
  * sources in another language (or given to another author): feeds:setup switches them off for this author.
  * 'retired' are addresses given earlier that do not work: feeds:setup switches them off.
+ * 'every' spreads the author's posts over that many days ('limit' 1 and 'every' 2: one news post in three days, after
+ * the ⅔ of config feeds.frequency). 'about' is the author's own profile line instead of the usual one.
  * 'timezone' is where the author lives: it posts (and is seen online) in its own daytime, by its own clock.
  * Without one, the club's (Israel); feeds:setup sets it where the admin has not chosen one.
  */
@@ -89,6 +91,17 @@ return [
         ['DW Español', 'https://rss.dw.com/xml/rss-sp-all', 'es'],
         ['France 24 Español', 'https://www.france24.com/es/rss', 'es'],
     ]],
+    // Iran in Persian: the independent services abroad (about one post in one or two days), and apart from them
+    // the voice of the Islamic Republic's own agencies (one post in three days), said so on its profile.
+    ['slug' => 'shirin', 'group' => 'iran', 'name' => 'شیرین', 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'limit' => 1, 'topic' => 'ایران و جهان: اخبار روز', 'sources' => [
+        ['BBC فارسی', 'https://feeds.bbci.co.uk/persian/rss.xml', 'fa'],
+        ['DW فارسی', 'https://rss.dw.com/xml/rss-fa-all', 'fa'],
+    ]],
+    ['slug' => 'kaveh', 'group' => 'iran', 'name' => 'کاوه', 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'limit' => 1, 'every' => 2, 'topic' => 'صدای رسمی تهران', 'about' => ':name · نویسنده AnahnuClub. :topic: خبرهای خبرگزاری‌های دولتی جمهوری اسلامی ایران، همان‌طور که منتشر شده‌اند، برای آشنایی با دیدگاه رسمی، با لینک.', 'sources' => [
+        ['ایرنا', 'https://www.irna.ir/rss', 'fa'],
+        ['خبرگزاری مهر', 'https://www.mehrnews.com/rss', 'fa'],
+        ['خبرگزاری فارس', 'https://www.farsnews.ir/rss', 'fa'],
+    ]],
     ['slug' => 'camille', 'group' => 'france', 'was_group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'timezone' => 'Europe/Paris', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
         ['France 24', 'https://www.france24.com/fr/rss', 'fr'],
         ['Le Monde', 'https://www.lemonde.fr/rss/une.xml', 'fr'],
@@ -161,6 +174,7 @@ return [
         'europe' => ['name' => 'Nachrichten aus Deutschland', 'was' => 'Европа', 'description' => 'Deutschland und Europa: Nachrichten aus geprüften Quellen, mit Links.', 'locale' => 'de', 'family' => 'europe', 'avatar' => 'germany'],
         'france' => ['name' => 'France et Europe', 'description' => 'L’actualité de la France et de l’Europe, de sources vérifiées, avec les liens.', 'locale' => 'fr', 'family' => 'europe', 'avatar' => 'france'],
         'latam' => ['name' => 'Noticias de América Latina', 'description' => 'Lo principal de México, Centro y Sudamérica y el Caribe, de fuentes verificadas y con enlaces.', 'locale' => 'es', 'avatar' => 'latam'],
+        'iran' => ['name' => 'اخبار ایران', 'description' => 'ایران از دو سو: رسانه‌های مستقل خارج از کشور (BBC، DW) و رسانه‌های رسمی جمهوری اسلامی، با لینک.', 'locale' => 'fa', 'avatar' => 'iran'],
         'america' => ['name' => 'USA & Canada', 'was' => 'США и Канада', 'description' => 'North American news from checked sources, with links.', 'locale' => 'en', 'avatar' => 'america'],
         'world' => ['name' => 'World News', 'was' => 'В мире', 'description' => 'The main world news of the day.', 'locale' => 'en', 'avatar' => 'world'],
         'science' => ['name' => 'מדע', 'was' => 'Наука и технологии', 'description' => 'תגליות, חלל, טבע ורפואה: מדע בעברית ממקורות בדוקים.', 'locale' => 'he', 'avatar' => 'science'],

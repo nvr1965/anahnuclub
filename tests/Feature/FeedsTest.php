@@ -331,6 +331,15 @@ class FeedsTest extends TestCase
         $this->assertSame(['Noticias de América Latina', 'es'], [$latam->name, $latam->locale]);
         $this->assertNotNull($latam->avatar_path);
         $this->assertSame(['es'], $lucia->feedChannel()->first()->sources()->pluck('locale')->unique()->values()->all());
+        // Iran in Persian: شیرین from BBC and DW, کاوه the state agencies, once in a few days, said so on its profile.
+        $shirin = User::where('email', 'shirin@authors.anahnu.club')->first();
+        $kaveh = User::where('email', 'kaveh@authors.anahnu.club')->first();
+        $this->assertSame(['fa', 'fa'], [$shirin->locale, $kaveh->locale]);
+        $this->assertSame('اخبار ایران', $shirin->feedChannel()->first()->group->name);
+        $this->assertSame($shirin->feedChannel()->first()->group_id, $kaveh->feedChannel()->first()->group_id);
+        $this->assertSame([1, 2], [$shirin->feedChannel()->first()->every_days, $kaveh->feedChannel()->first()->every_days]);
+        $this->assertStringContainsString('خبرگزاری‌های دولتی', $kaveh->about);
+        $this->assertStringContainsString('نویسنده AnahnuClub', $shirin->about);
         // Light topics: Linda in "Cooking", Mia in "Beauty", Ron in "Tech & IT"; Изя's jokes whole.
         $linda = User::where('email', 'faina@authors.anahnu.club')->first();
         $this->assertSame(['Linda', 'en'], [$linda->name, $linda->locale]);
@@ -595,6 +604,9 @@ class FeedsTest extends TestCase
         $this->assertSame(180, $days->sum(fn ($d) => FeedPublisher::limitToday($jokes->fresh(), $d)));
         // One post a day becomes a post on about two days of three.
         $this->assertEqualsWithDelta(40, $days->sum(fn ($d) => FeedPublisher::limitToday($rare, $d)), 10);
+        // Spread over two days: one post in about three days.
+        $rarer = $this->author(['daily_limit' => 1, 'every_days' => 2]);
+        $this->assertEqualsWithDelta(20, $days->sum(fn ($d) => FeedPublisher::limitToday($rarer, $d)), 7);
     }
 
     public function test_a_youtube_channel_is_a_source()
