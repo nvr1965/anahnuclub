@@ -12,6 +12,8 @@ interface Channel {
     id: number;
     user: { id: number; name: string; username: string | null } | null;
     topic: string | null;
+    timezone: string | null;
+    local_time: string;
     group: { name: string; slug: string } | null;
     daily_min: number | null;
     daily_limit: number;
@@ -65,6 +67,7 @@ interface Props {
     paused: boolean;
     members_busy: boolean;
     window: [number, number];
+    club_timezone: string;
     channels: Channel[];
     sources: Source[];
     items: Page<Item> | null;
@@ -93,7 +96,7 @@ export default function AdminFeeds(props: Props) {
         >
             <p className="text-muted-foreground mb-3 text-sm">
                 {t(
-                    'Club authors post by themselves from :from:00 to :to:00, Israel time: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.',
+                    'Club authors post by themselves from :from:00 to :to:00 of their own time zone: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.',
                     {
                         from: hours[0],
                         to: hours[1],
@@ -110,7 +113,7 @@ export default function AdminFeeds(props: Props) {
                 ))}
             </div>
             {tab === 'queue' && <Queue {...props} />}
-            {tab === 'authors' && <Authors channels={props.channels} />}
+            {tab === 'authors' && <Authors channels={props.channels} clubTimezone={props.club_timezone} />}
             {tab === 'sources' && <Sources channels={props.channels} sources={props.sources} />}
         </AdminLayout>
     );
@@ -290,12 +293,26 @@ function ManualForm({ channels }: { channels: Channel[] }) {
     );
 }
 
-function Authors({ channels }: { channels: Channel[] }) {
+/** Every time zone the browser knows, for the author's time zone field. */
+const timeZones: string[] = (() => {
+    try {
+        return (Intl as unknown as { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone');
+    } catch {
+        return [];
+    }
+})();
+
+function Authors({ channels, clubTimezone }: { channels: Channel[]; clubTimezone: string }) {
     const t = useT();
     const update = (c: Channel, data: Partial<Channel>) => send('patch', route('admin.feeds.authors.update', c.id), data);
 
     return (
         <div className={`${card} divide-y dark:divide-neutral-800`}>
+            <datalist id="feed-time-zones">
+                {timeZones.map((z) => (
+                    <option key={z} value={z} />
+                ))}
+            </datalist>
             {channels.length === 0 && (
                 <p className="text-muted-foreground p-6 text-center">{t('No authors yet: run php artisan feeds:setup on the server.')}</p>
             )}
@@ -324,7 +341,8 @@ function Authors({ channels }: { channels: Channel[] }) {
                             limit: c.daily_min !== null && c.daily_min < c.daily_limit ? `${c.daily_min}–${c.daily_limit}` : c.daily_limit,
                         })}{' '}
                         {c.plan.length > 0 && <>· {t('Times today: :times', { times: c.plan.join(', ') })} </>}·{' '}
-                        {t(':count waiting', { count: c.waiting })} · {t(':count approved', { count: c.approved })} ·{' '}
+                        {t('Its time now: :time', { time: c.local_time })} · {t(':count waiting', { count: c.waiting })} ·{' '}
+                        {t(':count approved', { count: c.approved })} ·{' '}
                         {t('Week: :posts posts, :likes likes, :comments comments', {
                             posts: c.posts_week,
                             likes: c.likes_week,
@@ -352,6 +370,17 @@ function Authors({ channels }: { channels: Channel[] }) {
                                 defaultValue={c.daily_limit}
                                 className={`${input} w-16`}
                                 onBlur={(e) => Number(e.target.value) !== c.daily_limit && update(c, { daily_limit: Number(e.target.value) })}
+                            />
+                        </label>
+                        <label className="flex items-center gap-1">
+                            {t('Time zone')}
+                            <input
+                                list="feed-time-zones"
+                                defaultValue={c.timezone ?? ''}
+                                placeholder={clubTimezone}
+                                className={`${input} w-44`}
+                                dir="ltr"
+                                onBlur={(e) => e.target.value.trim() !== (c.timezone ?? '') && update(c, { timezone: e.target.value.trim() || null })}
                             />
                         </label>
                         <label className="flex items-center gap-1">

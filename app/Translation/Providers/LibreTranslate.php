@@ -35,8 +35,9 @@ class LibreTranslate extends Provider
 
     public function supports(string $locale): bool
     {
+        // Kept for an hour per address, so a language model added on the server is picked up soon.
         try {
-            $codes = Cache::remember('libretranslate.languages', now()->addDay(), fn () => array_column(
+            $codes = Cache::remember('libretranslate.languages.'.md5($this->url), now()->addHour(), fn () => array_column(
                 Http::timeout(10)->get(rtrim($this->url, '/').'/languages')->throw()->json(),
                 'code',
             ));

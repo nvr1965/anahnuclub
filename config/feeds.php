@@ -5,7 +5,8 @@
  * are in database/seeders/feeds.php; everything is changed later on the admin page "Feed filling".
  */
 return [
-    // Posts go out in the club's daytime only.
+    // Each author posts in its own daytime only: these hours of its own time zone (the admin page, or
+    // 'timezone' in database/seeders/feeds.php). An author without a time zone of its own has the club's.
     'timezone' => env('FEEDS_TIMEZONE', 'Asia/Jerusalem'),
     'window' => [7, 23],
     // Minutes between any two authors' posts (a different pause each time, between the two numbers),

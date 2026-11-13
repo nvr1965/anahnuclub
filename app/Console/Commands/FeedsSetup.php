@@ -78,6 +78,10 @@ class FeedsSetup extends Command
                 'daily_min' => $author['min'] ?? null,
                 'daily_limit' => $author['limit'],
             ]);
+            // The author's own time zone, unless the admin has chosen one.
+            if (! $channel->timezone && isset($author['timezone'])) {
+                $channel->update(['timezone' => $author['timezone']]);
+            }
             // Moved to another topic group since, unless the admin has put it elsewhere.
             if (isset($author['was_group']) && $channel->group_id && Group::whereKey($channel->group_id)->value('slug') === $author['was_group']) {
                 $channel->group_id = null;

@@ -11,9 +11,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Posts the approved items one at a time, spread over the club's day: each author has its own times for the
- * day (see FeedChannel::slotsFor), two posts of the site are never closer than 10–25 minutes, an author
- * posts not more often than every hour and a half. When members write a lot, authors post less.
+ * Posts the approved items one at a time, spread over each author's own day in its own time zone (Jake by
+ * New York's clock, Farik by Tashkent's): each author has its own times for the day (see FeedChannel::slotsFor),
+ * two posts of the site are never closer than 10–25 minutes, an author posts not more often than every hour
+ * and a half. When members write a lot, authors post less.
  */
 class FeedPublisher
 {
@@ -23,13 +24,6 @@ class FeedPublisher
         if (self::paused()) {
             return null;
         }
-        $tz = config('feeds.timezone');
-        [$from, $to] = config('feeds.window');
-        $local = now()->tz($tz);
-        if ($local->hour < $from || $local->hour >= $to) {
-            return null;
-        }
-
 
         // Between two posts of the site a pause of a different length each time, so they do not tick like a clock.
         $lastItem = FeedItem::whereNotNull('posted_at')->latest('posted_at')->first(['id', 'posted_at']);
@@ -37,25 +31,34 @@ class FeedPublisher
             return null;
         }
 
-        $day = $local->toDateString();
-        $dayStart = $local->copy()->setTime($from, 0)->utc();
-        $elapsed = $local->copy()->setTime($from, 0)->diffInMinutes($local);
+        // Each author lives in its own time zone: it posts from feeds.window[0] to feeds.window[1] of its own clock,
+        // and its day (the number of posts, the planned moments) is its own date there.
+        [$from, $to] = config('feeds.window');
         $factor = self::membersAreBusy() ? 0.5 : 1;
-        $posted = FeedItem::where('posted_at', '>=', $dayStart)->selectRaw('feed_channel_id, count(*) as n, max(posted_at) as last')
-            ->groupBy('feed_channel_id')->get()->keyBy('feed_channel_id');
-
-        // Each author whose next planned moment has come; the one that waits longest goes first.
-        $channel = FeedChannel::query()->where('paused', false)->with(['user', 'group'])
+        $channels = FeedChannel::query()->where('paused', false)->with(['user', 'group'])
             ->whereHas('items', fn ($q) => $q->where('status', 'approved'))
             ->get()
-            ->map(function (FeedChannel $c) use ($posted, $elapsed, $factor, $day, $from, $to) {
+            ->filter(fn (FeedChannel $c) => ($h = $c->localTime()->hour) >= $from && $h < $to);
+        if ($channels->isEmpty()) {
+            return null;
+        }
+        $posted = FeedItem::whereIn('feed_channel_id', $channels->pluck('id'))->where('posted_at', '>=', now()->subDay())
+            ->get(['feed_channel_id', 'posted_at'])->groupBy('feed_channel_id');
+
+        // Each author whose next planned moment has come; the one that waits longest goes first.
+        $channel = $channels
+            ->map(function (FeedChannel $c) use ($posted, $factor, $from, $to) {
+                $local = $c->localTime();
+                $day = $local->toDateString();
+                $dayStart = $c->dayStart();
+                $elapsed = $local->copy()->setTime($from, 0)->diffInMinutes($local);
+                $mine = ($posted[$c->id] ?? collect())->filter(fn (FeedItem $i) => $i->posted_at->gte($dayStart));
                 $slots = $c->slotsFor($day, self::limitToday($c, $day, $factor), ($to - $from) * 60);
-                $done = (int) ($posted[$c->id]->n ?? 0);
-                $last = $posted[$c->id]->last ?? null;
-                $due = $slots[$done] ?? null;
+                $due = $slots[$mine->count()] ?? null;
+                $last = $mine->max('posted_at');
                 $ready = $c->user && ! $c->user->blocked && $c->daily_limit > 0
                     && $due !== null && $due <= $elapsed
-                    && (! $last || Carbon::parse($last)->lte(now()->subMinutes(config('feeds.author_gap'))));
+                    && (! $last || $last->lte(now()->subMinutes(config('feeds.author_gap'))));
 
                 return $ready ? ['channel' => $c, 'due' => $due] : null;
             })
@@ -67,7 +70,8 @@ class FeedPublisher
             return null;
         }
 
-        $item = self::choose($channel, $dayStart);
+        $item = self::choose($channel, $channel->dayStart());
+
         return $item ? $this->publish($item) : null;
     }
 
@@ -91,6 +95,8 @@ class FeedPublisher
             return $item;
         }
         $item->update(['status' => 'posted', 'post_id' => $post->id, 'posted_at' => now()]);
+        // The author was here when it posted: "online" for a few minutes, then "was online" at its own daytime.
+        $channel->user->forceFill(['last_seen_at' => now()])->saveQuietly();
 
         return $item;
     }
@@ -155,11 +161,11 @@ class FeedPublisher
         return $count + ($part > 1e-9 && (crc32('part#'.$day.'#'.$channel->id) % 1000) / 1000 < $part ? 1 : 0);
     }
 
-    /** The author's planned times today in the club's time zone, as "HH:MM". @return list<string> */
+    /** The author's planned times today in its own time zone, as "HH:MM". @return list<string> */
     public static function plan(FeedChannel $channel, ?Carbon $at = null): array
     {
         [$from, $to] = config('feeds.window');
-        $local = ($at ?? now())->copy()->tz(config('feeds.timezone'));
+        $local = $channel->localTime($at);
         $start = $local->copy()->setTime($from, 0);
         $slots = $channel->slotsFor($local->toDateString(), self::limitToday($channel, $local->toDateString()), ($to - $from) * 60);
 

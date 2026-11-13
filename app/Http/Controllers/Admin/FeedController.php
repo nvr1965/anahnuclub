@@ -32,12 +32,13 @@ class FeedController extends AdminController
         $tab = in_array($request->query('tab'), ['queue', 'authors', 'sources'], true) ? $request->query('tab') : 'queue';
         $status = in_array($request->query('status'), FeedItem::STATUSES, true) ? $request->query('status') : 'approved';
         $channelId = $request->integer('author') ?: null;
-        $today = now()->tz(config('feeds.timezone'))->setTime(config('feeds.window')[0], 0)->utc();
 
         $channels = FeedChannel::with(['user:id,name,username', 'group:id,name,slug'])->orderBy('id')->get();
         $counts = FeedItem::selectRaw('feed_channel_id, status, count(*) as n')->groupBy('feed_channel_id', 'status')->get()
             ->groupBy('feed_channel_id')->map(fn ($rows) => $rows->pluck('n', 'status'));
-        $postedToday = FeedItem::where('posted_at', '>=', $today)->selectRaw('feed_channel_id, count(*) as n')->groupBy('feed_channel_id')->pluck('n', 'feed_channel_id');
+        // "Today" of each author is its own day, by its own clock.
+        $postedToday = FeedItem::where('posted_at', '>=', now()->subDay())->get(['feed_channel_id', 'posted_at'])->groupBy('feed_channel_id')
+            ->map(fn ($items, $id) => $items->filter(fn (FeedItem $i) => $i->posted_at->gte($channels->firstWhere('id', $id)?->dayStart() ?? now()))->count());
         // How the week's posts were met: likes and comments per post.
         $week = Post::where('created_at', '>=', now()->subWeek())->whereIn('user_id', $channels->pluck('user_id'))
             ->withCount(['likes', 'comments'])->get(['id', 'user_id'])->groupBy('user_id');
@@ -49,10 +50,14 @@ class FeedController extends AdminController
             'paused' => FeedPublisher::paused(),
             'members_busy' => FeedPublisher::membersAreBusy(),
             'window' => config('feeds.window'),
+            'club_timezone' => config('feeds.timezone'),
             'channels' => $channels->map(fn (FeedChannel $c) => [
                 'id' => $c->id,
                 'user' => $c->user ? ['id' => $c->user->id, 'name' => $c->user->name, 'username' => $c->user->username] : null,
                 'topic' => $c->topic,
+                'timezone' => $c->timezone,
+                // The author's clock now, to see at a glance whether it is its day or its night.
+                'local_time' => $c->localTime()->format('H:i'),
                 'group' => $c->group ? ['name' => $c->group->name, 'slug' => $c->group->slug] : null,
                 'daily_min' => $c->daily_min,
                 'daily_limit' => $c->daily_limit,
@@ -124,6 +129,7 @@ class FeedController extends AdminController
     {
         $channel->update($request->validate([
             'topic' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'timezone' => ['sometimes', 'nullable', Rule::in(\DateTimeZone::listIdentifiers(\DateTimeZone::ALL_WITH_BC))],
             'daily_min' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:50'],
             'daily_limit' => ['sometimes', 'integer', 'min:0', 'max:50'],
             'stop_words' => ['sometimes', 'nullable', 'string', 'max:5000'],

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Translation\InterfaceStrings;
 use App\Translation\Providers\DeepL;
 use App\Translation\Providers\Gemini;
+use App\Translation\Providers\LibreTranslate;
 use App\Translation\Providers\Microsoft;
 use App\Translation\Providers\MyMemory;
 use App\Translation\Providers\Provider;
@@ -65,6 +66,19 @@ class TranslatorChainTest extends TestCase
         $this->assertSame('[gemini:uz] Hello', $chain->translate('Hello', 'uz'));
         $this->assertSame('gemini', $chain->name());
         $this->assertTrue($chain->supports('uz'));
+    }
+
+    public function test_a_language_missing_on_the_libretranslate_server_is_named_in_the_error()
+    {
+        Http::fake(['lt.test/languages' => Http::response([['code' => 'ru'], ['code' => 'he']])]);
+        $chain = $this->chain([['id' => 'libretranslate']])->with('libretranslate', new LibreTranslate('https://lt.test'));
+
+        try {
+            $chain->translate('Hello', 'es');
+            $this->fail('No translator should take es');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('libretranslate: does not know es', $e->getMessage());
+        }
     }
 
     public function test_a_failing_or_used_up_service_hands_over_to_the_next()
