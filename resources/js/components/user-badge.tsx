@@ -7,6 +7,7 @@ import {
     Gem,
     Handshake,
     Heart,
+    Hourglass,
     Languages,
     Megaphone,
     Newspaper,
@@ -75,6 +76,12 @@ export const BADGES: Record<string, { label: string; icon: ReactNode; color: str
         icon: <Heart />,
         color: 'bg-pink-50 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
         hint: 'A friend of the club, known to its founder in person',
+    },
+    'old-timer': {
+        label: 'Old-timer',
+        icon: <Hourglass />,
+        color: 'bg-yellow-50 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
+        hint: 'Was a member of the club before the new site',
     },
     ambassador: {
         label: 'Ambassador',

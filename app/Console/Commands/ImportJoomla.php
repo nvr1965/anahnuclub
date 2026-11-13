@@ -5,7 +5,9 @@ namespace App\Console\Commands;
 use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\Video;
+use App\Support\Badges;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +22,7 @@ class ImportJoomla extends Command
 {
     protected $signature = 'import:joomla
         {--files= : Path to the old public_html folder, to copy avatars, covers and photos}
-        {--only=* : Import just these parts, e.g. --only=friends --only=profiles}';
+        {--only=* : Import just these parts, e.g. --only=friends --only=profiles, or --only=old-timers to give the "Old-timer" badge}';
 
     protected $description = 'Import users, groups, posts, comments and photos from the old Joomla/JomSocial database';
 
@@ -47,6 +49,7 @@ class ImportJoomla extends Command
             DB::transaction(function () use ($only) {
                 in_array('profiles', $only, true) && $this->importProfileFields();
                 in_array('friends', $only, true) && $this->importFriends();
+                in_array('old-timers', $only, true) && $this->giveOldTimerBadges();
                 if (in_array('media', $only, true)) {
                     $this->importPhotos();
                     $this->importVideos();
@@ -132,6 +135,28 @@ class ImportJoomla extends Command
         }
 
         $this->line('Users: '.count($rows));
+        $this->giveOldTimerBadges();
+    }
+
+    /**
+     * The "Old-timer" badge for everyone who was a member of the old site: the same id here, and the
+     * same login or email, so someone who only got a freed id here is left out. Given quietly, once.
+     */
+    private function giveOldTimerBadges(): void
+    {
+        $old = $this->old->table('users')->get(['id', 'username', 'email'])->keyBy('id');
+        $given = 0;
+        User::query()->whereIn('id', $old->keys())->chunkById(500, function ($users) use ($old, &$given) {
+            foreach ($users as $user) {
+                $row = $old->get($user->id);
+                $same = $user->username === $row->username || Str::lower((string) $user->email) === Str::lower(trim((string) $row->email));
+                if ($same && ! in_array('old-timer', $user->badges ?? [], true)) {
+                    Badges::set($user, 'old-timer', true);
+                    $given++;
+                }
+            }
+        });
+        $this->line('Old-timer badges given: '.$given);
     }
 
     /** JomSocial's profile fields; only fills what a member has not written here yet. */

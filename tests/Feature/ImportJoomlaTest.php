@@ -76,6 +76,18 @@ class ImportJoomlaTest extends TestCase
         $this->assertTrue(password_verify('new-password', $anna->password));
     }
 
+    public function test_old_site_members_get_the_old_timer_badge_once_and_new_members_do_not()
+    {
+        $newcomer = User::factory()->create(['id' => 50]);
+        $this->oldMember(5, 'anna', 'anna@example.com');
+        $this->importUsers();
+        $this->importUsers();
+
+        $this->assertSame(['old-timer'], User::find(5)->badges);
+        $this->assertNull($newcomer->fresh()->badges);
+        $this->assertSame(0, User::find(5)->notifications()->count());
+    }
+
     public function test_an_old_member_whose_id_is_taken_here_stops_the_import()
     {
         User::factory()->create(['id' => 7, 'email' => 'dana@example.com', 'username' => null]);
