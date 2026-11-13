@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Http\Controllers\SeoController;
 use App\Models\Album;
 use App\Models\Event;
 use App\Models\Group;
@@ -23,6 +24,11 @@ use Illuminate\Support\Str;
  *   /community/12-ivan/profile.html, ?userid=12          member 12
  *   ?actid=55                                           the post made from stream entry 55
  *   index.php?option=com_community&view=groups&task=viewgroup&groupid=5   the same, without friendly URLs
+ *
+ * Only a member is sent to members' pages. A guest, and so Google, is sent only where a guest sees the
+ * content itself: a public post, the home page, registration. Profiles, albums, groups, events, videos
+ * and the old lists show a guest the sign-in form, which Google reported as soft 404s, or as blocked by
+ * robots.txt (/login, /search); for a guest those old addresses are gone (410), and Google drops them.
  */
 class LegacyUrl
 {
@@ -35,7 +41,7 @@ class LegacyUrl
         // The old site's home page in a language (/ru, /he/) is the home page here in that language.
         $url = $lang && $segments === [] && $request->query('option') === null
             ? route('home').'/'
-            : self::target($segments, $request->query());
+            : self::target($segments, $request->query(), $request);
 
         return $url && $lang ? SiteMeta::in($url, $lang) : $url;
     }
@@ -68,8 +74,9 @@ class LegacyUrl
         return $path === '' ? [] : explode('/', $path);
     }
 
-    private static function target(array $segments, array $query): ?string
+    private static function target(array $segments, array $query, Request $request): ?string
     {
+        $member = $request->user() !== null;
         // The id comes from the query (…&groupid=5) or from the part after the task (viewgroup/5-name).
         $id = function (string $name, string $task) use ($segments, $query): int {
             if (is_scalar($query[$name] ?? null) && (int) $query[$name] > 0) {
@@ -82,35 +89,43 @@ class LegacyUrl
         $param = fn (string $name) => is_scalar($query[$name] ?? null) ? (int) $query[$name] : 0;
 
         if ($n = $id('topicid', 'viewdiscussion')) {
-            return self::post('discussion', $n);
+            return self::post('discussion', $n, $member);
         }
         if ($n = $id('bulletinid', 'viewbulletin')) {
-            return self::post('bulletin', $n);
+            return self::post('bulletin', $n, $member);
         }
         if ($n = $param('actid')) {
-            return self::post('activity', $n);
+            return self::post('activity', $n, $member);
         }
+        // An address naming something (an event, a group, a member…) that is not here, or that a guest
+        // may not see, is gone: not the list it was in, which Google counts as a soft 404.
         if ($n = $id('eventid', 'viewevent')) {
-            return Event::whereKey($n)->exists() ? route('events.show', $n) : null;
+            return $member && Event::whereKey($n)->exists() ? route('events.show', $n) : null;
         }
         if ($n = $id('groupid', 'viewgroup')) {
-            return ($group = Group::find($n)) ? route('groups.show', $group) : null;
+            return $member && ($group = Group::find($n)) ? route('groups.show', $group) : null;
         }
         if ($n = $id('videoid', 'video')) {
-            $video = Video::where('legacy_source', 'jomsocial_video')->where('legacy_id', $n)->first();
+            $video = $member ? Video::where('legacy_source', 'jomsocial_video')->where('legacy_id', $n)->first() : null;
 
             return $video ? route('videos.show', $video) : null;
         }
         if ($n = $param('albumid')) {
-            return Album::whereKey($n)->exists() ? route('albums.show', $n) : null;
+            return $member && Album::whereKey($n)->exists() ? route('albums.show', $n) : null;
         }
-        if ($user = self::member($segments, $param('userid'))) {
+        if ($member && ($user = self::member($segments, $param('userid')))) {
             return route('people.show', $user);
         }
+        if ($param('userid') || self::memberPart($segments)) {
+            return null;
+        }
 
-        // Lists of the old site have their counterpart here.
-        foreach (['groups' => 'groups.index', 'events' => 'events.index', 'videos' => 'videos.index', 'friends' => 'friends.index',
-            'inbox' => 'messages.index', 'search' => 'search', 'register' => 'register', 'members' => 'people.index'] as $view => $name) {
+        // Lists of the old site have their counterpart here; all but registration are for members.
+        $lists = $member
+            ? ['groups' => 'groups.index', 'events' => 'events.index', 'videos' => 'videos.index', 'friends' => 'friends.index',
+                'inbox' => 'messages.index', 'search' => 'search', 'register' => 'register', 'members' => 'people.index']
+            : ['register' => 'register'];
+        foreach ($lists as $view => $name) {
             if (($query['view'] ?? null) === $view || in_array($view, $segments, true)) {
                 return route($name);
             }
@@ -119,11 +134,25 @@ class LegacyUrl
         return null;
     }
 
-    private static function post(string $source, int $legacyId): ?string
+    /** The post imported from that old item; for a guest only if anyone may open it from a link. */
+    private static function post(string $source, int $legacyId, bool $member): ?string
     {
-        $id = Post::where('legacy_source', $source)->where('legacy_id', $legacyId)->value('id');
+        $posts = $member ? Post::query() : SeoController::publicPosts();
+        $id = $posts->where('legacy_source', $source)->where('legacy_id', $legacyId)->value('posts.id');
 
         return $id ? route('posts.show', $id) : null;
+    }
+
+    /** Whether the address names a member the old way: "12-ivan" after the old menu or "profile". */
+    private static function memberPart(array $segments): bool
+    {
+        foreach ($segments as $i => $segment) {
+            if (preg_match('~^\d+[-:]~', $segment) && in_array($segments[$i - 1] ?? null, ['profile', 'community', 'jomsocial'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
