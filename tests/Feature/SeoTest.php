@@ -222,6 +222,8 @@ class SeoTest extends TestCase
         $wall = Post::create(['user_id' => $member->id, 'body' => 'Стена', 'legacy_source' => 'activity', 'legacy_id' => 55]);
         $video = Video::create(['user_id' => $member->id, 'title' => 'Клип', 'provider' => 'youtube', 'provider_id' => 'x', 'url' => 'https://youtu.be/x', 'legacy_source' => 'jomsocial_video', 'legacy_id' => 9]);
 
+        // A member is taken to the same group, post, video or profile here.
+        $this->actingAs($member);
         $this->get("/community/groups/viewgroup/{$group->id}-haifa.html")->assertRedirect(route('groups.show', $group))->assertStatus(301);
         $this->get('/community/groups/viewdiscussion/7-tema.html')->assertRedirect(route('posts.show', $discussion));
         $this->get('/index.php?option=com_community&view=groups&task=viewdiscussion&topicid=7')->assertRedirect(route('posts.show', $discussion));
@@ -229,9 +231,26 @@ class SeoTest extends TestCase
         $this->get('/community/videos/video/9-klip.html')->assertRedirect(route('videos.show', $video));
         $this->get("/community/{$member->id}-ivan/profile.html")->assertRedirect(route('people.show', $member));
         $this->get("/he/community/{$member->id}-ivan.html")->assertRedirect(route('people.show', $member).'?lang=he');
-
         // The old site's menu was "jomsocial"; a member's part after it counts whatever their name.
         $this->get("/en/jomsocial/{$member->id}-someone-else/events.html")->assertRedirect(route('people.show', $member).'?lang=en');
+        $this->get('/jomsocial/groups.html?sort=featured')->assertRedirect(route('groups.index'));
+        // An event that is not here is gone, not the list of events.
+        $this->get('/he/jomsocial/events/viewguest.html?eventid=999&type=1')->assertStatus(410);
+        auth()->logout();
+
+        // A guest (Google too) is sent only where a guest sees the content: a public post. Profiles,
+        // groups, videos and the old lists would show a guest the sign-in form, which Google counted as
+        // soft 404s or as blocked by robots.txt (/login, /search): for a guest they are gone.
+        $this->get('/community/profile.html?actid=55')->assertRedirect(route('posts.show', $wall))->assertStatus(301);
+        $this->get("/community/groups/viewgroup/{$group->id}-haifa.html")->assertStatus(410);
+        $this->get('/community/videos/video/9-klip.html')->assertStatus(410);
+        $this->get("/jomsocial/{$member->id}-ivan/profile.html")->assertStatus(410);
+        $this->get("/en/jomsocial/{$member->id}-ivan/events.html")->assertStatus(410);
+        $this->get('/jomsocial/photos/album.html?albumid=54&pageid=1')->assertStatus(410);
+        $this->get('/jomsocial/search/field.html?FIELD_LOCATION=New%20York')->assertStatus(410);
+        $this->get('/jomsocial/groups/viewbulle.html?language=ru-RU&sort=mostactive&start=12')->assertStatus(410);
+        $this->get('/groups.html?language=ru-RU&sort=oldest&start=24')->assertStatus(410);
+        $this->get('/jomsocial/register.html')->assertRedirect(route('register'));
 
         // An old article that only looks like a member's address, and old pages with nothing here,
         // are gone (410): search engines drop them, where a redirect home counted as a soft 404.
