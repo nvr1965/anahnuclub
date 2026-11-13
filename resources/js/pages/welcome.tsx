@@ -26,7 +26,8 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
             <Head title="anahnu.club" />
 
             <section className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-neutral-900 dark:ring-neutral-800">
-                <div className="bg-brand relative">
+                {/* The banner's own teal behind it, so the picture blends in whatever the style's colour is. */}
+                <div className="relative bg-[#117892]">
                     <img
                         src="/images/logo-banner.png"
                         alt="anahnu.club"
