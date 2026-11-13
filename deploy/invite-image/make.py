@@ -1,17 +1,17 @@
 import json, base64, sys
 logo = base64.b64encode(open('/root/work/anahnuclub/public/images/logo-mark.png','rb').read()).decode()
 L = {
- 'ru': dict(rtl=False, slogan='Лучшая соцсеть без цензуры', b=['Пишите на своём языке, всё переводится само','Сообщения, файлы и видеозвонки','Группы, фото, видео и события'], cta='Присоединяйтесь бесплатно',
+ 'ru': dict(rtl=False, slogan='Лучшая соцсеть без цензуры', b=['Пишите на своём языке, всё переводится само','Сообщения, файлы и видеозвонки','Группы, фото, видео и события'], cta='Вступайте в клуб',
    inc='שלום! מה שלומך?', tr='Привет! Как дела?', trl='Переведено с иврита', out='Отлично! Рад тебя видеть 🙂', chat='Сообщения', online='в сети', post='Пикник на набережной в субботу, кто с нами?', like='Нравится', com='Комментировать'),
- 'en': dict(rtl=False, slogan='The best social network without censorship', b=['Write in your language, everything is translated','Messages, files and video calls','Groups, photos, videos and events'], cta='Join for free',
+ 'en': dict(rtl=False, slogan='The best social network without censorship', b=['Write in your language, everything is translated','Messages, files and video calls','Groups, photos, videos and events'], cta='Join the club',
    inc='Привет! Как дела?', tr='Hi! How are you?', trl='Translated from Russian', out='Great! Good to see you 🙂', chat='Messages', online='online', post='Picnic on the promenade on Saturday, who is in?', like='Like', com='Comment'),
- 'de': dict(rtl=False, slogan='Das beste soziale Netzwerk ohne Zensur', b=['Schreiben Sie in Ihrer Sprache, alles wird übersetzt','Nachrichten, Dateien und Videoanrufe','Gruppen, Fotos, Videos und Events'], cta='Kostenlos beitreten',
+ 'de': dict(rtl=False, slogan='Das beste soziale Netzwerk ohne Zensur', b=['Schreiben Sie in Ihrer Sprache, alles wird übersetzt','Nachrichten, Dateien und Videoanrufe','Gruppen, Fotos, Videos und Events'], cta='Dem Club beitreten',
    inc='Привет! Как дела?', tr='Hallo! Wie geht es dir?', trl='Aus dem Russischen übersetzt', out='Super! Schön dich zu sehen 🙂', chat='Nachrichten', online='online', post='Picknick an der Promenade am Samstag, wer kommt mit?', like='Gefällt mir', com='Kommentieren'),
- 'he': dict(rtl=True, slogan='הרשת החברתית הטובה ביותר, ללא צנזורה', b=['כתבו בשפה שלכם, הכול מתורגם אוטומטית','הודעות, קבצים ושיחות וידאו','קבוצות, תמונות, סרטונים ואירועים'], cta='הצטרפו בחינם',
+ 'he': dict(rtl=True, slogan='הרשת החברתית הטובה ביותר, ללא צנזורה', b=['כתבו בשפה שלכם, הכול מתורגם אוטומטית','הודעות, קבצים ושיחות וידאו','קבוצות, תמונות, סרטונים ואירועים'], cta='הצטרפו למועדון',
    inc='Привет! Как дела?', tr='שלום! מה שלומך?', trl='תורגם מרוסית', out='מצוין! שמח לראות אותך 🙂', chat='הודעות', online='מחובר', post='פיקניק על הטיילת בשבת, מי מצטרף?', like='אהבתי', com='תגובה'),
- 'ar': dict(rtl=True, slogan='أفضل شبكة اجتماعية بلا رقابة', b=['اكتب بلغتك، وكل شيء يُترجم تلقائيًا','رسائل وملفات ومكالمات فيديو','مجموعات وصور وفيديوهات وفعاليات'], cta='انضم مجانًا',
+ 'ar': dict(rtl=True, slogan='أفضل شبكة اجتماعية بلا رقابة', b=['اكتب بلغتك، وكل شيء يُترجم تلقائيًا','رسائل وملفات ومكالمات فيديو','مجموعات وصور وفيديوهات وفعاليات'], cta='انضم إلى النادي',
    inc='Привет! Как дела?', tr='مرحبًا! كيف حالك؟', trl='مترجم من الروسية', out='ممتاز! سعيد برؤيتك 🙂', chat='الرسائل', online='متصل', post='نزهة على الكورنيش يوم السبت، من سيأتي؟', like='أعجبني', com='تعليق'),
- 'tg': dict(rtl=False, slogan='Беҳтарин шабакаи иҷтимоӣ бе сензура', b=['Бо забони худ нависед, ҳама тарҷума мешавад','Паёмҳо, файлҳо ва зангҳои видеоӣ','Гурӯҳҳо, аксҳо, видеоҳо ва чорабиниҳо'], cta='Ройгон ҳамроҳ шавед',
+ 'tg': dict(rtl=False, slogan='Беҳтарин шабакаи иҷтимоӣ бе сензура', b=['Бо забони худ нависед, ҳама тарҷума мешавад','Паёмҳо, файлҳо ва зангҳои видеоӣ','Гурӯҳҳо, аксҳо, видеоҳо ва чорабиниҳо'], cta='Ба клуб ҳамроҳ шавед',
    inc='Привет! Как дела?', tr='Салом! Корҳо чӣ хел?', trl='Аз забони русӣ тарҷума шуд', out='Олӣ! Аз дидани ту шодам 🙂', chat='Паёмҳо', online='дар шабака', post='Пикник дар соҳил рӯзи шанбе, кӣ бо мо?', like='Писанд', com='Шарҳ'),
 }
 for code, s in L.items():

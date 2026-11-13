@@ -24,7 +24,7 @@ class InviteImage
         'b1' => 'Write in your language, everything is translated',
         'b2' => 'Messages, files and video calls',
         'b3' => 'Groups, photos, videos and events',
-        'cta' => 'Join for free',
+        'cta' => 'Join the club',
         'reply' => 'Hi! How are you?',
         'from_ru' => 'Translated from Russian',
         'from_he' => 'Translated from Hebrew',
@@ -72,23 +72,59 @@ class InviteImage
         return self::drawn($code) || is_file(public_path("images/invite/$code.jpg"));
     }
 
-    /** The picture for this language, the English one if it has none; a new drawing gets a new address, so networks fetch it again. */
+    /**
+     * The picture for this language, the English one if it has none; a new drawing gets a new address, so networks fetch it again.
+     * A drawing from older texts gives way to the site's own picture when that one is up to date.
+     */
     public static function url(string $code): string
     {
-        if (self::drawn($code)) {
+        if (self::drawn($code) && (self::current($code) || ! self::bundledCurrent($code))) {
             return Storage::disk('public')->url(self::path($code)).'?v='.Storage::disk('public')->lastModified(self::path($code));
         }
 
         return asset('images/invite/'.(is_file(public_path("images/invite/$code.jpg")) ? $code : 'en').'.jpg');
     }
 
+    /** A fingerprint of the picture's texts in this language, so a picture drawn from older texts is known to be out of date. */
+    public static function signature(string $code): string
+    {
+        return md5(json_encode(self::texts($code)['texts'], JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Whether the language's picture shows its texts as they are now: a drawn one remembers the texts
+     * it was drawn from, the ones the site came with are listed in public/images/invite/texts.json.
+     * When a text changes (or a picture predates this), the admin Languages page draws it again.
+     */
+    public static function current(string $code): bool
+    {
+        if (self::drawn($code)) {
+            return Storage::disk('public')->get(self::signaturePath($code)) === self::signature($code);
+        }
+
+        return self::bundledCurrent($code);
+    }
+
+    private static function bundledCurrent(string $code): bool
+    {
+        $bundled = json_decode((string) @file_get_contents(public_path('images/invite/texts.json')), true) ?: [];
+
+        return is_file(public_path("images/invite/$code.jpg")) && ($bundled[$code] ?? null) === self::signature($code);
+    }
+
     public static function store(string $code, UploadedFile $file): void
     {
         Storage::disk('public')->putFileAs('invite', $file, "$code.jpg");
+        Storage::disk('public')->put(self::signaturePath($code), self::signature($code));
     }
 
     public static function forget(string $code): void
     {
-        Storage::disk('public')->delete(self::path($code));
+        Storage::disk('public')->delete([self::path($code), self::signaturePath($code)]);
+    }
+
+    private static function signaturePath(string $code): string
+    {
+        return "invite/$code.sig";
     }
 }

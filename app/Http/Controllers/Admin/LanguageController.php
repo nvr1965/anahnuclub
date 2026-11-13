@@ -34,7 +34,7 @@ class LanguageController extends AdminController
                     'paused' => Cache::get(TranslateInterface::errorKey($l->code)),
                     // The picture shared invitation links show; the page draws a missing one by itself.
                     'invite' => InviteImage::texts($l->code) + [
-                        'has' => InviteImage::exists($l->code),
+                        'has' => InviteImage::current($l->code),
                         'url' => InviteImage::exists($l->code) ? InviteImage::url($l->code) : null,
                     ],
                 ]),
