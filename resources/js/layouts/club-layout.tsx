@@ -216,7 +216,7 @@ function ShowcaseFrame({ children, left, right, full, wide, mainMenu }: Props) {
     );
 }
 
-function ForumFrame({ children, left, right, full }: Props) {
+function ForumFrame({ children, left, right, full, wide }: Props) {
     if (full) return <FullFrame>{children}</FullFrame>;
 
     return (
@@ -229,7 +229,7 @@ function ForumFrame({ children, left, right, full }: Props) {
                     </aside>
                 )}
                 <div className="flex min-w-0 flex-1 justify-center gap-6 px-0 py-4 sm:px-6">
-                    <main className="w-full max-w-[740px] min-w-0">{children}</main>
+                    <main className={`w-full min-w-0 ${wide && !right ? 'max-w-[1100px]' : 'max-w-[740px]'}`}>{children}</main>
                     {right && (
                         <aside className="sticky top-[4.5rem] hidden max-h-[calc(100vh-5.5rem)] w-[316px] shrink-0 self-start overflow-y-auto rounded-2xl bg-white py-3 xl:block dark:bg-neutral-900">
                             {right}

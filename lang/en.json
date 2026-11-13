@@ -40,7 +40,6 @@
     ":name takes messages from friends only.": ":name takes messages from friends only.",
     ":name will be offered to take over “:group”. You will stay on as an admin once they accept.": ":name will be offered to take over “:group”. You will stay on as an admin once they accept.",
     ":provider did not share your email address. Please sign up with your email instead.": ":provider did not share your email address. Please sign up with your email instead.",
-    "A community without borders. Write in your language, read in yours.": "A community without borders. Write in your language, read in yours.",
     "A letter could not be sent: :error": "A letter could not be sent: :error",
     "A new member has signed up on :site.": "A new member has signed up on :site.",
     "A new verification link has been sent to the email address you provided during registration.": "A new verification link has been sent to the email address you provided during registration.",
@@ -294,7 +293,6 @@
     "Join me on anahnu.club, the best social network without censorship!": "Join me on anahnu.club, the best social network without censorship!",
     "Join me on anahnu.club, the community of our people!": "Join me on anahnu.club, the community of our people!",
     "Join the group “:name” on anahnu.club": "Join the group “:name” on anahnu.club",
-    "Join us!": "Join us!",
     "Joined :date": "Joined :date",
     "Registered :date": "Registered :date",
     "Keep these placeholders in the text: :list": "Keep these placeholders in the text: :list",
@@ -999,5 +997,12 @@
     "No answer": "No answer",
     "Whole text": "Whole text",
     "Excerpt only": "Excerpt only",
-    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net"
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net",
+    "A community without borders": "A community without borders",
+    "Write in your language, read in yours. We translate the rest.": "Write in your language, read in yours. We translate the rest.",
+    "Automatic translation of posts and messages": "Automatic translation of posts and messages",
+    "Interest groups and news": "Interest groups and news",
+    "Our people are already here": "Our people are already here",
+    "Create an account for free": "Create an account for free",
+    "Already with us? Log in": "Already with us? Log in"
 }

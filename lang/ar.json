@@ -40,7 +40,6 @@
     ":name takes messages from friends only.": ":name يستقبل الرسائل من الأصدقاء فقط.",
     ":name will be offered to take over “:group”. You will stay on as an admin once they accept.": "سيُعرض على :name استلام المجموعة «:group». بعد موافقته ستبقى فيها مشرفًا.",
     ":provider did not share your email address. Please sign up with your email instead.": "لم يشارك :provider عنوان بريدك الإلكتروني. يرجى التسجيل باستخدام بريدك الإلكتروني.",
-    "A community without borders. Write in your language, read in yours.": "مجتمع بلا حدود. اكتب بلغتك واقرأ بلغتك.",
     "A letter could not be sent: :error": "تعذّر إرسال رسالة: :error",
     "A new member has signed up on :site.": "سجّل عضو جديد في :site.",
     "A new verification link has been sent to the email address you provided during registration.": "تم إرسال رابط تحقق جديد إلى البريد الإلكتروني الذي قدمته عند التسجيل.",
@@ -294,7 +293,6 @@
     "Join me on anahnu.club, the best social network without censorship!": "انضم إليّ على anahnu.club، أفضل شبكة اجتماعية بلا رقابة!",
     "Join me on anahnu.club, the community of our people!": "انضم إليّ في anahnu.club، مجتمع أهلنا!",
     "Join the group “:name” on anahnu.club": "انضم إلى مجموعة «:name» على anahnu.club",
-    "Join us!": "انضم إلينا!",
     "Joined :date": "انضم في :date",
     "Registered :date": "التسجيل :date",
     "Keep these placeholders in the text: :list": "أبقِ هذه العلامات في النص: :list",
@@ -999,5 +997,12 @@
     "No answer": "لا رد",
     "Whole text": "النص كاملاً",
     "Excerpt only": "المقتطف فقط",
-    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "عنوان RSS، قناة يوتيوب، قناة تيليغرام https://t.me/s/… أو panet.com / bokra.net"
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "عنوان RSS، قناة يوتيوب، قناة تيليغرام https://t.me/s/… أو panet.com / bokra.net",
+    "A community without borders": "مجتمع بلا حدود",
+    "Write in your language, read in yours. We translate the rest.": "اكتب بلغتك واقرأ بلغتك. والباقي نترجمه نحن.",
+    "Automatic translation of posts and messages": "ترجمة تلقائية للمنشورات والرسائل",
+    "Interest groups and news": "مجموعات اهتمام وأخبار",
+    "Our people are already here": "ناسنا هنا بالفعل",
+    "Create an account for free": "أنشئ حسابًا مجانًا",
+    "Already with us? Log in": "معنا بالفعل؟ سجّل الدخول"
 }

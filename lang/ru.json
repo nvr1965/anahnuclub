@@ -40,7 +40,6 @@
     ":name takes messages from friends only.": ":name принимает сообщения только от друзей.",
     ":name will be offered to take over “:group”. You will stay on as an admin once they accept.": ":name получит предложение принять группу «:group». Когда он согласится, вы останетесь в ней админом.",
     ":provider did not share your email address. Please sign up with your email instead.": ":provider не передал ваш адрес почты. Зарегистрируйтесь, пожалуйста, по почте.",
-    "A community without borders. Write in your language, read in yours.": "Сообщество без границ. Пишите на своём языке, читайте на своём.",
     "A letter could not be sent: :error": "Письмо не удалось отправить: :error",
     "A new member has signed up on :site.": "На :site зарегистрировался новый участник.",
     "A new verification link has been sent to the email address you provided during registration.": "Новая ссылка для подтверждения отправлена на адрес, указанный при регистрации.",
@@ -294,7 +293,6 @@
     "Join me on anahnu.club, the best social network without censorship!": "Присоединяйтесь ко мне на anahnu.club, лучшей соцсети без цензуры!",
     "Join me on anahnu.club, the community of our people!": "Присоединяйся ко мне на anahnu.club, в сообществе наших людей!",
     "Join the group “:name” on anahnu.club": "Присоединяйся к группе «:name» на anahnu.club",
-    "Join us!": "Присоединяйтесь!",
     "Joined :date": "С нами с :date",
     "Registered :date": "Регистрация :date",
     "Keep these placeholders in the text: :list": "Оставьте в тексте эти метки: :list",
@@ -999,5 +997,12 @@
     "No answer": "Нет ответа",
     "Whole text": "Целиком",
     "Excerpt only": "Только начало",
-    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "Адрес RSS, канал YouTube, канал Telegram https://t.me/s/… или panet.com / bokra.net"
+    "RSS address, YouTube channel, Telegram channel https://t.me/s/… or panet.com / bokra.net": "Адрес RSS, канал YouTube, канал Telegram https://t.me/s/… или panet.com / bokra.net",
+    "A community without borders": "Сообщество без границ",
+    "Write in your language, read in yours. We translate the rest.": "Пишите на своём языке, читайте на своём. Остальное мы переведём.",
+    "Automatic translation of posts and messages": "Автоперевод постов и сообщений",
+    "Interest groups and news": "Группы по интересам и новости",
+    "Our people are already here": "Наши уже здесь",
+    "Create an account for free": "Создать аккаунт бесплатно",
+    "Already with us? Log in": "Уже с нами? Войдите"
 }
