@@ -932,6 +932,7 @@
     "Group: :name": "Group: :name",
     "In queue": "In queue",
     "Club authors post by themselves from :from:00 to :to:00 of their own time zone: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.": "Club authors post by themselves from :from:00 to :to:00 of their own time zone: up to three newest items a source each run, each author its main news at its own times. What is not posted within 12 hours leaves the queue.",
+    "Spread over days": "Spread over days",
     "Time zone": "Time zone",
     "Its time now: :time": "Its time now: :time",
     "By name": "By name",

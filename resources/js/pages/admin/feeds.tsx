@@ -17,6 +17,7 @@ interface Channel {
     group: { name: string; slug: string } | null;
     daily_min: number | null;
     daily_limit: number;
+    every_days: number;
     stop_words: string | null;
     auto_approve: boolean;
     paused: boolean;
@@ -370,6 +371,21 @@ function Authors({ channels, clubTimezone }: { channels: Channel[]; clubTimezone
                                 defaultValue={c.daily_limit}
                                 className={`${input} w-16`}
                                 onBlur={(e) => Number(e.target.value) !== c.daily_limit && update(c, { daily_limit: Number(e.target.value) })}
+                            />
+                        </label>
+                        <label className="flex items-center gap-1">
+                            {t('Spread over days')}
+                            <input
+                                type="number"
+                                min={1}
+                                max={30}
+                                defaultValue={c.every_days}
+                                className={`${input} w-16`}
+                                onBlur={(e) =>
+                                    Number(e.target.value) >= 1 &&
+                                    Number(e.target.value) !== c.every_days &&
+                                    update(c, { every_days: Number(e.target.value) })
+                                }
                             />
                         </label>
                         <label className="flex items-center gap-1">

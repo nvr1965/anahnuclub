@@ -147,6 +147,7 @@ class FeedPublisher
      * The author's number of posts today: its daily number, times feeds.frequency for news (the light topics,
      * feeds.light_groups, keep theirs), and half of it on a day the members write a lot themselves.
      * A part of a post is a post on some days: 2 × ⅔ is one post a day and two on every third day.
+     * An author that posts once in some days (every_days) has its number spread over them.
      */
     public static function limitToday(FeedChannel $channel, string $day, float $factor = 1): int
     {
@@ -154,7 +155,7 @@ class FeedPublisher
             return 0;
         }
         $light = in_array($channel->group?->slug, config('feeds.light_groups', []), true);
-        $expected = $channel->limitFor($day) * $factor * ($light ? 1 : (float) config('feeds.frequency', 1));
+        $expected = $channel->limitFor($day) * $factor * ($light ? 1 : (float) config('feeds.frequency', 1)) / max(1, (int) $channel->every_days);
         $count = (int) floor($expected + 1e-9);
         $part = $expected - $count;
 
