@@ -118,6 +118,7 @@ class PeopleController extends Controller
                 // Beside the name: the level, then the special badges given by the club.
                 'level' => Badges::LEVELS[$user->level] ?? 'member',
                 'badges' => Badges::special($user),
+                'special_badges' => $viewer->is_admin ? Badges::SPECIAL : null,
                 'avatar' => $user->avatar,
                 'cover' => $user->cover,
                 'status' => $me ? $user->status : $user->localized('status'),

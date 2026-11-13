@@ -1,5 +1,20 @@
 import { useT } from '@/lib/i18n';
-import { BadgeCheck, Crown, Feather, FlaskConical, Gem, Handshake, Languages, Newspaper, PenLine, Shield, User, Users } from 'lucide-react';
+import {
+    BadgeCheck,
+    Crown,
+    Feather,
+    FlaskConical,
+    Gem,
+    Handshake,
+    Heart,
+    Languages,
+    Megaphone,
+    Newspaper,
+    PenLine,
+    Shield,
+    User,
+    Users,
+} from 'lucide-react';
 import { type ReactNode } from 'react';
 
 /**
@@ -54,6 +69,18 @@ export const BADGES: Record<string, { label: string; icon: ReactNode; color: str
         icon: <Shield />,
         color: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300',
         hint: 'Keeps order in the club',
+    },
+    'inner-circle': {
+        label: 'Inner circle',
+        icon: <Heart />,
+        color: 'bg-pink-50 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
+        hint: 'A friend of the club, known to its founder in person',
+    },
+    ambassador: {
+        label: 'Ambassador',
+        icon: <Megaphone />,
+        color: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300',
+        hint: 'Brings new people to the club',
     },
     translator: {
         label: 'Translator',
