@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('welcome', [WelcomeController::class, 'accept'])->name('welcome.accept');
 });
 
+// Addresses marked fetch.only give data to the site's own pages; opened directly in the browser they are "not found" except for admins (FetchOnly).
 Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
     Route::get('search', SearchController::class)->name('search');
@@ -104,7 +105,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::delete('groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
     Route::post('groups/{group}/members/{user}/approve', [GroupController::class, 'approve'])->name('groups.members.approve');
     Route::delete('groups/{group}/members/{user}', [GroupController::class, 'removeMember'])->name('groups.members.destroy');
-    Route::get('groups/{group}/invite', [GroupInviteController::class, 'candidates'])->name('groups.invite.candidates');
+    Route::get('groups/{group}/invite', [GroupInviteController::class, 'candidates'])->middleware('fetch.only')->name('groups.invite.candidates');
     Route::post('groups/{group}/invite', [GroupInviteController::class, 'store'])->middleware('throttle:30,60')->name('groups.invite.store');
     Route::post('groups/{group}/invitations/{invitation}/accept', [GroupInviteController::class, 'accept'])->name('groups.invitations.accept');
     Route::delete('groups/{group}/invitations/{invitation}', [GroupInviteController::class, 'decline'])->name('groups.invitations.destroy');
@@ -117,13 +118,13 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('share', ShareController::class)->name('share');
     // Sharing a post inside the club: to one's own feed, a group, or a friend's profile.
     Route::post('posts/{post}/share', [PostController::class, 'share'])->middleware('throttle:30,1')->name('posts.share');
-    Route::get('share/groups', [PostController::class, 'shareTargets'])->name('posts.share.groups');
-    Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->name('links.preview');
+    Route::get('share/groups', [PostController::class, 'shareTargets'])->middleware('fetch.only')->name('posts.share.groups');
+    Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->middleware('fetch.only')->name('links.preview');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('posts/{post}/tag', [PostController::class, 'untag'])->name('posts.untag');
-    Route::get('hashtags/suggest', [HashtagController::class, 'suggest'])->name('hashtags.suggest');
+    Route::get('hashtags/suggest', [HashtagController::class, 'suggest'])->middleware('fetch.only')->name('hashtags.suggest');
     Route::post('posts/{post}/pin/{place}', [PostController::class, 'pin'])->whereIn('place', ['feed', 'profile', 'group'])->name('posts.pin');
 
     Route::get('people', [PeopleController::class, 'index'])->name('people.index');
@@ -131,10 +132,10 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::patch('profile/about', [PeopleController::class, 'update'])->name('people.update');
     Route::post('profile/avatar', [PeopleController::class, 'avatar'])->name('people.avatar');
     Route::post('profile/cover', [PeopleController::class, 'cover'])->name('people.cover');
-    Route::get('profile/photos', [PeopleController::class, 'myPhotos'])->name('people.photos.mine');
+    Route::get('profile/photos', [PeopleController::class, 'myPhotos'])->middleware('fetch.only')->name('people.photos.mine');
 
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
-    Route::get('friends/list', [FriendController::class, 'list'])->name('friends.list');
+    Route::get('friends/list', [FriendController::class, 'list'])->middleware('fetch.only')->name('friends.list');
     Route::get('friends/requests', [FriendController::class, 'requests'])->name('friends.requests');
     Route::get('friends/suggestions', [FriendController::class, 'suggestions'])->name('friends.suggestions');
     Route::get('friends/all', [FriendController::class, 'all'])->name('friends.all');
@@ -153,22 +154,22 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::post('groups/{group}/block', [BlockController::class, 'blockGroup'])->name('blocks.group');
     Route::delete('groups/{group}/block', [BlockController::class, 'unblockGroup'])->name('blocks.group.destroy');
 
-    Route::get('push/key', [PushController::class, 'key'])->name('push.key');
+    Route::get('push/key', [PushController::class, 'key'])->middleware('fetch.only')->name('push.key');
     Route::post('push/subscriptions', [PushController::class, 'store'])->middleware('throttle:20,1')->name('push.store');
     Route::delete('push/subscriptions', [PushController::class, 'destroy'])->name('push.destroy');
     Route::post('push/test', [PushController::class, 'test'])->middleware('throttle:10,1')->name('push.test');
     Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
-    Route::get('messages/latest', [MessageController::class, 'latest'])->name('messages.latest');
+    Route::get('messages/latest', [MessageController::class, 'latest'])->middleware('fetch.only')->name('messages.latest');
     Route::post('messages/read', [MessageController::class, 'readAll'])->name('messages.read');
     Route::get('messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
-    Route::get('messages/{conversation}/popup', [MessageController::class, 'popup'])->name('messages.popup');
+    Route::get('messages/{conversation}/popup', [MessageController::class, 'popup'])->middleware('fetch.only')->name('messages.popup');
     Route::post('messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:30,1')->name('messages.store');
     Route::get('messages/files/{attachment}', [MessageController::class, 'file'])->name('messages.files');
     Route::post('people/{user}/message', [MessageController::class, 'start'])->name('messages.start');
     Route::post('messages/{conversation}/accept', [MessageController::class, 'accept'])->name('messages.accept');
     Route::post('messages/{conversation}/call', [CallController::class, 'start'])->middleware('throttle:20,1')->name('calls.start');
-    Route::get('calls/ringing', [CallController::class, 'ringing'])->name('calls.ringing');
-    Route::get('calls/{call}', [CallController::class, 'show'])->middleware('throttle:300,1')->name('calls.show');
+    Route::get('calls/ringing', [CallController::class, 'ringing'])->middleware('fetch.only')->name('calls.ringing');
+    Route::get('calls/{call}', [CallController::class, 'show'])->middleware('throttle:300,1')->middleware('fetch.only')->name('calls.show');
     Route::post('calls/{call}/signal', [CallController::class, 'signal'])->middleware('throttle:300,1')->name('calls.signal');
     Route::post('calls/{call}/accept', [CallController::class, 'accept'])->name('calls.accept');
     // Also from the "Decline" button on the call's notification, sent by the service worker, which has no session token.
@@ -196,15 +197,15 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::post('videos/{video}/like', [LikeController::class, 'video'])->name('videos.like');
 
     Route::get('clips', [ClipController::class, 'index'])->name('clips.index');
-    Route::get('clips/more', [ClipController::class, 'more'])->name('clips.more');
+    Route::get('clips/more', [ClipController::class, 'more'])->middleware('fetch.only')->name('clips.more');
     Route::get('clips/{post}', [ClipController::class, 'index'])->whereNumber('post')->name('clips.show');
     Route::post('clips/{post}/view', [ClipController::class, 'view'])->middleware('throttle:120,1')->name('clips.view');
 
     Route::get('moments/archive', [MomentController::class, 'archive'])->name('moments.archive');
-    Route::get('moments/people/{user}', [MomentController::class, 'show'])->name('moments.user');
+    Route::get('moments/people/{user}', [MomentController::class, 'show'])->middleware('fetch.only')->name('moments.user');
     Route::post('moments', [MomentController::class, 'store'])->middleware('throttle:30,60')->name('moments.store');
     Route::post('moments/{moment}/view', [MomentController::class, 'view'])->middleware('throttle:300,1')->name('moments.view');
-    Route::get('moments/{moment}/viewers', [MomentController::class, 'viewers'])->name('moments.viewers');
+    Route::get('moments/{moment}/viewers', [MomentController::class, 'viewers'])->middleware('fetch.only')->name('moments.viewers');
     Route::post('moments/{moment}/reply', [MomentController::class, 'reply'])->middleware('throttle:30,1')->name('moments.reply');
     Route::post('moments/{moment}/repost', [MomentController::class, 'repost'])->middleware('throttle:30,60')->name('moments.repost');
     Route::delete('moments/{moment}', [MomentController::class, 'destroy'])->name('moments.destroy');
@@ -216,7 +217,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::post('events/{event}/respond', [EventController::class, 'respond'])->name('events.respond');
 
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('notifications/latest', [NotificationController::class, 'latest'])->name('notifications.latest');
+    Route::get('notifications/latest', [NotificationController::class, 'latest'])->middleware('fetch.only')->name('notifications.latest');
     Route::post('notifications/read', [NotificationController::class, 'readAll'])->name('notifications.read');
     Route::get('notifications/{id}', [NotificationController::class, 'open'])->name('notifications.open');
 
