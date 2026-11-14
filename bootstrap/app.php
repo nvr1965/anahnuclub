@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureRulesAccepted;
+use App\Http\Middleware\FetchOnly;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\MainAddress;
 use App\Http\Middleware\PreviewForGuests;
@@ -24,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Shared hosting (SiteGround) serves through a proxy; without this every URL comes out as http://.
         $middleware->trustProxies(at: '*');
-        $middleware->alias(['admin' => EnsureAdmin::class, 'rules' => EnsureRulesAccepted::class, 'preview.guest' => PreviewForGuests::class]);
+        $middleware->alias(['admin' => EnsureAdmin::class, 'rules' => EnsureRulesAccepted::class, 'preview.guest' => PreviewForGuests::class, 'fetch.only' => FetchOnly::class]);
         $middleware->web(prepend: [MainAddress::class], append: [
             SetLocale::class,
             TouchLastSeen::class,
