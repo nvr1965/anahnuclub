@@ -45,8 +45,9 @@ class TranslateInterface implements ShouldQueue
         foreach (Language::all() as $language) {
             if (InterfaceStrings::missing($language->code) !== [] && ! Cache::has(self::busyKey($language->code))) {
                 Cache::put(self::busyKey($language->code), true, now()->addMinutes(10));
-                // A language still switched off is one waiting for its translation; it switches on when done.
-                self::dispatch($language->code, ! $language->enabled);
+                // Only a language just added waits for its translation to switch on; one the admin
+                // turned off gets the missing strings translated and stays off.
+                self::dispatch($language->code, $language->auto_enable);
             }
         }
     }
@@ -78,8 +79,9 @@ class TranslateInterface implements ShouldQueue
         }
 
         Page::all()->each(fn (Page $page) => $page->translateMissing($translator, [$this->code]));
-        if ($this->enableWhenDone) {
-            $language->update(['enabled' => true]);
+        // The admin may have switched the language on or off by hand meanwhile: then their choice stays.
+        if ($this->enableWhenDone && $language->auto_enable) {
+            $language->update(['enabled' => true, 'auto_enable' => false]);
         }
         Cache::forget(self::busyKey($this->code));
     }

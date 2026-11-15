@@ -14,11 +14,11 @@ class Language extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['code', 'name', 'native_name', 'rtl', 'enabled', 'sort'];
+    protected $fillable = ['code', 'name', 'native_name', 'rtl', 'enabled', 'auto_enable', 'sort'];
 
     protected function casts(): array
     {
-        return ['rtl' => 'boolean', 'enabled' => 'boolean'];
+        return ['rtl' => 'boolean', 'enabled' => 'boolean', 'auto_enable' => 'boolean'];
     }
 
     protected static function booted(): void
