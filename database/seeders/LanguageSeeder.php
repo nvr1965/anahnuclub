@@ -16,8 +16,10 @@ class LanguageSeeder extends Seeder
             ['code' => 'ar', 'name' => 'Arabic', 'native_name' => 'العربية', 'rtl' => true, 'sort' => 4],
         ];
 
+        // The seeder runs on every deploy: it only adds a missing language and never touches
+        // the order or the on/off switch the admin set.
         foreach ($languages as $language) {
-            Language::updateOrCreate(['code' => $language['code']], $language);
+            Language::firstOrCreate(['code' => $language['code']], $language);
         }
     }
 }

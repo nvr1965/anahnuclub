@@ -58,7 +58,7 @@ class LanguageController extends AdminController
             throw ValidationException::withMessages(['code' => __('DeepL does not translate into this language. Add GEMINI_API_KEY or ANTHROPIC_API_KEY to .env and Gemini or Claude will translate it.')]);
         }
 
-        Language::create($data + ['rtl' => false, 'enabled' => false, 'sort' => (Language::max('sort') ?? 0) + 1]);
+        Language::create($data + ['rtl' => false, 'enabled' => false, 'auto_enable' => true, 'sort' => (Language::max('sort') ?? 0) + 1]);
         TranslateInterface::dispatch($data['code'], true);
 
         return back();
@@ -69,7 +69,8 @@ class LanguageController extends AdminController
         $enabled = $request->validate(['enabled' => ['required', 'boolean']])['enabled'];
         abort_if(! $enabled && (Language::enabled()->count() <= 1 || $language->code === config('app.fallback_locale')), 422, 'This language must stay on.');
 
-        $language->update(['enabled' => $enabled]);
+        // A choice made by hand: the language no longer switches on by itself after its translation.
+        $language->update(['enabled' => $enabled, 'auto_enable' => false]);
 
         return back();
     }
