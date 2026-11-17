@@ -102,7 +102,7 @@ class InviteImage
     public static function current(string $code): bool
     {
         if (self::drawn($code)) {
-            return Storage::disk('public')->get(self::signaturePath($code)) === self::signature($code);
+            return Storage::disk('public')->get(self::signaturePath($code)) === self::drawnSignature($code);
         }
 
         return self::bundledCurrent($code);
@@ -118,7 +118,16 @@ class InviteImage
     public static function store(string $code, UploadedFile $file): void
     {
         Storage::disk('public')->putFileAs('invite', $file, "$code.jpg");
-        Storage::disk('public')->put(self::signaturePath($code), self::signature($code));
+        Storage::disk('public')->put(self::signaturePath($code), self::drawnSignature($code));
+    }
+
+    /**
+     * What a picture drawn on the site was drawn from: its texts and the logo on it. A new logo makes
+     * every drawn picture out of date, so the admin's Languages page draws them again on its own.
+     */
+    private static function drawnSignature(string $code): string
+    {
+        return self::signature($code).':'.substr((string) @md5_file(public_path('images/logo-tile.png')), 0, 8);
     }
 
     public static function forget(string $code): void
