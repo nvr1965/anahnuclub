@@ -6,9 +6,60 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+/** Lets the trigger open its menu on a finished tap (see DropdownMenuTrigger). */
+const TapToggleContext = React.createContext<(() => void) | null>(null);
 
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+function DropdownMenu({ open: openProp, defaultOpen, onOpenChange, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+    const [openState, setOpenState] = React.useState(defaultOpen ?? false);
+    const open = openProp ?? openState;
+    const setOpen = React.useCallback(
+        (next: boolean) => {
+            if (openProp === undefined) setOpenState(next);
+            onOpenChange?.(next);
+        },
+        [openProp, onOpenChange],
+    );
+    const toggle = React.useCallback(() => setOpen(!open), [open, setOpen]);
+
+    return (
+        <TapToggleContext.Provider value={toggle}>
+            <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen} {...props} />
+        </TapToggleContext.Provider>
+    );
+}
+
+/**
+ * Radix opens a menu as soon as a finger touches its button, so on a phone a swipe that starts on
+ * "Share" (or any other menu button) opened the menu instead of scrolling the page. With a finger or
+ * a pen the menu opens on a finished tap: the browser sends no click when the touch turned into a scroll.
+ * A mouse still opens it on press, as before.
+ */
+const DropdownMenuTrigger = React.forwardRef<
+    React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
+    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
+>(({ onPointerDown, onClick, ...props }, ref) => {
+    const toggle = React.useContext(TapToggleContext);
+    const tapped = React.useRef(false);
+
+    return (
+        <DropdownMenuPrimitive.Trigger
+            ref={ref}
+            onPointerDown={(event) => {
+                onPointerDown?.(event);
+                tapped.current = event.pointerType !== 'mouse';
+                // A prevented event is skipped by Radix's own handler, which would open the menu now.
+                if (tapped.current && toggle) event.preventDefault();
+            }}
+            onClick={(event) => {
+                onClick?.(event);
+                if (tapped.current && toggle && !event.defaultPrevented && !props.disabled) toggle();
+                tapped.current = false;
+            }}
+            {...props}
+        />
+    );
+});
+DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
