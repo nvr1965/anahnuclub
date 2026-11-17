@@ -1,7 +1,8 @@
 import { InviteButton } from '@/components/invite-button';
 import ClubLayout from '@/layouts/club-layout';
 import { useT } from '@/lib/i18n';
-import { Link } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 import { Cake, ChevronRight, ListChecks, UserCheck, UserPlus, Users, UsersRound } from 'lucide-react';
 import { type ReactNode } from 'react';
 
@@ -78,10 +79,15 @@ export function FriendsChips({ active, menu }: { active: FriendsSection; menu: F
 }
 
 export default function FriendsLayout({ active, menu, children }: { active: FriendsSection; menu: FriendsMenuCounts; children: ReactNode }) {
+    const { skin } = usePage<SharedData>().props;
+
     return (
         <ClubLayout left={<FriendsMenu active={active} menu={menu} />}>
-            <FriendsChips active={active} menu={menu} />
-            {children}
+            {/* The Forum style lays its cards edge to edge on phones; the Friends pages need the same side gap as the other styles. */}
+            <div className={skin === 'forum' ? 'max-sm:px-3' : undefined}>
+                <FriendsChips active={active} menu={menu} />
+                {children}
+            </div>
         </ClubLayout>
     );
 }
