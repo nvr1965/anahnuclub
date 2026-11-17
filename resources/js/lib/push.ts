@@ -136,7 +136,7 @@ export async function testPush(): Promise<PushReport> {
     const arrived = await arrival;
     let local = '';
     try {
-        await (await registration()).showNotification('Anahnu Club', { body: 'OK', tag: 'local-test', icon: '/icons/icon-192.png' });
+        await (await registration()).showNotification('Anahnu Club', { body: 'OK', tag: 'local-test', icon: '/icons/icon-192.png?v=2' });
     } catch (error) {
         local = error instanceof Error ? error.message : String(error);
     }

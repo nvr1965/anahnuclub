@@ -163,7 +163,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                 <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                     <Link href={auth.user ? route('dashboard') : route('home')} className="shrink-0" aria-label="anahnu.club">
                         <img
-                            src={blue ? '/images/logo-tile.png' : '/images/logo-mark.png'}
+                            src={blue ? '/images/logo-tile.png?v=2' : '/images/logo-mark.png?v=2'}
                             alt=""
                             className={`size-11 ${forum ? 'sm:size-12' : 'sm:size-14'}`}
                         />
@@ -199,7 +199,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                         onSubmit={search}
                         className="hidden w-full max-w-[640px] items-center gap-2 justify-self-center rounded-full bg-slate-100 px-4 py-2.5 sm:flex dark:bg-neutral-800"
                     >
-                        <img src="/images/logo-mark.png" alt="" className="size-7" />
+                        <img src="/images/logo-mark.png?v=2" alt="" className="size-7" />
                         <input
                             value={q}
                             onChange={(e) => setQ(e.target.value)}

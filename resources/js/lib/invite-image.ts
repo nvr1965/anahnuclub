@@ -95,7 +95,7 @@ export async function drawInvite(
     code: string,
     t: InviteTexts,
     rtl: boolean,
-    logoUrl = '/images/logo-tile.png',
+    logoUrl = '/images/logo-tile.png?v=2',
 ): Promise<void> {
     canvas.width = W;
     canvas.height = H;

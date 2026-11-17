@@ -42,10 +42,10 @@
             @endif
         @endisset
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="icon" href="/favicon.ico?v=2" sizes="any">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
         {{-- Installable as an app on phones and computers (public/manifest.webmanifest, public/sw.js). --}}
-        <link rel="manifest" href="/manifest.webmanifest">
+        <link rel="manifest" href="/manifest.webmanifest?v=2">
         <meta name="theme-color" content="#117892">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">

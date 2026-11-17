@@ -39,7 +39,7 @@ export function SharedPostView({ post, translated }: { post: SharedPost | null; 
             <div className="flex items-center gap-2.5 px-3 pt-3">
                 {post.official ? (
                     <Avatar className="size-9 shrink-0">
-                        <AvatarImage src="/images/logo-mark.png" alt="anahnu.club" />
+                        <AvatarImage src="/images/logo-mark.png?v=2" alt="anahnu.club" />
                     </Avatar>
                 ) : (
                     <Link href={post.author ? route('people.show', post.author.id) : '#'} className="shrink-0">

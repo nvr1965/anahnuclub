@@ -66,7 +66,7 @@ export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
                 aria-label="anahnu.club"
             >
                 {wide || <span className="hidden text-xl font-bold tracking-tight xl:inline">anahnu.club</span>}
-                <img src="/images/logo-mark.png" alt="" className={wide ? 'size-10' : 'size-10 xl:hidden'} />
+                <img src="/images/logo-mark.png?v=2" alt="" className={wide ? 'size-10' : 'size-10 xl:hidden'} />
             </Link>
             {items.map((item) => {
                 const active = page.url.startsWith(item.match);
