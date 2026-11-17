@@ -1,6 +1,6 @@
 @php
     $author = $official ? 'anahnu.club' : ($post->user?->name ?? __('Former member'));
-    $avatar = $official ? asset('images/logo-mark.png') : $post->user?->avatar;
+    $avatar = $official ? asset('images/logo-tile.png') : $post->user?->avatar;
     $date = $post->created_at && $post->created_at->gt(now()->subWeek())
         ? $post->created_at->locale(app()->getLocale())->diffForHumans()
         : $post->created_at?->locale(app()->getLocale())->isoFormat('LL');

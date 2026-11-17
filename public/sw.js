@@ -1,7 +1,7 @@
 // Anahnu Club as an installed app. Pages always come from the network (the club is live and
 // personal); the built scripts and styles, whose names change with every release, are kept on the
 // phone so the app opens fast; with no connection a page shows the offline notice.
-const CACHE = 'anahnu-v3';
+const CACHE = 'anahnu-v4';
 const OFFLINE = '/offline.html';
 
 self.addEventListener('install', (event) => {
