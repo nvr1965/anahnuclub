@@ -95,7 +95,7 @@ export async function drawInvite(
     code: string,
     t: InviteTexts,
     rtl: boolean,
-    logoUrl = '/images/logo-mark.png',
+    logoUrl = '/images/logo-tile.png',
 ): Promise<void> {
     canvas.width = W;
     canvas.height = H;
@@ -130,10 +130,8 @@ export async function drawInvite(
 
     // The text column: logo and name, slogan, three lines and the button.
     const col: [number, number] = [mx(56, 488), 488];
-    ctx.fillStyle = '#fff';
-    roundRect(ctx, mx(56, 64), 64, 64, 64, 16);
-    ctx.fill();
-    if (logo) ctx.drawImage(logo, mx(56, 64) + 6, 70, 52, 52);
+    // The logo on its white plate, which keeps it apart from the coloured background.
+    if (logo) ctx.drawImage(logo, mx(56, 64), 64, 64, 64);
     ctx.font = font(34, 700);
     ctx.fillStyle = '#fff';
     // The site's name is Latin in every language, so it reads left to right next to the logo.

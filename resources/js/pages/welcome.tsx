@@ -35,7 +35,7 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
             <section className="flex flex-col gap-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#117892] to-[#0b5a6e] p-5 text-white shadow-sm sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:p-10">
                 <div className="max-w-xl">
                     <div className="flex items-center gap-3">
-                        <img src="/images/logo-mark.png" alt="" className="size-12 rounded-xl bg-white" />
+                        <img src="/images/logo-tile.png" alt="" className="size-20" />
                         <span className="text-2xl font-extrabold tracking-wider">anahnu.club</span>
                     </div>
                     <h1 className="mt-6 text-3xl leading-tight font-bold sm:text-4xl">{t('A community without borders')}</h1>

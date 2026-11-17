@@ -1,5 +1,5 @@
 import json, base64, sys
-logo = base64.b64encode(open('/root/work/anahnuclub/public/images/logo-mark.png','rb').read()).decode()
+logo = base64.b64encode(open('/root/work/anahnuclub/public/images/logo-tile.png','rb').read()).decode()
 L = {
  'ru': dict(rtl=False, slogan='Лучшая соцсеть без цензуры', b=['Пишите на своём языке, всё переводится само','Сообщения, файлы и видеозвонки','Группы, фото, видео и события'], cta='Вступайте в клуб',
    inc='שלום! מה שלומך?', tr='Привет! Как дела?', trl='Переведено с иврита', out='Отлично! Рад тебя видеть 🙂', chat='Сообщения', online='в сети', post='Пикник на набережной в субботу, кто с нами?', like='Нравится', com='Комментировать'),
@@ -25,7 +25,7 @@ background:linear-gradient(135deg,#0e6f88 0%,#2b5fb8 55%,#6d4ad8 100%);color:#ff
 .glow{{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35}}
 .left{{position:absolute;top:0;bottom:0;{'right' if s['rtl'] else 'left'}:0;width:600px;padding:64px 56px;display:flex;flex-direction:column}}
 .brand{{display:flex;align-items:center;gap:16px;font-size:34px;font-weight:700;letter-spacing:.3px}}
-.brand img{{width:64px;height:64px;border-radius:16px;background:#fff;padding:6px}}
+.brand img{{width:64px;height:64px}}
 h1{{font-size:{'46' if s['rtl'] or len(s['slogan']) > 30 else '54'}px;line-height:1.08;font-weight:700;margin-top:40px}}
 ul{{list-style:none;padding:0;margin-top:30px;font-size:23px;line-height:1.5}} li{{display:flex;gap:12px;align-items:baseline;margin:6px 0;opacity:.95}}
 .tick{{display:inline-flex;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);align-items:center;justify-content:center;font-size:16px;flex:none}}
