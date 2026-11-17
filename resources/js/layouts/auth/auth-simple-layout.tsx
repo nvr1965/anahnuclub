@@ -15,7 +15,7 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                     which clashed with the card's colour in every style but Club (orange in Forum, rose in Showcase). */}
                 <div className="from-header-from via-brand to-header-to h-1 bg-gradient-to-r" />
                 <div className="flex flex-col items-center gap-2 pt-8">
-                    <img src="/images/logo-mark.png" alt="" className="size-28" />
+                    <img src="/images/logo-mark.png?v=2" alt="" className="size-28" />
                     <span className="text-brand text-2xl font-bold tracking-tight">anahnu.club</span>
                 </div>
                 <div className="space-y-6 px-6 pt-4 pb-6 sm:px-8 sm:pb-8">

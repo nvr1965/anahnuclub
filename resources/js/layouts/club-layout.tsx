@@ -201,7 +201,7 @@ function ShowcaseFrame({ children, left, right, full, wide, mainMenu }: Props) {
                         <SearchBox className="focus-within:border-brand rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-900" />
                         {auth.user && (
                             <div className="flex items-center gap-3 px-2">
-                                <img src={auth.user.avatar ?? '/images/logo-mark.png'} alt="" className="size-11 rounded-full object-cover" />
+                                <img src={auth.user.avatar ?? '/images/logo-mark.png?v=2'} alt="" className="size-11 rounded-full object-cover" />
                                 <span dir="auto" className="truncate text-sm font-semibold">
                                     {auth.user.name}
                                 </span>

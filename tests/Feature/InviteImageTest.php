@@ -107,4 +107,17 @@ class InviteImageTest extends TestCase
         Storage::disk('public')->delete('invite/kk.sig');
         $this->assertFalse(InviteImage::current('kk'));
     }
+
+    public function test_a_picture_drawn_with_the_old_logo_is_drawn_again()
+    {
+        Language::create(['code' => 'kk', 'name' => 'Kazakh', 'native_name' => 'Қазақша', 'rtl' => false, 'enabled' => true, 'sort' => 9]);
+        $this->actingAs($this->admin)->post('/admin/languages/kk/invite-image', ['image' => UploadedFile::fake()->image('kk.jpg', 1200, 630)]);
+        $this->assertTrue(InviteImage::current('kk'));
+
+        // A picture saved before the logo changed carries only the texts' fingerprint.
+        Storage::disk('public')->put('invite/kk.sig', InviteImage::signature('kk'));
+        $this->assertFalse(InviteImage::current('kk'));
+        $this->get('/admin/languages')->assertInertia(fn ($page) => $page
+            ->where('languages', fn ($languages) => collect($languages)->firstWhere('code', 'kk')['invite']['has'] === false));
+    }
 }

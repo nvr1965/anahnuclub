@@ -1,6 +1,6 @@
 @php
     $author = $official ? 'anahnu.club' : ($post->user?->name ?? __('Former member'));
-    $avatar = $official ? asset('images/logo-tile.png') : $post->user?->avatar;
+    $avatar = $official ? asset('images/logo-tile.png').'?v=2' : $post->user?->avatar;
     $date = $post->created_at && $post->created_at->gt(now()->subWeek())
         ? $post->created_at->locale(app()->getLocale())->diffForHumans()
         : $post->created_at?->locale(app()->getLocale())->isoFormat('LL');
@@ -78,7 +78,7 @@
             </a>
             <a class="date" href="{{ $url }}" title="{{ $post->created_at?->toIso8601String() }}">{{ $date }}</a>
         </div>
-        <a href="{{ $url }}" title="anahnu.club"><img class="logo" src="{{ asset('images/logo-mark.png') }}" alt="anahnu.club"></a>
+        <a href="{{ $url }}" title="anahnu.club"><img class="logo" src="{{ asset('images/logo-mark.png').'?v=2' }}" alt="anahnu.club"></a>
     </header>
 
     @if ($title || trim(strip_tags($body, '<img>')) !== '')

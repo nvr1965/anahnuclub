@@ -98,7 +98,7 @@ class SiteMeta
 
         return [
             ['@type' => 'Organization', '@id' => $home.'#club', 'name' => 'anahnu.club', 'url' => $home,
-                'logo' => asset('images/logo-mark.png'), 'description' => self::slogan()],
+                'logo' => asset('images/logo-mark.png').'?v=2', 'description' => self::slogan()],
             ['@type' => 'WebSite', '@id' => $home.'#site', 'name' => 'anahnu.club', 'url' => $home,
                 'publisher' => ['@id' => $home.'#club'], 'inLanguage' => Language::enabled()->pluck('code')->all()],
         ];
