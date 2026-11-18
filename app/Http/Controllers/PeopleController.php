@@ -8,6 +8,7 @@ use App\Models\Photo;
 use App\Models\User;
 use App\Support\Badges;
 use App\Support\ImageStore;
+use App\Support\PictureGallery;
 use App\Translation\ContentTranslator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -206,8 +207,12 @@ class PeopleController extends Controller
             return back();
         }
 
-        // A new file from the device, or one of the member's own photos already on the site.
-        if ($request->filled('photo_id')) {
+        // A new file from the device, one of the member's own photos already on the site, or a drawn picture.
+        if ($request->filled('gallery')) {
+            $source = PictureGallery::file($column === 'avatar_path' ? 'avatar' : 'cover', (string) $request->input('gallery'));
+            abort_if($source === null, 404);
+            $file = new UploadedFile($source, basename($source), null, null, true);
+        } elseif ($request->filled('photo_id')) {
             $photo = Photo::query()->where('user_id', $user->id)->findOrFail($request->integer('photo_id'));
             $file = new UploadedFile(Storage::disk('public')->path($photo->path), basename($photo->path), null, null, true);
         } else {
@@ -228,6 +233,14 @@ class PeopleController extends Controller
             Photo::query()->where('user_id', $request->user()->id)->latest('id')->limit(300)->get()
                 ->map(fn (Photo $p) => ['id' => $p->id, 'thumb' => asset('storage/'.($p->thumb_path ?: $p->path))])
         );
+    }
+
+    /** Drawn profile pictures or covers to pick from: the club authors' set and the one drawn for members. */
+    public function gallery(Request $request): JsonResponse
+    {
+        $kind = $request->validate(['kind' => ['required', Rule::in(PictureGallery::KINDS)]])['kind'];
+
+        return response()->json(PictureGallery::thumbs($kind));
     }
 
     /** A member as shown in friend lists and suggestions. */
