@@ -134,7 +134,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     };
 
     const renderComment = (comment: Comment, thread: number, small = false) => (
-        <div key={comment.id} className="flex gap-2">
+        <div key={comment.id} id={`comment-${comment.id}`} className="flex gap-2">
             <Avatar className={small ? 'size-6' : 'size-8'}>
                 <AvatarImage src={comment.author?.avatar ?? undefined} alt="" className="object-cover" />
                 <DefaultAvatarFallback />

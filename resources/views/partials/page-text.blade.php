@@ -4,6 +4,17 @@
     @if (! empty($content['html']))
         <div>{!! $content['html'] !!}</div>
     @endif
+    @if (! empty($content['comments']))
+        <section>
+            <h2>{{ __('Comments') }}</h2>
+            @foreach ($content['comments'] as $comment)
+                <article id="comment-{{ $comment['id'] }}">
+                    <p><strong>{{ $comment['author'] }}</strong>@if ($comment['date']) · <time datetime="{{ $comment['date']->toAtomString() }}">{{ $comment['date']->toDateString() }}</time>@endif</p>
+                    <div>{!! $comment['html'] !!}</div>
+                </article>
+            @endforeach
+        </section>
+    @endif
     @if (! empty($content['links']))
         <ul>
             @foreach ($content['links'] as $link)
