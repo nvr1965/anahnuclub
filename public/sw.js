@@ -1,11 +1,11 @@
 // Anahnu Club as an installed app. Pages always come from the network (the club is live and
 // personal); the built scripts and styles, whose names change with every release, are kept on the
 // phone so the app opens fast; with no connection a page shows the offline notice.
-const CACHE = 'anahnu-v3';
+const CACHE = 'anahnu-v5';
 const OFFLINE = '/offline.html';
 
 self.addEventListener('install', (event) => {
-    event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([OFFLINE, '/icons/icon-192.png'])));
+    event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([OFFLINE, '/icons/icon-192.png?v=2'])));
     self.skipWaiting();
 });
 
@@ -86,8 +86,8 @@ self.addEventListener('push', (event) => {
             if (watching && data.kind !== 'test') return undefined;
             return self.registration.showNotification(data.title || 'Anahnu Club', {
                 body: data.body || '',
-                icon: data.icon || '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
+                icon: data.icon || '/icons/icon-192.png?v=2',
+                badge: '/icons/icon-192.png?v=2',
                 tag: data.tag,
                 renotify: Boolean(data.tag),
                 requireInteraction: data.kind === 'call',

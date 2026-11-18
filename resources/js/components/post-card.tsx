@@ -211,7 +211,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
             <header className={`flex items-center gap-2.5 px-4 pt-3 ${showcase ? '-order-3 pb-3' : stream ? 'items-start' : ''}`}>
                 {post.official ? (
                     <Avatar className="size-10 shrink-0">
-                        <AvatarImage src="/images/logo-mark.png" alt="anahnu.club" />
+                        <AvatarImage src="/images/logo-mark.png?v=2" alt="anahnu.club" />
                     </Avatar>
                 ) : (
                     <Link href={profile(post.author?.id) ?? '#'} className="shrink-0">

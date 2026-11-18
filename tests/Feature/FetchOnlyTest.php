@@ -10,7 +10,7 @@ class FetchOnlyTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ADDRESSES = ['/friends/list', '/messages/latest', '/notifications/latest', '/push/key', '/share/groups', '/profile/photos', '/calls/ringing', '/clips/more?before=1000', '/hashtags/suggest?q=a'];
+    private const ADDRESSES = ['/friends/list', '/messages/latest', '/notifications/latest', '/push/key', '/share/groups', '/profile/photos', '/calls/ringing', '/clips/more?before=1000', '/profile/gallery?kind=avatar', '/hashtags/suggest?q=a'];
 
     public function test_data_addresses_are_not_found_when_opened_in_the_browser()
     {

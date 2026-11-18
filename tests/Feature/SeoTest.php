@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Event;
 use App\Models\Group;
+use App\Models\Language;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\User;
@@ -54,6 +55,20 @@ class SeoTest extends TestCase
 
         // The post under a menu in another language is the same text: it points to the plain address.
         $this->get("/posts/{$post->id}?lang=en")->assertSee('<link rel="canonical" href="'.$url.'">', false);
+    }
+
+    public function test_a_language_switched_off_drops_out_of_search_without_errors()
+    {
+        $post = Post::create(['user_id' => User::factory()->create()->id, 'body' => 'Привет', 'locale' => 'ru']);
+        $this->translate($post, 'he');
+        $url = route('posts.show', $post);
+        Language::where('code', 'he')->first()->update(['enabled' => false]);
+
+        // Its old address (?lang=he) still opens the post, with no redirect, and points Google to the plain one.
+        $this->get("/posts/{$post->id}?lang=he")->assertOk()
+            ->assertSee('<link rel="canonical" href="'.$url.'">', false)
+            ->assertDontSee('hreflang="he"', false);
+        $this->get('/sitemap-posts-1.xml')->assertOk()->assertDontSee('?lang=he', false);
     }
 
     public function test_pages_tell_search_engines_what_they_are()
@@ -261,6 +276,15 @@ class SeoTest extends TestCase
         // There are no feeds here: old ones are gone too, even when they name a group that exists.
         $this->get("/jomsocial/events.feed?groupid={$group->id}")->assertStatus(410);
         $this->get('/jomsocial/groups/viewdiscussion/7-tema.feed')->assertStatus(410);
+        // The forms Search Console listed: a member's part, several groups, a language prefix (also one
+        // switched off since), Cyrillic in the address. Each answers 410 at once, no redirect.
+        foreach (['/jomsocial/188-victor-letopan/groups/viewmylatestdiscussions.feed?groupids=40,41',
+            '/en/jomsocial/events.feed?groupid=71', '/jomsocial/videos.feed?groupid=102', '/jomsocial/photos.feed?groupid=104',
+            '/jomsocial/groups/viewbulletins.feed?groupid=104', '/ar/jomsocial/groups/viewbulletins.feed?groupid=1',
+            '/tg/jomsocial/photos.feed?groupid=49', '/jomsocial/groups/viewdiscussion/'.rawurlencode('89-диссертация-по-юриспруденции').'.feed',
+            '/jomsocial/events.feed?groupid=54&format=feed&type=rss'] as $old) {
+            $this->get($old)->assertStatus(410);
+        }
 
         // The old home page in a language is the home page in it; its other pages with nothing here are gone.
         $this->get('/ru')->assertRedirect(route('home').'/?lang=ru')->assertStatus(301);

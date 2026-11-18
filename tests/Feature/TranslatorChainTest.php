@@ -213,7 +213,7 @@ class TranslatorChainTest extends TestCase
 
     public function test_a_batch_the_service_garbles_is_split_and_the_language_does_not_stick()
     {
-        Language::create(['code' => 'fa', 'name' => 'Persian', 'native_name' => 'فارسی', 'rtl' => true, 'enabled' => false, 'sort' => 9]);
+        Language::create(['code' => 'fa', 'name' => 'Persian', 'native_name' => 'فارسی', 'rtl' => true, 'enabled' => false, 'auto_enable' => true, 'sort' => 9]);
         // Like an AI service that answers a long batch with a shorter array: only small batches get through.
         $this->app->instance(Translator::class, $this->chain([['id' => 'ai']])->with('ai', new class extends Provider
         {
@@ -295,6 +295,31 @@ class TranslatorChainTest extends TestCase
         $this->assertSame([], InterfaceStrings::missing('uk'));
         $this->assertTrue(Language::find('uk')->enabled);
         InterfaceStrings::forget('uk');
+    }
+
+    public function test_a_language_the_admin_turned_off_stays_off_after_the_hourly_translation()
+    {
+        $this->app->instance(Translator::class, new FakeTranslator);
+        $admin = User::factory()->create(['is_admin' => true]);
+        Language::create(['code' => 'hu', 'name' => 'Hungarian', 'native_name' => 'Magyar', 'rtl' => false, 'enabled' => true, 'sort' => 9]);
+        $this->actingAs($admin)->patch('/admin/languages/hu', ['enabled' => false])->assertRedirect();
+        $this->assertNotSame([], InterfaceStrings::missing('hu'));
+
+        TranslateInterface::resumeAll();
+
+        $this->assertSame([], InterfaceStrings::missing('hu'));
+        $this->assertFalse(Language::find('hu')->enabled);
+        InterfaceStrings::forget('hu');
+    }
+
+    public function test_the_deploy_seeder_keeps_the_order_and_switches_the_admin_set()
+    {
+        Language::whereKey('ru')->update(['sort' => 7, 'enabled' => false]);
+
+        $this->seed(\Database\Seeders\LanguageSeeder::class);
+
+        $this->assertSame(7, (int) Language::find('ru')->sort);
+        $this->assertFalse(Language::find('ru')->enabled);
     }
 
     public function test_admins_enter_keys_on_the_page_and_they_stay_encrypted()
