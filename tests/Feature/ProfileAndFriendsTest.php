@@ -81,6 +81,40 @@ class ProfileAndFriendsTest extends TestCase
         $this->assertSame($path, $member->fresh()->avatar_path);
     }
 
+    public function test_the_profile_picture_and_cover_can_be_a_drawn_picture()
+    {
+        Storage::fake('public');
+        $member = User::factory()->create();
+
+        $avatars = $this->actingAs($member)->getJson('/profile/gallery?kind=avatar')->assertOk()->json();
+        $ids = array_column($avatars, 'id');
+        // The club authors' own pictures and the extra set drawn for members.
+        $this->assertContains('club-aigul', $ids);
+        $this->assertContains('drawn-cat', $ids);
+        $this->assertCount(count(glob(resource_path('club-authors/*.png'))) + count(glob(resource_path('picture-gallery/avatars/*.png'))), $ids);
+        Storage::disk('public')->assertExists(str_replace(asset('storage').'/', '', $avatars[0]['thumb']));
+
+        $covers = array_column($this->getJson('/profile/gallery?kind=cover')->assertOk()->json(), 'id');
+        $this->assertContains('club-vera', $covers);
+        $this->assertContains('drawn-forest', $covers);
+        $this->getJson('/profile/gallery?kind=nope')->assertUnprocessable();
+
+        $this->post('/profile/avatar', ['gallery' => 'drawn-cat'])->assertRedirect();
+        $path = $member->fresh()->avatar_path;
+        $this->assertSame([400, 400], array_slice(getimagesizefromstring(Storage::disk('public')->get($path)), 0, 2));
+
+        $this->post('/profile/cover', ['gallery' => 'club-vera'])->assertRedirect();
+        $this->assertSame([1640, 624], array_slice(getimagesizefromstring(Storage::disk('public')->get($member->fresh()->cover_path)), 0, 2));
+
+        // Only pictures of the set, and a cover is not a profile picture.
+        $this->post('/profile/avatar', ['gallery' => '../../.env'])->assertNotFound();
+        $this->post('/profile/avatar', ['gallery' => 'drawn-forest'])->assertNotFound();
+        $this->assertSame($path, $member->fresh()->avatar_path);
+
+        $this->post('/profile/avatar', ['gallery' => 'drawn-owl'])->assertRedirect();
+        Storage::disk('public')->assertMissing($path);
+    }
+
     public function test_friend_requests_can_be_sent_accepted_and_ended()
     {
         [$anna, $boris] = User::factory()->count(2)->create();

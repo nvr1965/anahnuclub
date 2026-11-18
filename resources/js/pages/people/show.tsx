@@ -38,6 +38,7 @@ import {
     MapPin,
     MessageCircle,
     MessageCircleOff,
+    Palette,
     Pencil,
     Plus,
     Trash2,
@@ -604,8 +605,8 @@ function FriendButton({ profile }: { profile: Profile }) {
 }
 
 /**
- * Changes the profile picture or the cover: a new file from the device, or one of the member's own photos
- * already on the site; a menu item removes the current one.
+ * Changes the profile picture or the cover: a new file from the device, one of the member's own photos
+ * already on the site, or a drawn picture from the club's set; a menu item removes the current one.
  */
 function PictureButton({
     route: name,
@@ -622,6 +623,8 @@ function PictureButton({
     const input = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [picking, setPicking] = useState(false);
+    const [drawing, setDrawing] = useState(false);
+    const kind = name === 'people.cover' ? 'cover' : 'avatar';
     const busy = { preserveScroll: true, onStart: () => setUploading(true), onFinish: () => setUploading(false) };
 
     const upload = (file: File | undefined) => {
@@ -632,6 +635,11 @@ function PictureButton({
     const choose = (photoId: number) => {
         setPicking(false);
         router.post(route(name), { photo_id: photoId }, busy);
+    };
+
+    const chooseDrawn = (id: string) => {
+        setDrawing(false);
+        router.post(route(name), { gallery: id }, busy);
     };
 
     return (
@@ -648,6 +656,9 @@ function PictureButton({
                     <DropdownMenuItem onSelect={() => setPicking(true)}>
                         <Images className="size-4" /> {t('Choose from my photos')}
                     </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDrawing(true)}>
+                        <Palette className="size-4" /> {kind === 'cover' ? t('Choose a drawn cover') : t('Choose a drawn picture')}
+                    </DropdownMenuItem>
                     {hasPicture && (
                         <DropdownMenuItem onSelect={() => router.post(route(name), { remove: true }, { preserveScroll: true })}>
                             <Trash2 className="size-4" /> {t('Remove picture')}
@@ -656,7 +667,57 @@ function PictureButton({
                 </DropdownMenuContent>
             </DropdownMenu>
             {picking && <MyPhotos onClose={() => setPicking(false)} onChoose={choose} />}
+            {drawing && <DrawnPictures kind={kind} onClose={() => setDrawing(false)} onChoose={chooseDrawn} />}
         </>
+    );
+}
+
+/**
+ * Drawn profile pictures or covers, the same set the club authors use plus more drawn for members,
+ * loaded when the window opens; a tap picks one.
+ */
+function DrawnPictures({ kind, onClose, onChoose }: { kind: 'avatar' | 'cover'; onClose: () => void; onChoose: (id: string) => void }) {
+    const t = useT();
+    const [pictures, setPictures] = useState<{ id: string; thumb: string }[] | null>(null);
+    const cover = kind === 'cover';
+
+    useEffect(() => {
+        const ask = new AbortController();
+        fetch(route('people.gallery', { kind }), { headers: { Accept: 'application/json' }, signal: ask.signal })
+            .then((r) => (r.ok ? r.json() : []))
+            .then(setPictures)
+            .catch(() => !ask.signal.aborted && setPictures([]));
+        return () => ask.abort();
+    }, [kind]);
+
+    return (
+        <Dialog open onOpenChange={(value) => !value && onClose()}>
+            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{cover ? t('Choose a drawn cover') : t('Choose a drawn picture')}</DialogTitle>
+                </DialogHeader>
+                {pictures === null ? (
+                    <p className="text-muted-foreground py-8 text-center text-sm">…</p>
+                ) : pictures.length === 0 ? (
+                    <p className="text-muted-foreground py-8 text-center text-[15px]">{t('No pictures here yet.')}</p>
+                ) : (
+                    <div className={cover ? 'grid grid-cols-2 gap-2 sm:grid-cols-3' : 'grid grid-cols-4 gap-2 sm:grid-cols-6'}>
+                        {pictures.map((picture) => (
+                            <button
+                                key={picture.id}
+                                type="button"
+                                onClick={() => onChoose(picture.id)}
+                                className={`focus-visible:ring-brand hover:ring-brand bg-muted block overflow-hidden outline-none hover:ring-2 focus-visible:ring-2 ${
+                                    cover ? 'aspect-[1640/624] rounded-md' : 'aspect-square rounded-full'
+                                }`}
+                            >
+                                <img src={picture.thumb} alt="" loading="lazy" className="size-full object-cover transition hover:opacity-90" />
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }
 

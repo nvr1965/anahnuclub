@@ -132,6 +132,7 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::post('profile/avatar', [PeopleController::class, 'avatar'])->name('people.avatar');
     Route::post('profile/cover', [PeopleController::class, 'cover'])->name('people.cover');
     Route::get('profile/photos', [PeopleController::class, 'myPhotos'])->name('people.photos.mine');
+    Route::get('profile/gallery', [PeopleController::class, 'gallery'])->name('people.gallery');
 
     Route::get('friends', [FriendController::class, 'index'])->name('friends.index');
     Route::get('friends/list', [FriendController::class, 'list'])->name('friends.list');
