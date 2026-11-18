@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Comment;
 use App\Models\Event;
 use App\Models\Group;
 use App\Models\Language;
+use App\Models\Like;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\User;
@@ -86,7 +88,7 @@ class SeoTest extends TestCase
         // Text written by members never ends the script early.
         preg_match('~<script type="application/ld\+json">(.*?)</script>~s', $this->get("/posts/{$post->id}")->getContent(), $script);
         $this->assertStringContainsString('\u003C/script\u003E', $script[1]);
-        $this->assertSame('SocialMediaPosting', json_decode($script[1], true)['@graph'][0]['@type']);
+        $this->assertContains('SocialMediaPosting', array_column(json_decode($script[1], true)['@graph'], '@type'));
 
         $event = Event::create(['user_id' => $anna->id, 'title' => 'Шаббат в парке', 'location' => 'Парк Хайфы', 'starts_at' => now()->addWeek()]);
         $invite = Post::create(['user_id' => $anna->id, 'type' => 'event', 'body' => '', 'event_id' => $event->id]);
@@ -95,6 +97,59 @@ class SeoTest extends TestCase
             ->assertSee('"name":"Шаббат в парке"', false)
             ->assertSee('"location":{"@type":"Place","name":"Парк Хайфы","address":"Парк Хайфы"}', false)
             ->assertSee('"startDate":"'.$event->starts_at->toAtomString().'"', false);
+    }
+
+    public function test_every_page_names_the_club_and_the_site_once()
+    {
+        foreach (['/', '/register', '/posts', '/contact'] as $path) {
+            $graph = $this->graph($this->get($path)->getContent());
+            $this->assertSame(['Organization', 'WebSite'], array_column($graph, '@type'), $path);
+            $this->assertSame(SiteMeta::clubId(), $graph[1]['publisher']['@id']);
+        }
+    }
+
+    public function test_a_discussion_carries_its_comments_and_counts_for_google()
+    {
+        $anna = User::factory()->create(['name' => 'Анна']);
+        $boris = User::factory()->create(['name' => 'Борис']);
+        $group = Group::create(['name' => 'Хайфа', 'slug' => 'haifa']);
+        $post = Post::create(['user_id' => $anna->id, 'group_id' => $group->id, 'body' => '<p>Где купить халу?</p>', 'locale' => 'ru']);
+        $question = Comment::create(['post_id' => $post->id, 'user_id' => $boris->id, 'body' => 'В пекарне на Герцль']);
+        $reply = Comment::create(['post_id' => $post->id, 'user_id' => $anna->id, 'parent_id' => $question->id, 'body' => 'Спасибо!']);
+        Like::create(['user_id' => $boris->id, 'type' => 'like', 'likeable_type' => 'post', 'likeable_id' => $post->id]);
+
+        $html = $this->get("/posts/{$post->id}")->assertOk()->getContent();
+        $node = collect($this->graph($html))->firstWhere('@type', 'DiscussionForumPosting');
+        $this->assertNotNull($node);
+        $this->assertSame('Где купить халу?', $node['text']);
+        $this->assertSame(['@type' => 'Person', 'name' => 'Анна', 'url' => route('people.show', $anna)], $node['author']);
+        $this->assertSame(['@id' => SiteMeta::siteId()], $node['isPartOf']);
+        $this->assertSame(2, $node['commentCount']);
+        $this->assertSame([
+            ['@type' => 'InteractionCounter', 'interactionType' => 'https://schema.org/LikeAction', 'userInteractionCount' => 1],
+            ['@type' => 'InteractionCounter', 'interactionType' => 'https://schema.org/CommentAction', 'userInteractionCount' => 2],
+        ], $node['interactionStatistic']);
+        // The comment with its reply inside it, as the page shows them.
+        $this->assertCount(1, $node['comment']);
+        $this->assertSame('В пекарне на Герцль', $node['comment'][0]['text']);
+        $this->assertSame('Борис', $node['comment'][0]['author']['name']);
+        $this->assertSame(route('posts.show', $post).'#comment-'.$question->id, $node['comment'][0]['url']);
+        $this->assertSame('Спасибо!', $node['comment'][0]['comment'][0]['text']);
+        // And in the page's own text, for robots that don't run JavaScript.
+        $this->assertStringContainsString('<article id="comment-'.$reply->id.'">', $html);
+        $this->assertStringContainsString('В пекарне на Герцль', $html);
+
+        // Outside a group a post is a social media post.
+        $news = Post::create(['user_id' => $anna->id, 'body' => 'Новости']);
+        $this->assertSame('SocialMediaPosting', collect($this->graph($this->get("/posts/{$news->id}")->getContent()))->last()['@type']);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function graph(string $html): array
+    {
+        preg_match('~<script type="application/ld\+json">(.*?)</script>~s', $html, $script);
+
+        return json_decode($script[1], true)['@graph'];
     }
 
     public function test_new_public_posts_are_announced_to_indexnow()

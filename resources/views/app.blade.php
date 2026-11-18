@@ -36,10 +36,9 @@
             @else
                 <meta name="twitter:card" content="summary">
             @endif
-            @if (! empty($meta['jsonld']))
-                {{-- What the page is, in schema.org terms, for search results (the club, a post, an event). --}}
-                <script type="application/ld+json">{!! \App\Support\SiteMeta::jsonLd($meta['jsonld']) !!}</script>
-            @endif
+            {{-- What the page is, in schema.org terms, for search results: the club and the site on every
+                 page, and the page's own content (a post with its comments, an event). --}}
+            <script type="application/ld+json">{!! \App\Support\SiteMeta::jsonLd(\App\Support\SiteMeta::graph($meta['jsonld'] ?? [])) !!}</script>
         @endisset
 
         <link rel="icon" href="/favicon.ico?v=2" sizes="any">

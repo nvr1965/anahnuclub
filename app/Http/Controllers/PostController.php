@@ -7,6 +7,7 @@ use App\Jobs\FetchLinkPreview;
 use App\Jobs\SubmitToIndexNow;
 use App\Jobs\TranslateContent;
 use App\Models\Album;
+use App\Models\Comment;
 use App\Models\Group;
 use App\Models\LinkPreview;
 use App\Models\Post;
@@ -401,49 +402,91 @@ class PostController extends Controller
                 'heading' => $title ?: $author.': '.(mb_strimwidth($words, 0, 70, '…') ?: $linkTitle),
                 'html' => $body,
                 'links' => [],
+                // The comments too, as the page shows them, so search engines read the discussion without JavaScript.
+                'comments' => $post->isOfficial() ? [] : $post->comments->sortBy('id')->take(100)->map(fn (Comment $comment) => [
+                    'id' => $comment->id,
+                    'author' => $comment->user?->name ?? 'anahnu.club',
+                    'date' => $comment->created_at,
+                    'html' => Html::clean($comment->cachedTranslation('body', app()->getLocale()) ?? $comment->body),
+                ])->values()->all(),
             ],
         ];
 
         return Inertia::render('posts/show', [
             'post' => PostResource::make($post),
             'sidebar' => CommunitySidebar::for($request->user()),
-        ])->withViewData(['meta' => $meta + ['jsonld' => self::schema($post, $meta, $author, $languages)]]);
+        ])->withViewData(['meta' => $meta + ['jsonld' => self::schema($post, $meta, $author, $languages, $words, $linkTitle)]]);
     }
 
     /**
-     * The post in schema.org terms, and the event it announces, if any: search engines can show
-     * the date, author and picture, and an event with its date and place.
+     * The post in schema.org terms, with its comments, and the event it announces, if any. Google
+     * shows such posts under "Discussions and forums": author, date, text, pictures, likes, comments.
+     * A post in a group is a forum thread (DiscussionForumPosting), any other one a social media post
+     * (SocialMediaPosting); Google reads both the same way. Only what a guest sees on the page is
+     * described: the comments the page shows (none on the club's own posts), the likes it counts.
      *
      * @param  list<string>  $languages
      * @return list<array<string, mixed>>
      */
-    private static function schema(Post $post, array $meta, string $author, array $languages): array
+    private static function schema(Post $post, array $meta, string $author, array $languages, string $text, ?string $linkTitle): array
     {
         $url = route('posts.show', $post);
+        $locale = app()->getLocale();
+        $official = $post->isOfficial() || ! $post->user;
+        $comments = $official ? collect() : $post->comments;
+        // As the page shows them: each comment with the replies to it, oldest first.
+        $threads = $comments->filter(fn (Comment $c) => ! $c->parent_id || ! $comments->contains('id', $c->parent_id))
+            ->sortBy('id')->take(100)
+            ->map(fn (Comment $c) => self::commentSchema($c, $url, $comments->where('parent_id', $c->id)->sortBy('id')->take(50)
+                ->map(fn (Comment $reply) => self::commentSchema($reply, $url))->values()->all()))
+            ->values()->all();
+        $images = $post->photos->map(fn ($photo) => $photo->card()['url'])->values()->all();
+        $video = $post->video;
+
         $nodes = [array_filter([
-            '@type' => 'SocialMediaPosting',
-            '@id' => $url,
+            '@type' => $post->group_id ? 'DiscussionForumPosting' : 'SocialMediaPosting',
+            '@id' => $url.'#post',
             'url' => $meta['url'],
+            'mainEntityOfPage' => $meta['url'],
             'headline' => mb_strimwidth($meta['content']['heading'], 0, 110, '…'),
-            'description' => $meta['description'],
-            'image' => $meta['image'],
+            // Google needs the post's words, a picture or a video; a post that is only a link is named by it.
+            'text' => $text !== '' ? $text : $linkTitle,
+            'image' => $images ?: ($meta['image'] !== SiteMeta::image() ? $meta['image'] : null),
+            'video' => $video && $video->thumbUrl() ? array_filter([
+                '@type' => 'VideoObject',
+                'name' => $video->localized('title') ?: ($linkTitle ?: $meta['title']),
+                'description' => SiteMeta::plain($video->localized('description')) ?: null,
+                'thumbnailUrl' => $video->thumbUrl(),
+                'uploadDate' => ($video->created_at ?? $post->created_at)?->toAtomString(),
+                'embedUrl' => $video->embedUrl(),
+                'contentUrl' => $video->path ? asset('storage/'.$video->path) : null,
+                'duration' => $video->duration ? 'PT'.(int) $video->duration.'S' : null,
+            ]) : null,
+            'sharedContent' => $post->link_url && ! $video ? array_filter([
+                '@type' => 'WebPage', 'url' => $post->link_url, 'name' => $linkTitle,
+            ]) : null,
             'datePublished' => $post->created_at?->toAtomString(),
             'dateModified' => ($post->updated_at ?? $post->created_at)?->toAtomString(),
-            'inLanguage' => in_array(app()->getLocale(), $languages, true) ? app()->getLocale() : ($post->locale ?: null),
-            // Google asks for the author's page: the member's profile, or the club's home for its own posts.
-            'author' => $post->isOfficial() || ! $post->user
-                ? ['@type' => 'Organization', 'name' => $author, 'url' => route('home').'/']
-                : ['@type' => 'Person', 'name' => $author, 'url' => route('people.show', $post->user)],
-            'isPartOf' => ['@type' => 'WebSite', 'name' => 'anahnu.club', 'url' => route('home').'/'],
-        ])];
+            'inLanguage' => in_array($locale, $languages, true) ? $locale : ($post->locale ?: null),
+            // Google asks for the author's page: the member's profile, or the club itself for its own posts.
+            'author' => $official ? ['@type' => 'Organization', '@id' => SiteMeta::clubId(), 'name' => $author, 'url' => route('home').'/']
+                : self::personSchema($post->user),
+            'isPartOf' => ['@id' => SiteMeta::siteId()],
+            'interactionStatistic' => array_values(array_filter([
+                ['@type' => 'InteractionCounter', 'interactionType' => 'https://schema.org/LikeAction', 'userInteractionCount' => (int) ($post->likes_count ?? 0)],
+                $official ? null : ['@type' => 'InteractionCounter', 'interactionType' => 'https://schema.org/CommentAction', 'userInteractionCount' => $comments->count()],
+            ])),
+            'commentCount' => $official ? null : $comments->count(),
+            'comment' => $threads ?: null,
+        ], fn ($value) => $value !== null && $value !== '' && $value !== [])];
 
         // Google shows an event only with its start and its place.
         $event = $post->event;
         if ($event?->starts_at && trim((string) $event->location) !== '') {
             $nodes[] = array_filter([
                 '@type' => 'Event',
-                'name' => $event->cachedTranslation('title', app()->getLocale()) ?? $event->title,
-                'description' => SiteMeta::plain($event->cachedTranslation('description', app()->getLocale()) ?? $event->description) ?: null,
+                'name' => $event->cachedTranslation('title', $locale) ?? $event->title,
+                'description' => SiteMeta::plain($event->cachedTranslation('description', $locale) ?? $event->description) ?: null,
                 'startDate' => $event->starts_at->toAtomString(),
                 'endDate' => $event->ends_at?->toAtomString(),
                 'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
@@ -451,11 +494,30 @@ class PostController extends Controller
                 'location' => ['@type' => 'Place', 'name' => $event->location, 'address' => $event->location],
                 'image' => $event->coverUrl(),
                 'url' => $url,
-                'organizer' => ['@type' => 'Organization', 'name' => 'anahnu.club', 'url' => route('home').'/'],
+                'organizer' => ['@id' => SiteMeta::clubId()],
             ]);
         }
 
         return $nodes;
+    }
+
+    /** A comment as the post's page shows it: in the reader's language when translated. */
+    private static function commentSchema(Comment $comment, string $postUrl, array $replies = []): array
+    {
+        return array_filter([
+            '@type' => 'Comment',
+            'url' => $postUrl.'#comment-'.$comment->id,
+            'text' => SiteMeta::plain(Html::clean($comment->cachedTranslation('body', app()->getLocale()) ?? $comment->body), 5000),
+            'datePublished' => $comment->created_at?->toAtomString(),
+            'author' => $comment->user ? self::personSchema($comment->user) : ['@type' => 'Person', 'name' => 'anahnu.club'],
+            'comment' => $replies ?: null,
+        ]);
+    }
+
+    /** A member as an author: the name the page shows and the address of their profile. */
+    private static function personSchema(User $user): array
+    {
+        return ['@type' => 'Person', 'name' => $user->name, 'url' => route('people.show', $user)];
     }
 
     /** "Post from Facebook" for a link whose page told us nothing (Facebook shows robots only a sign-in page). */

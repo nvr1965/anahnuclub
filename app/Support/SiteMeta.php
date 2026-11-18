@@ -97,11 +97,36 @@ class SiteMeta
         $home = route('home').'/';
 
         return [
-            ['@type' => 'Organization', '@id' => $home.'#club', 'name' => 'anahnu.club', 'url' => $home,
+            ['@type' => 'Organization', '@id' => self::clubId(), 'name' => 'anahnu.club', 'url' => $home,
                 'logo' => asset('images/logo-mark.png').'?v=2', 'description' => self::slogan()],
-            ['@type' => 'WebSite', '@id' => $home.'#site', 'name' => 'anahnu.club', 'url' => $home,
-                'publisher' => ['@id' => $home.'#club'], 'inLanguage' => Language::enabled()->pluck('code')->all()],
+            ['@type' => 'WebSite', '@id' => self::siteId(), 'name' => 'anahnu.club', 'url' => $home,
+                'publisher' => ['@id' => self::clubId()], 'inLanguage' => Language::enabled()->pluck('code')->all()],
         ];
+    }
+
+    /** The club (Organization) and the site (WebSite) as other schema.org nodes point to them. */
+    public static function clubId(): string
+    {
+        return route('home').'/#club';
+    }
+
+    public static function siteId(): string
+    {
+        return route('home').'/#site';
+    }
+
+    /**
+     * What every page carries: the club and the site, then the page's own nodes (a post, an event).
+     * The page's nodes point to the club and the site by their @id.
+     *
+     * @param  list<array<string, mixed>>  $nodes
+     * @return list<array<string, mixed>>
+     */
+    public static function graph(array $nodes = []): array
+    {
+        $ids = array_filter(array_column($nodes, '@id'));
+
+        return [...array_filter(self::site(), fn (array $node) => ! in_array($node['@id'], $ids, true)), ...$nodes];
     }
 
     /**

@@ -65,7 +65,6 @@ class FeedController extends Controller
                 'html' => '<p>'.e(__('Write in your language, everything is translated for you.')).'</p>',
                 'links' => [...self::links($posts), ['href' => route('posts.archive'), 'text' => __('Posts').' →']],
             ],
-            'jsonld' => SiteMeta::site(),
         ])]);
     }
 
