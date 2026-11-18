@@ -4,6 +4,7 @@ import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import { PasswordInput } from '@/components/password-input';
 import { SocialLogin } from '@/components/social-login';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -71,9 +72,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 </TextLink>
                             )}
                         </div>
-                        <Input
+                        <PasswordInput
                             id="password"
-                            type="password"
                             required
                             tabIndex={2}
                             autoComplete="current-password"

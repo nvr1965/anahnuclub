@@ -1,5 +1,6 @@
 import { CommunitySidebar } from '@/components/community-sidebar';
 import InputError from '@/components/input-error';
+import { PasswordToggle } from '@/components/password-input';
 import { PostList } from '@/components/post-list';
 import { SocialLogin } from '@/components/social-login';
 import ClubLayout from '@/layouts/club-layout';
@@ -7,7 +8,7 @@ import { useT } from '@/lib/i18n';
 import { type Post, type Sidebar } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Check, Lock, User, UserPlus } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 /**
  * Front page for guests, laid out like the old anahnu.club: banner, quick login, members and the latest posts.
@@ -16,6 +17,7 @@ import { FormEventHandler } from 'react';
 export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; sidebar: Sidebar }) {
     const t = useT();
     const form = useForm({ email: '', password: '', remember: true as boolean });
+    const [showPassword, setShowPassword] = useState(false);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -78,13 +80,14 @@ export default function Welcome({ posts, sidebar }: { posts: { data: Post[] }; s
                     <label className={field}>
                         <Lock className="text-muted-foreground size-4" />
                         <input
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             className="w-full bg-transparent py-2.5 text-sm outline-none"
                             placeholder={t('Password')}
                             autoComplete="current-password"
                             value={form.data.password}
                             onChange={(e) => form.setData('password', e.target.value)}
                         />
+                        <PasswordToggle shown={showPassword} onToggle={() => setShowPassword((v) => !v)} className="-me-2" />
                     </label>
                     <InputError message={form.errors.email} />
                     <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
