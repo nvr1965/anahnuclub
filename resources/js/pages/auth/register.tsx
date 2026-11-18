@@ -4,6 +4,7 @@ import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import { PasswordInput } from '@/components/password-input';
 import { SocialLogin } from '@/components/social-login';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -74,9 +75,8 @@ export default function Register() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="password">{t('Password')}</Label>
-                        <Input
+                        <PasswordInput
                             id="password"
-                            type="password"
                             required
                             tabIndex={3}
                             autoComplete="new-password"
@@ -90,9 +90,8 @@ export default function Register() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="password_confirmation">{t('Confirm password')}</Label>
-                        <Input
+                        <PasswordInput
                             id="password_confirmation"
-                            type="password"
                             required
                             tabIndex={4}
                             autoComplete="new-password"
