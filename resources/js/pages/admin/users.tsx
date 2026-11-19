@@ -181,7 +181,7 @@ export default function AdminUsers({
                                         <DefaultAvatarFallback />
                                     </Avatar>
                                 </Link>
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 flex-[1_1_14rem]">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <Link href={route('people.show', user.id)} dir="auto" className="font-medium hover:underline">
                                             {user.name}
