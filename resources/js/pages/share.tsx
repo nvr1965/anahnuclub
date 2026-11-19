@@ -14,7 +14,13 @@ export default function Share({ body, url, sidebar }: { body: string; url: strin
     const [stayed, setStayed] = useState(false);
     // The button opens a small window; when it did, closing it returns the reader to the site.
     const popup = typeof window !== 'undefined' && !!window.opener;
-    const host = url ? new URL(url).host : null;
+    const host = (() => {
+        try {
+            return url ? new URL(url).host : null;
+        } catch {
+            return null;
+        }
+    })();
     const leave = () => (popup ? window.close() : url ? (window.location.href = url) : router.visit(route('dashboard')));
     useEffect(() => {
         if (!posted) return;
