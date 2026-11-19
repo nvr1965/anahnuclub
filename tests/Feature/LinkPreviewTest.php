@@ -170,6 +170,24 @@ class LinkPreviewTest extends TestCase
         $this->assertSame('NofInfo', LinkPreview::where('url', 'http://93.184.216.34/old')->value('site_name'));
     }
 
+    public function test_a_bbcode_link_from_the_old_site_ends_at_the_bracket()
+    {
+        $this->assertSame('https://eogbot.one', LinkPreviewFetcher::firstUrl('Текст [url=https://eogbot.one]глаз бога[/url] дальше'));
+        $this->assertSame('https://site.com/a', LinkPreviewFetcher::firstUrl('[url]https://site.com/a[/url]'));
+        $this->assertSame('https://site.com/a?b=1', LinkPreviewFetcher::firstUrl('см. https://site.com/a?b=1.'));
+    }
+
+    public function test_posts_with_a_broken_bbcode_link_are_repaired()
+    {
+        $user = User::factory()->create();
+        $id = Post::create(['user_id' => $user->id, 'type' => 'status', 'body' => 'старый'])->id;
+        Post::whereKey($id)->update(['body' => 'Обзор [url=https://eogbot.one]глаз бога[/url]', 'link_url' => 'https://eogbot.one]глаз']);
+
+        (require database_path('migrations/2026_11_19_000001_repair_bbcode_link_urls.php'))->up();
+
+        $this->assertSame('https://eogbot.one', Post::find($id)->link_url);
+    }
+
     public function test_one_page_can_be_read_by_hand_to_see_why_it_fails()
     {
         Http::fake(['http://93.184.216.34/blocked' => Http::response('no', 403, ['Content-Type' => 'text/html']), 'http://93.184.216.34/*' => Http::response(self::PAGE, 200, ['Content-Type' => 'text/html'])]);

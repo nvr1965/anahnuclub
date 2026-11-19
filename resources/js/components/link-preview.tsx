@@ -3,13 +3,23 @@ import { type LinkCard } from '@/types';
 import { ExternalLink, Globe, X } from 'lucide-react';
 import { useState } from 'react';
 
+/** The site of an address, or null when the address is not a valid one: a bad link must not break the page. */
+function hostOf(url: string): string | null {
+    try {
+        return new URL(url).host || null;
+    } catch {
+        return null;
+    }
+}
+
 /**
  * A shared link drawn as on Facebook: a big picture above the site, title and summary,
  * or, when the page only offers a small picture, a thumbnail beside them.
  */
 export function LinkPreview({ link, onRemove }: { link: LinkCard; onRemove?: () => void }) {
     const [image, setImage] = useState<'loading' | 'big' | 'small' | 'none'>(link.image ? 'loading' : 'none');
-    const [icon, setIcon] = useState(true);
+    const host = hostOf(link.url);
+    const [icon, setIcon] = useState(host !== null);
     const t = useT();
     const small = image === 'small' || image === 'none';
     // A site that turns servers away tells us nothing: its icon, name and the address, read by the visitor's own browser.
@@ -25,7 +35,7 @@ export function LinkPreview({ link, onRemove }: { link: LinkCard; onRemove?: () 
             <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-neutral-900">
                 {icon ? (
                     <img
-                        src={`https://${new URL(link.url).host}/favicon.ico`}
+                        src={`https://${host}/favicon.ico`}
                         alt=""
                         loading="lazy"
                         referrerPolicy="no-referrer"

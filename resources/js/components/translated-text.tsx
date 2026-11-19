@@ -8,7 +8,12 @@ import { type MouseEvent, useEffect, useRef, useState } from 'react';
 function openInside(e: MouseEvent<HTMLDivElement>) {
     const link = (e.target as HTMLElement).closest('a');
     if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const url = new URL(link.href, window.location.href);
+    let url: URL;
+    try {
+        url = new URL(link.href, window.location.href);
+    } catch {
+        return;
+    }
     if (url.origin !== window.location.origin || !/^\/(hashtag|people)\//.test(url.pathname)) return;
     e.preventDefault();
     router.visit(url.pathname + url.search);

@@ -35,10 +35,14 @@ class LinkPreviewFetcher
     /** Why the last fetch() came back empty, for `posts:link-previews --url`. */
     public ?string $lastError = null;
 
-    /** The first web address in a post's text, or null. */
+    /**
+     * The first web address in a post's text, or null. An address ends at a square bracket: posts from
+     * the old site carry BBCode, and "[url=https://site.com]words[/url]" is the address site.com, not
+     * "site.com]words" (that one broke the post's page in the browser, and Google saw it as a soft 404).
+     */
     public static function firstUrl(?string $text): ?string
     {
-        if (! $text || ! preg_match('~https?://[^\s<>"\']+~i', html_entity_decode($text, ENT_QUOTES | ENT_HTML5), $m)) {
+        if (! $text || ! preg_match('~https?://[^\s<>"\'\[\]]+~i', html_entity_decode($text, ENT_QUOTES | ENT_HTML5), $m)) {
             return null;
         }
         $url = rtrim($m[0], '.,;:!?)]}»');
