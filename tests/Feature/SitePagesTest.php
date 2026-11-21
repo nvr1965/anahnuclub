@@ -31,7 +31,18 @@ class SitePagesTest extends TestCase
                 ->where('page.title', $title)
                 ->where('footer.pages.0.slug', 'rules')
                 ->where('footer.pages.2.slug', 'privacy')
+                ->where('footer.pages.3.slug', 'accessibility')
                 ->where('footer.donate.0.url', 'https://www.paypal.com/donate/?hosted_button_id=9K3YLUVSY8K72')
+            );
+        }
+    }
+
+    public function test_the_accessibility_statement_names_the_standard_and_a_contact()
+    {
+        foreach (['ru' => 'Заявление о доступности', 'he' => 'הצהרת נגישות', 'en' => 'Accessibility statement', 'ar' => 'بيان إمكانية الوصول'] as $locale => $title) {
+            $this->withSession(['locale' => $locale])->get('/p/accessibility')->assertOk()->assertInertia(fn ($page) => $page
+                ->where('page.title', $title)
+                ->where('page.body', fn ($body) => str_contains($body, '5568') && str_contains($body, 'href="/contact"'))
             );
         }
     }

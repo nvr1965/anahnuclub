@@ -146,7 +146,9 @@ class FeedsTest extends TestCase
         $this->assertSame('public', $post->audience);
         $this->assertSame('https://gazeta.uz/1', $post->link_url);
         $this->assertStringContainsString('В Ташкенте открыли станцию.', $post->body);
-        $this->assertStringContainsString('Gazeta.uz', $post->body);
+        // The source and the link are kept by the translators as written, so "— Gazeta.uz" is never translated.
+        $this->assertStringContainsString('— <span translate="no" class="notranslate">Gazeta.uz</span>', $post->body);
+        $this->assertStringContainsString('<a href="https://gazeta.uz/1" translate="no" class="notranslate">https://gazeta.uz/1</a>', $post->body);
         $this->assertSame('Новое метро', LinkPreview::where('url', 'https://gazeta.uz/1')->value('title'));
     }
 
