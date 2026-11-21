@@ -93,8 +93,6 @@ class FeedPublisher
             return $item;
         }
         $item->update(['status' => 'posted', 'post_id' => $post->id, 'posted_at' => now()]);
-        // The author was here when it posted: "online" for a few minutes, then "was online" at its own daytime.
-        $channel->user->forceFill(['last_seen_at' => now()])->saveQuietly();
 
         return $item;
     }

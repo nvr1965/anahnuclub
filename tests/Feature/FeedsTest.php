@@ -180,7 +180,7 @@ class FeedsTest extends TestCase
         $this->assertSame(2, Post::count());
     }
 
-    public function test_each_author_posts_in_its_own_time_zone_and_is_online_when_it_posts()
+    public function test_each_author_posts_in_its_own_time_zone_and_is_never_shown_online()
     {
         $jake = $this->author(['daily_limit' => 1, 'timezone' => 'America/New_York']);
         $david = $this->author(['daily_limit' => 1]);
@@ -193,7 +193,11 @@ class FeedsTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-11-08 22:30', 'America/New_York')->utc());
         $item = $publisher->publishNext();
         $this->assertSame($jake->id, $item?->feed_channel_id);
-        $this->assertTrue($jake->user->fresh()->isOnline(), 'seen online when he posts');
+        // An automated account is not a person: no "online" and no "was online", even when it posts.
+        $this->assertNull($jake->user->fresh()->last_seen_at);
+        $jake->user->forceFill(['last_seen_at' => now()])->saveQuietly();
+        $this->assertFalse($jake->user->fresh()->isOnline());
+        $this->assertNull($jake->user->fresh()->seenAt());
         $this->assertFalse($david->user->fresh()->isOnline());
 
         // 03:00 in New York: Jake does not post, whatever the time in Israel.
