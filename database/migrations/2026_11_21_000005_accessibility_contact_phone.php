@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** The accessibility coordinator's phone on the accessibility statement. A page an admin has already edited is left alone. */
+/** The accessibility coordinator's name and phone on the accessibility statement. A page an admin has already edited is left alone. */
 return new class extends Migration
 {
     public function up(): void
