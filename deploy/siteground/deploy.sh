@@ -120,7 +120,7 @@ echo "==> Mail"
 "$PHP" artisan mail:check || true
 # Languages and the translators' daily limits, and the last translation errors (why new posts stay untranslated).
 "$PHP" artisan translations:status || true
-grep -hE "Content translation failed|Translator failed|Interface translation paused" storage/logs/laravel*.log 2>/dev/null | tail -5 | cut -c1-300 || true
+grep -hE "Content translation failed|Translator failed|Interface translation paused" storage/logs/laravel*.log 2>/dev/null | tail -5 | cut -c1-700 || true
 
 echo
 echo "Done: $(grep '^APP_URL=' .env | cut -d= -f2)"

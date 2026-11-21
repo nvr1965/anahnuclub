@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Jobs\TranslateContent;
+use App\Models\FeedChannel;
 use App\Models\Language;
 use App\Models\Post;
 use App\Models\User;
 use App\Translation\ContentTranslator;
+use App\Translation\TranslationTargets;
 use App\Translation\Translator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -75,6 +77,27 @@ class NewContentTranslationTest extends TestCase
         $this->withSession(['locale' => 'fa'])->postJson('/translations', ['items' => [['type' => 'post', 'id' => $post->id]]])
             ->assertOk();
         $this->assertTrue($post->contentTranslations()->where('locale', 'fa')->exists(), 'translated when opened in Persian');
+    }
+
+    public function test_only_members_seen_lately_and_no_news_author_make_a_language_go_ahead_of_time()
+    {
+        foreach (['uz' => "O'zbek", 'fa' => 'فارسی', 'ka' => 'ქართული'] as $code => $native) {
+            Language::create(['code' => $code, 'name' => $code, 'native_name' => $native, 'rtl' => false, 'enabled' => true, 'sort' => 9]);
+        }
+        // Tried Uzbek once, months ago, and has not been back.
+        $gone = User::factory()->create(['ui_locale' => 'uz']);
+        $gone->forceFill(['created_at' => now()->subYear(), 'last_seen_at' => now()->subDays(TranslationTargets::ACTIVE_DAYS + 5)])->save();
+        // A news channel's author account.
+        FeedChannel::create(['user_id' => User::factory()->create(['locale' => 'fa'])->id]);
+        // A member who reads Georgian and was here yesterday.
+        $here = User::factory()->create(['locale' => 'ka']);
+        $here->forceFill(['created_at' => now()->subYear(), 'last_seen_at' => now()->subDay()])->save();
+
+        $eager = TranslationTargets::eager();
+
+        $this->assertContains('ka', $eager);
+        $this->assertNotContains('uz', $eager, 'a member gone for long does not count');
+        $this->assertNotContains('fa', $eager, 'a news author is not a reader');
     }
 
     public function test_languages_no_service_could_take_are_tried_again_later()
