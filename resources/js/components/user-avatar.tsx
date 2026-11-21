@@ -21,8 +21,9 @@ export function UserAvatar({
     className?: string;
     fallbackClassName?: string;
 }) {
+    // Named as a picture, so a link or button holding only the avatar is read out as the member's name.
     const avatar = (
-        <Avatar className={className}>
+        <Avatar className={className} role={person ? 'img' : undefined} aria-label={person?.name}>
             <AvatarImage src={person?.avatar ?? undefined} alt="" className="object-cover" />
             <DefaultAvatarFallback className={fallbackClassName} />
         </Avatar>

@@ -233,7 +233,7 @@ export function ClubHeader({ className = '' }: { className?: string }) {
                     <LanguageSwitcher className="rounded-full bg-slate-100 px-3 py-2 whitespace-nowrap text-slate-900 max-sm:px-2.5 dark:bg-neutral-800 dark:text-neutral-100 max-sm:[&>span:nth-child(2)]:hidden [&>svg]:hidden sm:[&>svg]:block" />
                     {auth.user ? (
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="flex flex-col items-center gap-1 rounded-lg outline-none sm:w-14">
+                            <DropdownMenuTrigger aria-label={t('Menu')} className="flex flex-col items-center gap-1 rounded-lg outline-none sm:w-14">
                                 <Avatar className="size-9">
                                     <AvatarImage src={auth.user.avatar} alt={auth.user.name} className="object-cover" />
                                     <DefaultAvatarFallback />

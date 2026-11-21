@@ -63,7 +63,7 @@ export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
                             <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg">
                                 <img
                                     src={photo.thumb}
-                                    alt=""
+                                    alt={t('Photo')}
                                     loading="lazy"
                                     onError={(e) => ((e.currentTarget.parentElement as HTMLElement).style.display = 'none')}
                                     className="aspect-square w-full object-cover transition hover:scale-105"

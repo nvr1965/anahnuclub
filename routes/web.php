@@ -27,6 +27,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PushController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShareController;
@@ -82,6 +83,8 @@ Route::get('embed/posts/{post}', [EmbedController::class, 'post'])->whereNumber(
 Route::get('p/{page}', [PageController::class, 'show'])->name('pages.show');
 Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:10,1')->name('contact.store');
+// "Report" on a post or a comment, for members and guests alike.
+Route::post('reports', [ReportController::class, 'store'])->middleware('throttle:10,1')->name('reports.store');
 
 // For members; a guest opening a shared link gets the sign-in page with the link's card (PreviewForGuests).
 Route::middleware(['preview.guest', 'verified', 'rules'])->group(function () {
@@ -247,6 +250,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('moderation', [Admin\ModerationController::class, 'destroy'])->name('moderation.destroy');
     Route::post('moderation/keep', [Admin\ModerationController::class, 'keep'])->name('moderation.keep');
     Route::put('moderation/words', [Admin\ModerationController::class, 'words'])->name('moderation.words');
+    Route::get('reports', [Admin\ReportController::class, 'index'])->name('reports.index');
+    Route::patch('reports/{report}', [Admin\ReportController::class, 'update'])->name('reports.update');
     Route::get('groups', [Admin\GroupController::class, 'index'])->name('groups.index');
     Route::post('groups/prune-stale', [Admin\GroupController::class, 'pruneStale'])->name('groups.prune-stale');
     Route::patch('groups/{group:id}', [Admin\GroupController::class, 'update'])->name('groups.update');
