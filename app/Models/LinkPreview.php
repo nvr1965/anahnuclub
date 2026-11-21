@@ -2,25 +2,11 @@
 
 namespace App\Models;
 
-use App\Support\ImageStore;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class LinkPreview extends Model
 {
     protected $fillable = ['url', 'title', 'description', 'image', 'site_name'];
-
-    protected static function booted(): void
-    {
-        // A new picture for the page: our copy of the old one goes.
-        static::saving(function (LinkPreview $preview) {
-            if ($preview->isDirty('image') && $preview->getOriginal('image_path')) {
-                ImageStore::delete($preview->getOriginal('image_path'));
-                $preview->image_path = null;
-            }
-        });
-        static::deleted(fn (LinkPreview $preview) => ImageStore::delete($preview->image_path));
-    }
 
     /**
      * A page that told us nothing (its site turns servers away) still gets a small card: the site and the address.
@@ -40,15 +26,11 @@ class LinkPreview extends Model
     }
 
     /**
-     * The picture always from our own server: our copy, or, until it is made, the address
-     * that makes it (an antivirus may distrust the other site's picture server).
+     * The picture is only linked, never copied to our server: it is shown from the site it belongs to
+     * (the card sends no referrer), so the rights to it stay with its publisher.
      */
     public function imageUrl(): ?string
     {
-        if ($this->image_path) {
-            return Storage::disk('public')->url($this->image_path);
-        }
-
-        return $this->image ? route('link-previews.image', $this) : null;
+        return $this->image ?: null;
     }
 }

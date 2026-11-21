@@ -46,7 +46,7 @@ Route::get('images/{path}', function (string $path) {
     return redirect('/storage/joomla/images/'.$path, 301);
 })->where('path', '.*');
 
-// The picture of a shared link, from our server rather than the other site's (LinkImage).
+// The old address of a shared link's picture: sends the browser to the picture on its own site.
 Route::get('link-previews/{linkPreview}/image', LinkImageController::class)->middleware('throttle:120,1')->name('link-previews.image');
 
 // News from our other sites (nofinfo.com), sent by their servers with a secret key.

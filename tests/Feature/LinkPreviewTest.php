@@ -52,48 +52,25 @@ class LinkPreviewTest extends TestCase
             ->where('post.data.link.description', 'Разногласия по поводу & прочего')
             ->where('post.data.link.domain', '93.184.216.34'));
 
-        // The picture is ours: visitors' browsers never contact the other site's picture server.
+        // The picture is only linked: shown from its own site, never copied to ours.
         $preview = LinkPreview::firstWhere('url', 'http://93.184.216.34/news?id=176361');
         $this->assertSame('http://93.184.216.34/img/cover.jpg', $preview->image);
-        Storage::disk('public')->assertExists($preview->image_path);
         $this->get("/posts/{$post->id}")->assertInertia(fn ($page) => $page
-            ->where('post.data.link.image', Storage::disk('public')->url($preview->image_path)));
+            ->where('post.data.link.image', 'http://93.184.216.34/img/cover.jpg'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/img/'));
+        $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
-    public function test_a_card_picture_not_copied_yet_is_copied_when_first_shown()
+    public function test_the_old_picture_address_sends_the_browser_to_the_picture_on_its_own_site()
     {
-        Storage::fake('public');
-        Http::fake(['http://93.184.216.34/*' => Http::response(self::jpeg(), 200, ['Content-Type' => 'image/jpeg'])]);
-        // As a news post stores it, without reading the page.
-        $preview = LinkPreview::create(['url' => 'https://meduza.io/news/1', 'title' => 'Сбой', 'image' => 'http://93.184.216.34/unsafe/original']);
-        $this->assertSame(route('link-previews.image', $preview), $preview->card()['image']);
+        Http::fake();
+        $preview = LinkPreview::create(['url' => 'https://meduza.io/news/1', 'title' => 'Сбой', 'image' => 'https://img.example/original.jpg']);
+        $bare = LinkPreview::create(['url' => 'https://a.example/2']);
 
-        $this->get(route('link-previews.image', $preview))->assertRedirect();
-        $preview->refresh();
-        Storage::disk('public')->assertExists($preview->image_path);
-        $this->assertSame(Storage::disk('public')->url($preview->image_path), $preview->card()['image']);
-        $this->get(route('link-previews.image', $preview))->assertRedirect(Storage::disk('public')->url($preview->image_path));
-        Http::assertSentCount(1);
-
-        // A new picture for the page replaces our copy.
-        $old = $preview->image_path;
-        $preview->update(['image' => 'http://93.184.216.34/unsafe/other']);
-        Storage::disk('public')->assertMissing($old);
-        $this->assertNull($preview->image_path);
-    }
-
-    public function test_only_public_pictures_are_copied_and_a_failure_is_not_retried_at_once()
-    {
-        Storage::fake('public');
-        Http::fake(['http://93.184.216.34/*' => Http::response('<html>not a picture</html>', 200, ['Content-Type' => 'image/jpeg'])]);
-        $private = LinkPreview::create(['url' => 'https://a.example/1', 'image' => 'http://127.0.0.1/a.jpg']);
-        $fake = LinkPreview::create(['url' => 'https://a.example/2', 'image' => 'http://93.184.216.34/a.jpg']);
-
-        $this->get(route('link-previews.image', $private))->assertNotFound();
-        $this->get(route('link-previews.image', $fake))->assertNotFound();
-        $this->get(route('link-previews.image', $fake))->assertNotFound();
-        Http::assertSentCount(1);
-        $this->assertNull($fake->fresh()->image_path);
+        $this->assertSame('https://img.example/original.jpg', $preview->card()['image']);
+        $this->get(route('link-previews.image', $preview))->assertRedirect('https://img.example/original.jpg');
+        $this->get(route('link-previews.image', $bare))->assertNotFound();
+        Http::assertNothingSent();
     }
 
     public function test_a_page_without_a_preview_picture_shows_the_picture_of_its_article()
@@ -121,7 +98,7 @@ class LinkPreviewTest extends TestCase
         Http::assertNothingSent();
 
         $card->forceFill(['updated_at' => now()->subHours(2)])->saveQuietly();
-        $this->getJson('/link-preview?url=http://93.184.216.34/news')->assertJsonPath('link.image', route('link-previews.image', $card));
+        $this->getJson('/link-preview?url=http://93.184.216.34/news')->assertJsonPath('link.image', 'http://93.184.216.34/img/cover.jpg');
         $this->assertSame('http://93.184.216.34/img/cover.jpg', $card->fresh()->image);
     }
 
