@@ -6,6 +6,7 @@ import { LifeEventCard, PostContext } from '@/components/post-extras';
 import { EventCard, PostPhotos, PostVideo } from '@/components/post-media';
 import { TagFriendsPicker, TagTextarea, type TaggedFriend, WithFriends } from '@/components/post-tags';
 import { ReactionButton, ReactionFaces } from '@/components/reactions';
+import { ReportDialog } from '@/components/report-dialog';
 import { ShareMenu } from '@/components/share-menu';
 import { SharedPostView } from '@/components/shared-post';
 import { TranslatedText } from '@/components/translated-text';
@@ -17,7 +18,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type PinPlace, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Code, Ellipsis, Eye, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2, UserMinus, UserPlus } from 'lucide-react';
+import { Code, Ellipsis, Eye, Flag, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -58,6 +59,8 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     const [tagged, setTagged] = useState<TaggedFriend[]>(post.with);
     const [tagging, setTagging] = useState(false);
     const [choosingAudience, setChoosingAudience] = useState(false);
+    // "Report" on this post or one of its comments.
+    const [reporting, setReporting] = useState<{ type: 'post' | 'comment'; id: number } | null>(null);
     const [embedding, setEmbedding] = useState(false);
     const audienceLabels = useAudienceLabels();
     const mine = auth.user?.id === post.author?.id;
@@ -158,6 +161,11 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     {auth.user && (
                         <button type="button" className="font-semibold hover:underline" onClick={() => startReply(thread, comment)}>
                             {t('Reply')}
+                        </button>
+                    )}
+                    {comment.author?.id !== auth.user?.id && (
+                        <button type="button" className="hover:underline" onClick={() => setReporting({ type: 'comment', id: comment.id })}>
+                            {t('Report')}
                         </button>
                     )}
                 </div>
@@ -311,12 +319,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                     />
                 )}
                 {post.embeddable && <EmbedPostDialog open={embedding} onClose={() => setEmbedding(false)} postId={post.id} src={post.embed_url} />}
-                {(post.can_delete ||
-                    post.editable_text !== null ||
-                    canChangeAudience ||
-                    post.embeddable ||
-                    pins.length > 0 ||
-                    (post.tagged_me && !mine)) && (
+                {(post.can_delete || post.editable_text !== null || canChangeAudience || post.embeddable || pins.length > 0 || !mine) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             className="text-muted-foreground -me-2 self-start rounded-full p-2 hover:bg-slate-100 dark:hover:bg-neutral-800"
@@ -356,9 +359,15 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                                     <Trash2 className="size-4" /> {t('Delete')}
                                 </DropdownMenuItem>
                             )}
+                            {!mine && (
+                                <DropdownMenuItem onSelect={() => setReporting({ type: 'post', id: post.id })}>
+                                    <Flag className="size-4" /> {t('Report')}
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
+                {reporting && <ReportDialog open onClose={() => setReporting(null)} type={reporting.type} id={reporting.id} />}
             </header>
 
             {post.life_event && (

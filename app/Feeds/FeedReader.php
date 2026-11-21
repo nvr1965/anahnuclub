@@ -16,8 +16,11 @@ class FeedReader
     /** The excerpt we show: a short quote with the link, never the whole article. */
     public const SUMMARY_LENGTH = 300;
 
-    /** A joke or a recipe is not cut in the middle: the whole of it, when not longer than this. */
-    public const FULL_TEXT_LENGTH = 1500;
+    /** And never more than this part of the source's own text (a quarter), however short the text. */
+    public const SHARE = 0.25;
+
+    /** A quote shorter than this says nothing: such an item is posted with its title and link only. */
+    public const MIN_QUOTE = 20;
 
     /**
      * @return list<array{title: string, url: string, summary: ?string, image: ?string, published_at: ?Carbon}>
@@ -128,9 +131,7 @@ class FeedReader
         return [
             'title' => mb_substr(self::plain($title), 0, 500),
             'url' => trim($url),
-            'summary' => self::excerpt(self::withoutBoilerplate($description)) ?: null,
-            // The whole text, for a source whose items are short in full (jokes): FeedSource::full_text.
-            'text' => self::fullText($description) ?: null,
+            'summary' => self::quote(self::withoutBoilerplate($description)) ?: null,
             'image' => preg_match('#^https?://#i', $image) ? mb_substr($image, 0, 1000) : null,
             'published_at' => $published,
         ];
@@ -178,14 +179,21 @@ class FeedReader
         return $text;
     }
 
-    /** The whole text with its lines (a joke's dialogue), cut at a word when too long. */
-    public static function fullText(string $html): string
+    /** The most of a source's text we may take: a quarter of it, and not more than SUMMARY_LENGTH. */
+    public static function allowedLength(string $text): int
     {
-        $text = html_entity_decode(strip_tags(preg_replace('/<(br|\/p|\/div|\/li)[^>]*>/i', "\n", $html)), ENT_QUOTES | ENT_HTML5);
-        $text = trim(preg_replace(["/[ \t\x{00A0}]+/u", "/ *\n */", "/\n{3,}/"], [' ', "\n", "\n\n"], $text));
-        $text = self::withoutTails($text);
+        return max(1, min(self::SUMMARY_LENGTH, (int) floor(mb_strlen($text) * self::SHARE)));
+    }
 
-        return mb_strlen($text) <= self::FULL_TEXT_LENGTH ? $text : self::excerpt($text, self::FULL_TEXT_LENGTH);
+    /**
+     * The beginning of a source's text, never more than allowedLength() of it, so never the whole text;
+     * nothing when a quarter of the text is too short to say anything (MIN_QUOTE).
+     */
+    public static function quote(string $text): string
+    {
+        $length = self::allowedLength($text);
+
+        return $length < self::MIN_QUOTE ? '' : self::excerpt($text, $length);
     }
 
     public static function plain(string $html): string
@@ -202,9 +210,9 @@ class FeedReader
         if (mb_strlen($text) <= $length) {
             return $text;
         }
-        $cut = mb_substr($text, 0, $length);
+        $cut = mb_substr($text, 0, max(1, $length - 1));
         $space = mb_strrpos($cut, ' ');
 
-        return rtrim($space > $length * 0.6 ? mb_substr($cut, 0, $space) : $cut, " ,.;:—-").'…';
+        return rtrim($space !== false && $space > $length * 0.6 ? mb_substr($cut, 0, $space) : $cut, " ,.;:—-").'…';
     }
 }

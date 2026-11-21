@@ -79,15 +79,13 @@ class FeedPublisher
     {
         $channel = $item->channel;
         $text = trim($item->summary ?: $item->title ?: '');
-        if ($item->source) {
-            $text .= "\n\n— ".$item->source->name;
-        }
         try {
+            // The source is named under the text, untranslated (NewsPost), so its name stays "Ynet", not "performer Ynet".
             $post = NewsPost::publish($channel->user, $text, $item->url, [
                 'title' => $item->title,
                 'description' => $item->summary,
                 'image' => $item->image,
-            ], $channel->group_id, $item->source?->locale ?: $channel->user->locale);
+            ], $channel->group_id, $item->source?->locale ?: $channel->user->locale, $item->source?->name);
         } catch (\Throwable $e) {
             Log::warning('Feed item '.$item->id.' was not posted: '.$e->getMessage());
             $item->update(['status' => 'skipped', 'reason' => 'error: '.mb_substr($e->getMessage(), 0, 200)]);
@@ -95,8 +93,6 @@ class FeedPublisher
             return $item;
         }
         $item->update(['status' => 'posted', 'post_id' => $post->id, 'posted_at' => now()]);
-        // The author was here when it posted: "online" for a few minutes, then "was online" at its own daytime.
-        $channel->user->forceFill(['last_seen_at' => now()])->saveQuietly();
 
         return $item;
     }

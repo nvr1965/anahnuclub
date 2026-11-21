@@ -4,10 +4,12 @@ import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
+import { AccessibilityMenu } from './components/accessibility-menu';
 import { ChatDock } from './components/chat-dock';
 import { ErrorBoundary } from './components/error-boundary';
 import { CallRoot } from './components/video-call';
 import { initializeTheme } from './hooks/use-appearance';
+import { initializeAccessibility } from './lib/accessibility';
 import { keepInterfaceStrings } from './lib/i18n';
 import { setUpInstall } from './lib/install-app';
 import { listenForPush, syncPush } from './lib/push';
@@ -34,11 +36,26 @@ createInertiaApp({
             <App {...props}>
                 {({ Component, key, props: pageProps }) => (
                     <>
+                        {/* For the keyboard: the first Tab offers to jump over the menus straight to the page's content. */}
+                        <a
+                            href="#main"
+                            onClick={(e) => {
+                                const main = document.querySelector('main');
+                                if (!main) return;
+                                e.preventDefault();
+                                main.setAttribute('tabindex', '-1');
+                                main.focus();
+                            }}
+                            className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:font-semibold focus:text-black focus:shadow-lg"
+                        >
+                            {skipLabel(props.initialPage.props)}
+                        </a>
                         <ErrorBoundary resetKey={key}>
                             <Component key={key} {...pageProps} />
                         </ErrorBoundary>
                         <ChatDock />
                         <CallRoot />
+                        <AccessibilityMenu />
                     </>
                 )}
             </App>,
@@ -48,6 +65,12 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
+
+// The skip link's words, from the interface strings the first page brought.
+function skipLabel(pageProps: Record<string, unknown>) {
+    const strings = (pageProps as { translations?: Record<string, string> | null }).translations;
+    return strings?.['Skip to content'] ?? 'Skip to content';
+}
 
 // Inertia visits (e.g. switching language or style) don't reload the page, so keep <html lang/dir/data-skin> in sync.
 function syncDocumentLanguage(pageProps: Record<string, unknown>) {
@@ -85,6 +108,5 @@ listenForPush();
 // This will set light / dark mode on load...
 initializeTheme();
 
-// Safari on iPhone ignores user-scalable=no in the viewport tag; its own pinch gesture events are stopped here,
-// so the feed cannot be zoomed or knocked sideways with two fingers.
-document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
+// The accessibility menu's settings (text size, palette…), kept in this browser.
+initializeAccessibility();

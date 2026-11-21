@@ -166,10 +166,19 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     private ?array $blockMemo = null;
 
     /** Members this one blocked, plus members who blocked this one: either way they do not meet. */
-    /** Seen on the site in the last five minutes; open pages check in every half minute. */
+    /**
+     * Seen on the site in the last five minutes; open pages check in every half minute.
+     * A club author is never shown online: it is an automated account, not a person (seenAt).
+     */
     public function isOnline(): bool
     {
-        return $this->last_seen_at !== null && $this->last_seen_at->gt(now()->subMinutes(5));
+        return ($seen = $this->seenAt()) !== null && $seen->gt(now()->subMinutes(5));
+    }
+
+    /** When this member was last on the site, as others are told it; never for a club author. */
+    public function seenAt(): ?\Illuminate\Support\Carbon
+    {
+        return $this->isClubAuthor() ? null : $this->last_seen_at;
     }
 
     /** Members on the site now go first; the order given after this sorts the rest. */

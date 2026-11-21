@@ -19,8 +19,10 @@ class NewsPost
 {
     /**
      * @param  array{title?: ?string, description?: ?string, image?: ?string}  $card
+     * @param  ?string  $source  the name of the paper or channel the text comes from: written under it as
+     *                           "— Ynet" and never translated, so the reader always sees whose text it is
      */
-    public static function publish(User $user, string $text, ?string $url, array $card = [], int|string|null $groupId = null, ?string $locale = null): Post
+    public static function publish(User $user, string $text, ?string $url, array $card = [], int|string|null $groupId = null, ?string $locale = null, ?string $source = null): Post
     {
         if ($url && (! empty($card['title']) || ! empty($card['image']))) {
             LinkPreview::updateOrCreate(['url' => $url], [
@@ -31,12 +33,19 @@ class NewsPost
             ]);
         }
 
+        $body = Html::fromPlainText(trim($text));
+        if ($source !== null && trim($source) !== '') {
+            $body .= '<br><br>— <span translate="no" class="notranslate">'.e(trim($source)).'</span>';
+        }
+        if ($url) {
+            $body .= '<br><br>'.Html::fromPlainText($url);
+        }
         $text = trim($text).($url ? "\n\n".$url : '');
         $post = Post::create([
             'user_id' => $user->id,
             'group_id' => $groupId,
             'type' => 'status',
-            'body' => Html::fromPlainText($text),
+            'body' => $body,
             'locale' => $locale ?? LanguageGuesser::guess($text) ?? $user->locale,
         ]);
         if (! $groupId) {

@@ -39,7 +39,6 @@ interface Source {
     url: string;
     locale: string | null;
     trusted: boolean;
-    full_text: boolean;
     active: boolean;
     fetched_at: string | null;
     error: string | null;
@@ -528,7 +527,6 @@ function Sources({ channels, sources }: { channels: Channel[]; sources: Source[]
                                 <b>{name(s.channel_id)}</b> · <span dir="auto">{s.name}</span>
                                 {s.locale && <Badge>{s.locale}</Badge>}
                                 {s.trusted && <Badge tone="green">{t('Trusted')}</Badge>}
-                                {s.full_text && <Badge>{t('Whole text')}</Badge>}
                                 {!s.active && <Badge tone="red">{t('Off')}</Badge>}
                                 {s.error && <Badge tone="red">{s.error}</Badge>}
                             </div>
@@ -541,9 +539,6 @@ function Sources({ channels, sources }: { channels: Channel[]; sources: Source[]
                             <ActionButton onClick={() => send('post', route('admin.feeds.sources.fetch', s.id))}>{t('Read now')}</ActionButton>
                             <ActionButton onClick={() => send('patch', route('admin.feeds.sources.update', s.id), { trusted: !s.trusted })}>
                                 {s.trusted ? t('Untrust') : t('Trust')}
-                            </ActionButton>
-                            <ActionButton onClick={() => send('patch', route('admin.feeds.sources.update', s.id), { full_text: !s.full_text })}>
-                                {s.full_text ? t('Excerpt only') : t('Whole text')}
                             </ActionButton>
                             <ActionButton onClick={() => send('patch', route('admin.feeds.sources.update', s.id), { active: !s.active })}>
                                 {s.active ? t('Switch off') : t('Switch on')}

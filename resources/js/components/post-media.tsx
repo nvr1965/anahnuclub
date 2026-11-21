@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 /** Pictures in a post, laid out like Facebook: one big, two side by side, or a grid with "+N". */
 export function PostPhotos({ photos }: { photos: PhotoItem[] }) {
     const [open, setOpen] = useState<number | null>(null);
+    const t = useT();
     if (photos.length === 0) return null;
     const shown = photos.slice(0, 4);
     const extra = photos.length - shown.length;
@@ -26,7 +27,7 @@ export function PostPhotos({ photos }: { photos: PhotoItem[] }) {
                     >
                         <img
                             src={photos.length === 1 ? photo.url : photo.thumb}
-                            alt={photo.caption ?? ''}
+                            alt={photo.caption || t('Photo')}
                             loading="lazy"
                             className={`w-full object-cover ${photos.length === 1 ? 'max-h-[600px]' : 'aspect-square h-full'}`}
                         />
@@ -46,6 +47,7 @@ export function PostPhotos({ photos }: { photos: PhotoItem[] }) {
 /** A video player: YouTube or Vimeo in a frame, uploaded files in the browser's own player. */
 export function VideoPlayer({ video, autoPlay = false }: { video: VideoItem; autoPlay?: boolean }) {
     const [playing, setPlaying] = useState(autoPlay);
+    const t = useT();
 
     if (video.provider === 'file') {
         return (
@@ -63,7 +65,12 @@ export function VideoPlayer({ video, autoPlay = false }: { video: VideoItem; aut
     // The frame loads only when asked, so a feed full of videos stays light.
     if (!playing) {
         return (
-            <button type="button" onClick={() => setPlaying(true)} className="group relative block aspect-video w-full overflow-hidden bg-black">
+            <button
+                type="button"
+                onClick={() => setPlaying(true)}
+                aria-label={t('Play video')}
+                className="group relative block aspect-video w-full overflow-hidden bg-black"
+            >
                 {video.thumb && (
                     <img
                         src={video.thumb}

@@ -114,7 +114,7 @@ class MessageController extends Controller
         return [
             'conversation' => [
                 'id' => $conversation->id,
-                'with' => PeopleController::card($other) + ['last_seen_at' => $other->last_seen_at?->toIso8601String()],
+                'with' => PeopleController::card($other) + ['last_seen_at' => $other->seenAt()?->toIso8601String()],
                 // A block either way closes the chat; only the one who blocked is told why.
                 'blocked' => match (true) {
                     $user->hasBlocked($other) => 'by_me',

@@ -2,7 +2,20 @@
 <html translate="no" lang="{{ app()->getLocale() }}" dir="{{ \App\Models\Language::enabled()->firstWhere('code', app()->getLocale())?->rtl ? 'rtl' : 'ltr' }}" data-skin="{{ \App\Support\Skins::current() }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content">
+        {{-- Pinch-zoom stays allowed: IS 5568 / WCAG 1.4.4. --}}
+        <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+        {{-- The accessibility menu's settings (resources/js/lib/accessibility.ts), before the page draws. --}}
+        <script>
+            try {
+                (function (s) {
+                    if (!s) return;
+                    var h = document.documentElement, steps = [1, 1.125, 1.25, 1.5, 1.75];
+                    if (steps[s.text] > 1) h.style.fontSize = steps[s.text] * 100 + '%';
+                    if (s.palette && s.palette !== 'normal') h.classList.add('a11y-' + s.palette);
+                    ['links', 'readable', 'spacing', 'still', 'cursor'].forEach(function (k) { if (s[k]) h.classList.add('a11y-' + k); });
+                })(JSON.parse(localStorage.getItem('a11y') || 'null'));
+            } catch (e) {}
+        </script>
         <meta name="csrf-token" content="{{ csrf_token() }}">
         {{-- The site translates itself; the browser should not offer to translate it again. --}}
         <meta name="google" content="notranslate">

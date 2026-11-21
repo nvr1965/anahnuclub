@@ -135,7 +135,7 @@ class PeopleController extends Controller
                 'privacy' => $me ? array_merge(array_fill_keys(User::PRIVATE_FIELDS, 'public'), $user->privacy ?? []) : null,
                 'friends_hidden' => ! $user->shows('friends', $viewer),
                 'joined_at' => $user->created_at?->toIso8601String(),
-                'last_seen_at' => $user->last_seen_at?->toIso8601String(),
+                'last_seen_at' => $user->seenAt()?->toIso8601String(),
                 'online' => $user->isOnline(),
                 'friends_count' => $user->shows('friends', $viewer) ? (clone $friends)->count() : null,
                 'posts_count' => $user->posts()->visibleTo($viewer)->count(),

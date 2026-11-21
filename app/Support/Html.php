@@ -36,7 +36,9 @@ class Html
     {
         $escaped = self::bbcode(e($text));
         // Bare addresses become links; ones already inside a tag or a BBCode link stay as they are.
-        $linked = preg_replace('~(?<!["=>])(https?://[^\s<"]+?)(?=[.,;:!?)]*(?:\s|<|$))~u', '<a href="$1">$1</a>', $escaped) ?? $escaped;
+        // An address is never translated: the translators keep it as written (translate="no" for Google and
+        // DeepL, class="notranslate" for Microsoft), so a link does not turn into "HTTPSis www…".
+        $linked = preg_replace('~(?<!["=>])(https?://[^\s<"]+?)(?=[.,;:!?)]*(?:\s|<|$))~u', '<a href="$1" translate="no" class="notranslate">$1</a>', $escaped) ?? $escaped;
 
         return nl2br($linked, false);
     }

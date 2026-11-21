@@ -287,12 +287,26 @@
         @apply border-border;
     }
 
-    /* Phones: the page does not pinch-zoom or slide sideways; it only scrolls up and down. */
+    /* Phones may pinch-zoom the page (IS 5568 / WCAG 1.4.4); it still does not slide sideways (overflow-x below). */
     html,
     body {
-        touch-action: pan-x pan-y;
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
+    }
+
+    /* On phones a field is never smaller than 16px, so Safari does not zoom in by itself when it is tapped. */
+    @media (pointer: coarse) {
+        input,
+        textarea,
+        select {
+            font-size: max(16px, 1em);
+        }
+    }
+
+    /* The keyboard's place is always visible, even where a control hides its own outline. */
+    :focus-visible {
+        outline: 3px solid #1a56db !important;
+        outline-offset: 2px !important;
     }
 
     /* On body only, never on html: the browser then moves it to the window itself. On html as well, body
@@ -343,4 +357,114 @@
         /* Members paste long links into posts and profiles; they wrap instead of running off the card. */
         overflow-wrap: anywhere;
     }
+}
+
+/*
+ * The accessibility menu (components/accessibility-menu.tsx, lib/accessibility.ts) puts these classes on <html>.
+ * Outside the layers, so they win over the page's own colours.
+ */
+html.a11y-contrast {
+    --background: #ffffff;
+    --foreground: #000000;
+    --muted-foreground: #000000;
+    --border: #000000;
+    --color-page: #ffffff;
+}
+html.a11y-contrast body,
+html.a11y-contrast body *:not(svg):not(svg *) {
+    color: #000 !important;
+    border-color: #000 !important;
+}
+html.a11y-contrast body,
+html.a11y-contrast body *:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    background-color: #fff !important;
+    background-image: none !important;
+}
+html.a11y-contrast body a:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-contrast body a *:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    color: #0000c8 !important;
+}
+html.a11y-contrast body .bg-brand:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-contrast body .bg-brand *:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-contrast body .a11y-button:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-contrast body .a11y-button *:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    background-color: #000 !important;
+    color: #fff !important;
+}
+
+html.a11y-dark-contrast {
+    --background: #000000;
+    --foreground: #ffff00;
+    --muted-foreground: #ffffff;
+    --border: #ffffff;
+    --color-page: #000000;
+    color-scheme: dark;
+}
+html.a11y-dark-contrast body,
+html.a11y-dark-contrast body *:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-color: #fff !important;
+}
+html.a11y-dark-contrast body a:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-dark-contrast body a *:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    color: #ffff00 !important;
+}
+html.a11y-dark-contrast body h1:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-dark-contrast body h2:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-dark-contrast body h3:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    color: #00ffff !important;
+}
+html.a11y-dark-contrast body .a11y-button:not(svg):not(svg *):not(img):not(video):not(iframe),
+html.a11y-dark-contrast body .a11y-button *:not(svg):not(svg *):not(img):not(video):not(iframe) {
+    background-color: #ffff00 !important;
+    color: #000 !important;
+}
+
+html.a11y-gray {
+    filter: grayscale(1);
+}
+
+html.a11y-links a {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+}
+html.a11y-links a:not(:has(img)) {
+    outline: 1px dashed currentColor;
+    outline-offset: 1px;
+}
+
+html.a11y-readable body,
+html.a11y-readable body *:not(svg):not(svg *) {
+    font-family: Arial, 'Noto Sans', 'Noto Sans Hebrew', 'Noto Sans Arabic', system-ui, sans-serif !important;
+    letter-spacing: 0.03em !important;
+    word-spacing: 0.08em !important;
+}
+
+html.a11y-spacing body p,
+html.a11y-spacing body li,
+html.a11y-spacing body [dir='auto'],
+html.a11y-spacing body span,
+html.a11y-spacing body a {
+    line-height: 1.8 !important;
+}
+html.a11y-spacing body p {
+    margin-bottom: 0.75em;
+}
+
+html.a11y-still *,
+html.a11y-still *::before,
+html.a11y-still *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+}
+
+html.a11y-cursor,
+html.a11y-cursor * {
+    cursor:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath d='M4 2l16 10-7 1.5L17 22l-3 1.5-4-8.5L4 20z' fill='black' stroke='white' stroke-width='1.2'/%3E%3C/svg%3E")
+            4 2,
+        auto !important;
 }

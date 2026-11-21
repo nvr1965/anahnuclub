@@ -96,7 +96,8 @@ class PageParsers
                 $image = html_entity_decode($im[1]);
             }
             $date = preg_match('/<time[^>]+datetime="([^"]+)"/i', $block, $d) ? $d[1] : '';
-            $items[] = $this->reader->item(self::titleFrom($text), $m[1], htmlspecialchars($text), $image, $date);
+            // The post has no title: its first words, within the quarter of the post we may take.
+            $items[] = $this->reader->item(self::titleFrom($text, min(120, FeedReader::allowedLength($text))), $m[1], htmlspecialchars($text), $image, $date);
         }
 
         return $items;
