@@ -84,7 +84,8 @@ class FeedsTest extends TestCase
             .'<link rel="alternate" href="https://example.com/a"/><summary>Short</summary><updated>2026-11-08T07:00:00Z</updated></entry></feed>';
         $items = $reader->parse($atom);
         $this->assertSame('https://example.com/a', $items[0]['url']);
-        $this->assertSame('Short', $items[0]['summary']);
+        // A quarter of "Short" says nothing: the item goes with its title and link only.
+        $this->assertNull($items[0]['summary']);
     }
 
     public function test_each_news_item_is_taken_once_fresh_and_without_stop_words()
@@ -354,7 +355,7 @@ class FeedsTest extends TestCase
         $this->assertSame('Tech & IT', User::where('email', 'ron@authors.anahnu.club')->first()->feedChannel()->first()->group->name);
         // Each club group has its picture.
         $this->assertSame(0, Group::whereIn('slug', ['central-asia', 'israel', 'israel-he', 'cooking'])->whereNull('avatar_path')->count());
-        $this->assertTrue(FeedSource::where('url', 'https://www.anekdot.ru/rss/export_j.xml')->value('full_text'));
+        $this->assertTrue(FeedSource::where('url', 'https://www.anekdot.ru/rss/export_j.xml')->exists());
         // Addresses that never worked are switched off; Telegram channels and Panet's front page are sources.
         $this->assertTrue(FeedSource::where('url', 'https://t.me/s/bokranews')->exists());
         $this->assertFalse(FeedSource::where('url', 'https://www.panet.co.il/rss/news')->where('active', true)->exists());
@@ -500,15 +501,17 @@ class FeedsTest extends TestCase
         $items = $reader->read('https://t.me/kunuzru');
         $this->assertCount(2, $items);
         $this->assertSame('https://t.me/kunuzru/3', $items[0]['url']);
-        $this->assertSame('В Самарканде открыли новый музей.', $items[0]['title']);
-        $this->assertStringContainsString('Подробности на сайте kun.uz', $items[0]['summary']);
+        // A short post: its title is its first words within a quarter of it, and no quote beside.
+        $this->assertStringStartsWith('В Самарканде', $items[0]['title']);
+        $this->assertLessThanOrEqual(mb_strlen('В Самарканде открыли новый музей. Подробности на сайте kun.uz') / 4, mb_strlen($items[0]['title']));
+        $this->assertNull($items[0]['summary']);
         $this->assertSame('https://cdn.tg/photo.jpg', $items[0]['image']);
         $this->assertNotNull($items[0]['published_at']);
 
         $items = $reader->read('https://panet.com/');
         $this->assertCount(2, $items);
         $this->assertSame('عنوان الخبر', $items[0]['title']);
-        $this->assertSame('مقدمة الخبر', $items[0]['summary']);
+        $this->assertNull($items[0]['summary']);
         $this->assertSame('https://panet.com/p.jpg', $items[0]['image']);
         $this->assertSame('https://panet.com/story/123', $items[0]['url']);
     }
@@ -630,21 +633,37 @@ class FeedsTest extends TestCase
 
         $this->assertSame('Одесский анекдот про Сару', $items[0]['title']);
         $this->assertSame('https://www.youtube.com/watch?v=abc', $items[0]['url']);
-        $this->assertSame('Сара, ты где?', $items[0]['summary']);
+        $this->assertNull($items[0]['summary']);
         $this->assertSame('https://i.ytimg.com/vi/abc/hqdefault.jpg', $items[0]['image']);
         Http::assertSent(fn ($r) => str_contains($r->url(), 'channel_id=UCabcdefghijklmnopqrstuv'));
     }
 
-    public function test_a_joke_is_posted_whole_with_its_lines()
+    public function test_never_more_than_a_quarter_of_the_source_text_is_taken()
     {
         $channel = $this->author();
+        // Even a source marked "whole text" before the rule: its jokes are quoted like any news.
         $source = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'Анекдоты', 'url' => 'https://www.anekdot.ru/rss/export_j.xml', 'full_text' => true]);
         $joke = '— Сара, где деньги?<br>— Моня, а ты их клал?<br>'.str_repeat('Длинная история про Привоз. ', 20);
+        $reader = app(FeedReader::class);
 
-        app(FeedCollector::class)->store($source, [app(FeedReader::class)->item('Анекдот', 'https://www.anekdot.ru/id/1/', $joke, '', now()->toRssString())]);
+        app(FeedCollector::class)->store($source, [$reader->item('Анекдот', 'https://www.anekdot.ru/id/1/', $joke, '', now()->toRssString())]);
 
+        $whole = FeedReader::plain($joke);
         $summary = FeedItem::first()->summary;
-        $this->assertStringStartsWith("— Сара, где деньги?\n— Моня, а ты их клал?\n", $summary);
-        $this->assertStringNotContainsString('…', $summary);
+        $this->assertStringStartsWith('— Сара, где деньги?', $summary);
+        $this->assertLessThanOrEqual(mb_strlen($whole) / 4, mb_strlen($summary));
+        $this->assertStringEndsWith('…', $summary);
+
+        // A short item: a quarter of it, not the 300 characters a long one may give.
+        $short = str_repeat('Слово ', 40);
+        $this->assertLessThanOrEqual(mb_strlen(trim($short)) / 4, mb_strlen($reader->item('T', 'https://a.example/1', $short, '', '')['summary']));
+        // A long one: never more than 300 characters.
+        $this->assertLessThanOrEqual(FeedReader::SUMMARY_LENGTH, mb_strlen($reader->item('T', 'https://a.example/2', str_repeat('Слово ', 1000), '', '')['summary']));
+
+        // A Telegram post has no title: its first words, also within the quarter.
+        $post = 'Первое предложение этого поста довольно длинное и содержательное. '.str_repeat('Дальше идёт текст. ', 3);
+        $item = (new PageParsers($reader))->telegram('<div class="tgme_widget_message_bubble"><a class="tgme_widget_message_date" href="https://t.me/x/1"></a><div class="tgme_widget_message_text">'.$post.'</div></div>')[0];
+        $this->assertLessThanOrEqual(mb_strlen(trim($post)) / 4, mb_strlen($item['title']));
+        $this->assertLessThanOrEqual(mb_strlen(trim($post)) / 4, mb_strlen($item['summary']));
     }
 }

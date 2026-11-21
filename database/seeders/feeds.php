@@ -11,7 +11,7 @@
  *
  * 'was' is the author's earlier name: feeds:setup renames an author that still has it (name, language, topic, profile line).
  * 'was_group' moves an author that is still in that group to its 'group'. A source may carry options
- * (['full_text' => true]: its items are posted whole, for jokes and recipes).
+ * (['trusted' => true]). No source is ever posted whole: at most a quarter of its text (FeedReader::quote).
  * 'group' is the topic group the author posts in (the list 'groups' below). Each club group has one language, and its
  * author writes in it: "Новости Израиля" in Russian, "חדשות ישראל" in Hebrew. 'dropped' are the author's earlier
  * sources in another language (or given to another author): feeds:setup switches them off for this author.
@@ -154,7 +154,7 @@ return [
     // Folk jokes, added by the curator by hand (a few hundred at once); jokes of other sites only as links.
     // Jokes, whole: anekdot.ru's jokes of the day, YouTube channels the curator adds (Odessa jokes), and by hand.
     ['slug' => 'izya', 'group' => 'humor', 'name' => 'Изя', 'locale' => 'ru', 'min' => 2, 'limit' => 3, 'topic' => 'Анекдоты и юмор', 'sources' => [
-        ['Анекдоты дня', 'https://www.anekdot.ru/rss/export_j.xml', 'ru', ['full_text' => true]],
+        ['Анекдоты дня', 'https://www.anekdot.ru/rss/export_j.xml', 'ru'],
     ]],
     /*
      * The club's groups, one language each: 'name' and 'description' in it, 'locale', the picture 'avatar'

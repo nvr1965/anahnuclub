@@ -81,7 +81,8 @@ class FeedCollector
                 'url_hash' => $hash,
                 'title_key' => $titleKey,
                 'title' => $item['title'],
-                'summary' => $source->full_text ? ($item['text'] ?? $item['summary']) : $item['summary'],
+                // Never more than a quarter of the source's text (FeedReader::quote), whatever the source.
+                'summary' => $item['summary'],
                 'image' => $item['image'],
                 'published_at' => $item['published_at'],
                 // Straight to the author's queue, unless its curator wants to look at everything first.
