@@ -18,6 +18,7 @@ use App\Translation\TranslatorChain;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class TranslatorChainTest extends TestCase
@@ -167,6 +168,43 @@ class TranslatorChainTest extends TestCase
         ])]);
 
         $this->assertSame(['Salom', 'Rahmat'], (new Gemini('k', 'm'))->translateMany(['Hello', 'Thanks'], 'uz', 'en'));
+    }
+
+    public function test_gemini_tries_again_when_busy_but_not_when_its_quota_is_used()
+    {
+        Sleep::fake();
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
+            ->push(['error' => ['message' => 'The model is overloaded.']], 503)
+            ->push(['candidates' => [['content' => ['parts' => [['text' => '["Salom"]']]]]]])
+            ->push(['error' => ['message' => 'Quota exceeded']], 429),
+        ]);
+        $gemini = new Gemini('k', 'm');
+
+        $this->assertSame(['Salom'], $gemini->translateMany(['Hello'], 'uz', 'en'));
+        Sleep::assertSleptTimes(1);
+
+        try {
+            $gemini->translateMany(['Hello'], 'uz', 'en');
+            $this->fail('a used-up quota is an error');
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            $this->assertSame(429, $e->response->status());
+        }
+        Sleep::assertSleptTimes(1);
+        Http::assertSentCount(3);
+    }
+
+    public function test_a_service_switched_on_without_its_key_is_named_in_the_error()
+    {
+        config(['services.google_translate.key' => null]);
+        $chain = $this->chain([['id' => 'mymemory', 'daily_chars' => 1], ['id' => 'google']])->with('mymemory', $this->fake('mymemory'));
+
+        try {
+            $chain->translate('Hello', 'uz');
+            $this->fail('nothing could translate');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('mymemory: today\'s limit used', $e->getMessage());
+            $this->assertStringContainsString('google: no key', $e->getMessage());
+        }
     }
 
     public function test_admins_correct_interface_texts_and_machine_translation_leaves_them_alone()

@@ -142,6 +142,11 @@ class TranslatorChain implements Translator
         foreach ($this->entries as $entry) {
             $provider = $entry['on'] ? $this->provider($entry['id']) : null;
             if (! $provider) {
+                if ($entry['on']) {
+                    // Switched on but without its key: said in the error, or the log hides why it was passed by.
+                    $errors[] = $entry['id'].': no key';
+                }
+
                 continue;
             }
             if ($entry['daily_chars'] > 0 && $this->usedToday($entry['id']) + $chars > $entry['daily_chars']) {
