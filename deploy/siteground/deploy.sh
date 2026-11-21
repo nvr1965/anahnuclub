@@ -124,5 +124,8 @@ grep -hE "Content translation failed|Translator failed|Interface translation pau
 
 echo
 echo "Done: $(grep '^APP_URL=' .env | cut -d= -f2)"
+# The scheduler is a new PHP process every minute: PHP's compiled-code cache, kept on disk between runs,
+# spares it compiling the whole site again each time (the host counts that CPU).
+mkdir -p storage/framework/opcache
 echo "Cron (Site Tools > Devs > Cron Jobs, every minute):"
-echo "    cd $APP_DIR && $PHP artisan schedule:run >> /dev/null 2>&1"
+echo "    cd $APP_DIR && $PHP -d opcache.enable_cli=1 -d opcache.file_cache=$APP_DIR/storage/framework/opcache artisan schedule:run >> /dev/null 2>&1"

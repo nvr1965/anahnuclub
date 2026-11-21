@@ -3,12 +3,12 @@ import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { useCounts } from '@/lib/counts';
 import { useT } from '@/lib/i18n';
 import { focusSearchBox } from '@/lib/search-box';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, Ellipsis, Film, House, type LucideIcon, Menu, MessageCircle, PenLine, Plus, Search, UserRound, Users } from 'lucide-react';
-import { useEffect } from 'react';
 
 /**
  * The menu of the Stream and Showcase styles on wide screens, in place of the top bar.
@@ -17,16 +17,9 @@ import { useEffect } from 'react';
 export function SideRail({ variant }: { variant: 'wide' | 'icons' }) {
     const t = useT();
     const page = usePage<SharedData>();
-    const { auth, counts } = page.props;
-
-    // The same badge refresh as the top bar, which is hidden while the rail shows.
-    useEffect(() => {
-        if (!auth.user) return;
-        const timer = setInterval(() => {
-            if (document.visibilityState === 'visible') router.reload({ only: ['counts'] });
-        }, 30000);
-        return () => clearInterval(timer);
-    }, [auth.user?.id]);
+    const { auth } = page.props;
+    // Kept fresh together with the top bar's (one request a round for both, see lib/counts).
+    const counts = useCounts();
 
     const items: { label: string; href: string; match: string; icon: LucideIcon; badge?: number }[] = [
         { label: t('Feed'), href: route('dashboard'), match: '/feed', icon: House },

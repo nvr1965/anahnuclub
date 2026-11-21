@@ -7,12 +7,12 @@ import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { useCounts } from '@/lib/counts';
 import { useT } from '@/lib/i18n';
-import { onFreshNews } from '@/lib/push';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, House, type LucideIcon, MessageCircle, Plus, Search, UserRound, Users } from 'lucide-react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 /** Tile colours, written out in full so Tailwind keeps them: soft when idle, filled when the section is open. */
 const tones = {
@@ -102,7 +102,8 @@ export function ClubHeader({ className = '' }: { className?: string }) {
     const round = 'relative flex size-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-neutral-800';
     const [q, setQ] = useState(() => new URLSearchParams(page.url.split('?')[1] ?? '').get('q') ?? '');
 
-    const counts = page.props.counts;
+    // New messages and friend requests show up without reloading the page (see lib/counts).
+    const counts = useCounts();
     const tabs: { title: string; href: string; match: string; icon: LucideIcon; tone: Tone; badge: number }[] = [
         { title: t('Feed'), href: route('dashboard'), match: '/feed', icon: House, tone: 'brand', badge: 0 },
         {
@@ -115,20 +116,6 @@ export function ClubHeader({ className = '' }: { className?: string }) {
         },
         { title: t('Groups'), href: route('groups.index'), match: '/groups', icon: Users, tone: 'violet', badge: 0 },
     ];
-
-    // New messages and friend requests show up without reloading the page.
-    useEffect(() => {
-        if (!auth.user) return;
-        const timer = setInterval(() => {
-            if (document.visibilityState === 'visible') router.reload({ only: ['counts'] });
-        }, 30000);
-        // A push (a new message), the tab back in front or the connection back: the badges at once.
-        const stop = onFreshNews(() => router.reload({ only: ['counts'] }));
-        return () => {
-            clearInterval(timer);
-            stop();
-        };
-    }, [auth.user?.id]);
 
     const search: FormEventHandler = (e) => {
         e.preventDefault();

@@ -2,6 +2,7 @@ import { openChat } from '@/components/chat-dock';
 import { PanelMenu, panelMenuItem } from '@/components/notification-bell';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
+import { refreshCounts } from '@/lib/counts';
 import { useT } from '@/lib/i18n';
 import { shortAgo } from '@/lib/relative-time';
 import { type Person, type SharedData } from '@/types';
@@ -100,7 +101,7 @@ export function MessengerMenu({ className, children }: { className: string; chil
                                                 (list) =>
                                                     list && { ...list, conversations: list.conversations.map((c) => ({ ...c, unread: false })) },
                                             );
-                                            router.reload({ only: ['counts'] });
+                                            refreshCounts();
                                         }}
                                     >
                                         <Check />
