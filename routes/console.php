@@ -1,5 +1,6 @@
 <?php
 
+use App\Feeds\FeedPublisher;
 use App\Jobs\TranslateContent;
 use App\Jobs\TranslateInterface;
 use App\Models\Comment;
@@ -7,6 +8,7 @@ use App\Models\LoginLog;
 use App\Models\Moment;
 use App\Models\Post;
 use App\Support\Badges;
+use App\Support\QueueBacklog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
@@ -14,20 +16,24 @@ use Illuminate\Support\Facades\Schedule;
 // and the scheduler drains the queue (pre-translation of new posts and comments).
 // Tasks run one after another, so the letters come first: a long translation run never holds them up.
 // The overlap locks expire after 10 minutes: a worker the host killed must not stop letters for a day.
+// A worker is a new PHP process that loads the whole site (the host counts its CPU like a page's), so it is
+// started only when its queue has a job ready: most minutes nothing waits, and only the scheduler runs.
 Schedule::call(fn () => Cache::forever('schedule:last-run', now()->getTimestamp()))->everyMinute()->name('heartbeat');
-Schedule::command('queue:work --queue=mail --stop-when-empty --max-time=50 --tries=3 --backoff=60')->everyMinute()->withoutOverlapping(10);
+Schedule::command('queue:work --queue=mail --stop-when-empty --max-time=50 --tries=3 --backoff=60')->everyMinute()->withoutOverlapping(10)
+    ->when(fn () => QueueBacklog::ready(['mail']));
 // The main queue first (translations, new posts' cards); older links' pages only when it is empty.
-Schedule::command('queue:work --queue=default,previews --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping(10);
+Schedule::command('queue:work --queue=default,previews --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping(10)
+    ->when(fn () => QueueBacklog::ready(['default', 'previews']));
 // New posts and comments are translated right after publishing; if that run was lost (the host
-// cut the request short, a service failed for a moment), the queue gets another try within a minute.
+// cut the request short, a service failed for a moment), the queue gets another try within five minutes.
 Schedule::call(function () {
     foreach ([Post::class, Comment::class] as $model) {
-        $model::where('created_at', '>', now()->subMinutes(15))->where('created_at', '<', now()->subMinute())
+        $model::where('created_at', '>', now()->subMinutes(20))->where('created_at', '<', now()->subMinute())
             ->whereDoesntHave('contentTranslations')->limit(20)->get()
-            ->each(fn ($item) => Cache::add('translate-retry.'.$item->getMorphClass().'.'.$item->getKey(), true, now()->addMinutes(5))
+            ->each(fn ($item) => Cache::add('translate-retry.'.$item->getMorphClass().'.'.$item->getKey(), true, now()->addMinutes(9))
                 && TranslateContent::dispatch($item));
     }
-})->everyMinute()->name('translate-new-content')->withoutOverlapping(5);
+})->everyFiveMinutes()->name('translate-new-content')->withoutOverlapping(5);
 // Interface translation of an added language stops when the services hit their daily limits; pick it up again.
 Schedule::call([TranslateInterface::class, 'resumeAll'])->hourly()->name('translate-interface')->withoutOverlapping();
 // A link whose page could not be read (site down, or it turned this server away) is tried again.
@@ -40,4 +46,6 @@ Schedule::command('model:prune', ['--model' => [Moment::class]])->hourly()->name
 Schedule::call(fn () => Badges::refreshAll())->dailyAt('03:30')->name('badge-levels')->withoutOverlapping(30);
 // The club's authors: their sources are read every 20 minutes, and their posts go out one at a time over the day.
 Schedule::command('feeds:fetch')->cron('*/20 * * * *')->withoutOverlapping(15);
-Schedule::command('feeds:publish')->everyFiveMinutes()->withoutOverlapping(5);
+// Posting is a few quick queries most rounds, so it runs inside the scheduler, not as a PHP process of its own
+// (`php artisan feeds:publish` does the same by hand).
+Schedule::call(fn () => app(FeedPublisher::class)->publishNext())->everyFiveMinutes()->name('feeds-publish')->withoutOverlapping(5);

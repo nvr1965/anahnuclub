@@ -8,6 +8,7 @@ use App\Http\Controllers\CallController;
 use App\Http\Controllers\ClipController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\CountsController;
 use App\Http\Controllers\EmbedController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedController;
@@ -92,6 +93,8 @@ Route::middleware(['preview.guest', 'verified', 'rules'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('welcome', [WelcomeController::class, 'show'])->name('welcome');
     Route::post('welcome', [WelcomeController::class, 'accept'])->name('welcome.accept');
+    // The badges' numbers alone, for an open tab's refresh (see HandleInertiaRequests::counts).
+    Route::get('counts', CountsController::class)->name('counts');
 });
 
 Route::middleware(['auth', 'verified', 'rules'])->group(function () {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\SocialLoginController;
 use App\Models\Language;
 use App\Models\Page;
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\Skins;
 use App\Translation\InterfaceStrings;
 use Closure;
@@ -73,12 +74,23 @@ class HandleInertiaRequests extends Middleware
             // Sign-in services with keys set, for the buttons on the login and sign-up forms.
             'social' => fn () => $request->user() ? [] : SocialLoginController::enabled(),
             // Badges in the top bar; the page asks for just these again now and then.
-            'counts' => fn () => $request->user() ? [
-                'messages' => $request->user()->unreadMessagesCount(),
-                'friend_requests' => $request->user()->friendRequesters()->where('blocked', false)->count(),
-                'notifications' => $request->user()->unreadNotifications()->count(),
-            ] : null,
+            'counts' => fn () => $request->user() ? self::counts($request->user()) : null,
         ]);
+    }
+
+    /**
+     * The numbers on the top bar's badges. An open tab asks for them every half minute at /counts, which
+     * counts just these, so the page it shows (the feed, a group) is not built again each time.
+     *
+     * @return array{messages: int, friend_requests: int, notifications: int}
+     */
+    public static function counts(User $user): array
+    {
+        return [
+            'messages' => $user->unreadMessagesCount(),
+            'friend_requests' => $user->friendRequesters()->where('blocked', false)->count(),
+            'notifications' => $user->unreadNotifications()->count(),
+        ];
     }
 
     /**

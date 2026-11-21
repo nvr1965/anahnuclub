@@ -2,6 +2,7 @@ import { Bubble, gap, type Message } from '@/components/chat-bubble';
 import { UserAvatar } from '@/components/user-avatar';
 import { startCall } from '@/components/video-call';
 import { useAutoTranslate } from '@/hooks/use-auto-translate';
+import { refreshCounts } from '@/lib/counts';
 import { useT } from '@/lib/i18n';
 import { onFreshNews } from '@/lib/push';
 import { relativeTime } from '@/lib/relative-time';
@@ -231,7 +232,7 @@ function ChatWindow({ docked }: { docked: Docked }) {
                 setBody('');
                 setFiles([]);
                 await load();
-                router.reload({ only: ['counts'] });
+                refreshCounts();
             } else {
                 const answer = await response.json().catch(() => ({}));
                 setError((Object.values(answer.errors ?? {})[0] as string[] | undefined)?.[0] ?? answer.message ?? t('Something went wrong.'));
