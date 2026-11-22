@@ -101,8 +101,11 @@ class InterfaceStrings
         $deadline = $seconds ? microtime(true) + $seconds : null;
         $added = self::file(self::addedPath($code));
         foreach (array_chunk($missing, 40, true) as $chunk) {
-            $done = self::translateChunk($translator, array_map(self::protect(...), array_values($chunk)), $code);
+            $done = self::translateChunk($translator, array_map(self::protect(...), array_values($chunk)), $code, $deadline);
             foreach (array_keys($chunk) as $i => $key) {
+                if (array_key_exists($i, $done) && $done[$i] === null) {
+                    continue; // Not tried before the time ran out: it stays missing for the next run.
+                }
                 $text = trim(self::unprotect($done[$i] ?? ''));
                 // A translation that lost or invented a placeholder would show ":name" to people; keep the
                 // English instead, so it is not asked for again on every run ("translate again" retries it).
@@ -126,12 +129,18 @@ class InterfaceStrings
      * A batch the services all refuse is split in halves and tried again: an AI service that answers 40
      * strings with 39 fails the whole batch, and the same batch would fail on every run, so the language
      * stuck there for good. Only a single string that still fails stops the run (a daily limit, a service down).
+     * Past the deadline the halves are not tried any more (null): every try runs the whole chain of services,
+     * and a batch split down to single strings took minutes, so the host killed the run as timed out.
      *
      * @param  list<string>  $texts
-     * @return list<string>
+     * @return list<?string>
      */
-    private static function translateChunk(Translator $translator, array $texts, string $code): array
+    private static function translateChunk(Translator $translator, array $texts, string $code, ?float $deadline = null): array
     {
+        if ($deadline && microtime(true) > $deadline) {
+            return array_fill(0, count($texts), null);
+        }
+
         try {
             return method_exists($translator, 'translateMany')
                 ? $translator->translateMany($texts, $code, 'en')
@@ -143,8 +152,8 @@ class InterfaceStrings
             $half = intdiv(count($texts) + 1, 2);
 
             return [
-                ...self::translateChunk($translator, array_slice($texts, 0, $half), $code),
-                ...self::translateChunk($translator, array_slice($texts, $half), $code),
+                ...self::translateChunk($translator, array_slice($texts, 0, $half), $code, $deadline),
+                ...self::translateChunk($translator, array_slice($texts, $half), $code, $deadline),
             ];
         }
     }

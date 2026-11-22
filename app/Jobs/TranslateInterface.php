@@ -25,6 +25,13 @@ class TranslateInterface implements ShouldQueue
 
     public int $tries = 1;
 
+    /**
+     * The run stops starting new requests after 35 seconds, but a request already sent may take its own time
+     * (each service waits up to 30-60 s, Gemini tries three times). The worker's default 60 s cut such runs
+     * short as failed jobs and left the language marked busy; this leaves room for the last request.
+     */
+    public int $timeout = 240;
+
     public function __construct(public string $code, public bool $enableWhenDone = false) {}
 
     /** Marked while a run is queued or working, so the schedule does not start a second one. */

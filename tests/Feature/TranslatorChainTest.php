@@ -15,7 +15,9 @@ use App\Translation\Providers\MyMemory;
 use App\Translation\Providers\Provider;
 use App\Translation\Translator;
 use App\Translation\TranslatorChain;
+use Database\Seeders\LanguageSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
@@ -186,7 +188,7 @@ class TranslatorChainTest extends TestCase
         try {
             $gemini->translateMany(['Hello'], 'uz', 'en');
             $this->fail('a used-up quota is an error');
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             $this->assertSame(429, $e->response->status());
         }
         Sleep::assertSleptTimes(1);
@@ -247,6 +249,37 @@ class TranslatorChainTest extends TestCase
 
         $this->assertSame('Delete the language :name?', InterfaceStrings::read('uz')['Delete the language :name?']);
         $this->assertSame('tarjima', InterfaceStrings::read('uz')['Cancel']);
+    }
+
+    public function test_splitting_a_refused_batch_stops_at_the_deadline_and_keeps_the_rest_missing()
+    {
+        Language::create(['code' => 'uz', 'name' => 'Uzbek', 'native_name' => 'Oʻzbekcha', 'rtl' => false, 'enabled' => false, 'sort' => 9]);
+        // A slow service that refuses every batch but answers single strings: split down to single strings,
+        // one chunk of 40 took 79 requests and the worker killed the run as timed out.
+        $slow = new class extends FakeTranslator
+        {
+            public function translateMany(array $texts, string $targetLocale, ?string $sourceLocale = null): array
+            {
+                $this->calls++;
+                usleep(150_000);
+                if (count($texts) > 1) {
+                    throw new \RuntimeException('busy');
+                }
+
+                return ["[$targetLocale] $texts[0]"];
+            }
+        };
+        $before = count(InterfaceStrings::missing('uz'));
+
+        $left = InterfaceStrings::fill('uz', $slow, 1);
+
+        $this->assertLessThan(15, $slow->calls);
+        $this->assertGreaterThan(0, $left);
+        $this->assertLessThan($before, $left);
+        // Nothing was stored as English just because its turn did not come.
+        $auto = collect(InterfaceStrings::rows('uz'))->where('source', 'auto');
+        $this->assertSame($before - $left, $auto->count());
+        $this->assertTrue($auto->every(fn ($row) => str_starts_with($row['text'], '[uz] ')));
     }
 
     public function test_a_batch_the_service_garbles_is_split_and_the_language_does_not_stick()
@@ -354,7 +387,7 @@ class TranslatorChainTest extends TestCase
     {
         Language::whereKey('ru')->update(['sort' => 7, 'enabled' => false]);
 
-        $this->seed(\Database\Seeders\LanguageSeeder::class);
+        $this->seed(LanguageSeeder::class);
 
         $this->assertSame(7, (int) Language::find('ru')->sort);
         $this->assertFalse(Language::find('ru')->enabled);
