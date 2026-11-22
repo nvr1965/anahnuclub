@@ -2,12 +2,13 @@ import { ActionButton, AdminSearch, Badge, card, type Page, Pager, send } from '
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
-import { UserBadge } from '@/components/user-badge';
+import { BADGES, useBadgeName, UserBadge } from '@/components/user-badge';
 import AdminLayout from '@/layouts/admin-layout';
+import { countryName } from '@/lib/countries';
 import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 interface Row {
@@ -26,7 +27,22 @@ interface Row {
     badges: string[];
     created_at: string | null;
     last_seen_at: string | null;
+    country: string | null;
+    locale: string | null;
 }
+
+interface Filters {
+    sort: string;
+    posts: string | null;
+    joined: number | null;
+    seen: number | string | null;
+    rules: string | null;
+    lang: string | null;
+    country: string | null;
+}
+
+const select =
+    'rounded-full border-0 bg-white py-1 ps-3 pe-8 text-sm shadow-sm dark:bg-neutral-900 [&:not([data-empty])]:ring-2 [&:not([data-empty])]:ring-brand';
 
 interface Banned {
     id: number;
@@ -40,6 +56,8 @@ export default function AdminUsers({
     q,
     filter,
     badge,
+    filters: f,
+    countries,
     special_badges,
     unverified,
     banned,
@@ -49,13 +67,49 @@ export default function AdminUsers({
     q: string;
     filter: string | null;
     badge: string | null;
+    filters: Filters;
+    countries: string[];
     special_badges: string[];
     unverified: number;
     banned: Banned[] | null;
     banned_count: number;
 }) {
     const t = useT();
-    const { auth, locale } = usePage<SharedData>().props;
+    const { auth, locale, languages } = usePage<SharedData>().props;
+    const badgeName = useBadgeName();
+    // What narrows the list now, carried over when a tab, the search or another filter changes.
+    const current: Record<string, string | number | undefined> = {
+        q: q || undefined,
+        filter: filter ?? undefined,
+        badge: badge ?? undefined,
+        sort: f.sort === 'new' ? undefined : f.sort,
+        posts: f.posts ?? undefined,
+        joined: f.joined ?? undefined,
+        seen: f.seen ?? undefined,
+        rules: f.rules ?? undefined,
+        lang: f.lang ?? undefined,
+        country: f.country ?? undefined,
+    };
+    const narrowed = ['badge', 'posts', 'joined', 'seen', 'rules', 'lang', 'country'].some((k) => current[k] !== undefined) || f.sort !== 'new';
+    const apply = (change: Record<string, string | undefined>) =>
+        router.get(route('admin.users.index'), { ...current, ...change, page: undefined }, { preserveState: true, preserveScroll: true });
+    const pick = (key: string, value: string | number | null, options: [string, string][], all: string, label: string) => (
+        <select
+            aria-label={label}
+            title={label}
+            className={select}
+            value={value === null || value === undefined ? '' : String(value)}
+            data-empty={value === null || value === undefined || (key === 'sort' && value === 'new') ? '' : undefined}
+            onChange={(e) => apply({ [key]: e.target.value || undefined })}
+        >
+            {all && <option value="">{all}</option>}
+            {options.map(([v, l]) => (
+                <option key={v} value={v}>
+                    {l}
+                </option>
+            ))}
+        </select>
+    );
     const filters = [
         { key: null, label: t('All') },
         { key: 'unverified', label: `${t('Email not confirmed')} (${unverified})` },
@@ -85,30 +139,107 @@ export default function AdminUsers({
     };
 
     return (
-        <AdminLayout
-            title={t('Users')}
-            actions={<AdminSearch value={q} routeName="admin.users.index" params={{ filter: filter ?? undefined, badge: badge ?? undefined }} />}
-        >
+        <AdminLayout title={t('Users')} actions={<AdminSearch value={q} routeName="admin.users.index" params={{ ...current, q: undefined }} />}>
             <div className="mb-3 flex flex-wrap gap-2">
-                {filters.map((f) => (
+                {filters.map((tab) => (
                     <Link
-                        key={f.label}
-                        href={route('admin.users.index', { q: q || undefined, filter: f.key ?? undefined })}
-                        className={`rounded-full px-3 py-1 text-sm ${filter === f.key ? 'bg-brand text-white' : 'bg-white dark:bg-neutral-900'}`}
+                        key={tab.label}
+                        href={route('admin.users.index', { ...current, filter: tab.key ?? undefined })}
+                        className={`rounded-full px-3 py-1 text-sm ${filter === tab.key ? 'bg-brand text-white' : 'bg-white dark:bg-neutral-900'}`}
                     >
-                        {f.label}
+                        {tab.label}
                     </Link>
                 ))}
             </div>
-            {badge && (
-                <div className="mb-3 flex items-center gap-2 text-sm">
-                    <UserBadge badge={badge} />
-                    <Link
-                        href={route('admin.users.index', { q: q || undefined, filter: filter ?? undefined })}
-                        className="text-brand hover:underline"
-                    >
-                        {t('Show everyone')}
-                    </Link>
+            {!banned && (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                    {pick(
+                        'sort',
+                        f.sort,
+                        [
+                            ['new', t('Newest first')],
+                            ['old', t('Oldest first')],
+                            ['seen', t('Recently active')],
+                            ['posts', t('Most posts')],
+                            ['name', t('By name')],
+                        ],
+                        '',
+                        t('Sorting'),
+                    )}
+                    {pick(
+                        'badge',
+                        badge,
+                        Object.keys(BADGES).map((b) => [b, badgeName(b)]),
+                        t('Any role'),
+                        t('Role'),
+                    )}
+                    {pick(
+                        'posts',
+                        f.posts,
+                        [
+                            ['with', t('With posts')],
+                            ['without', t('Without posts')],
+                        ],
+                        t('Any posts'),
+                        t('Posts'),
+                    )}
+                    {pick(
+                        'joined',
+                        f.joined,
+                        [
+                            ['1', t('Joined today')],
+                            ['7', t('Joined this week')],
+                            ['30', t('Joined this month')],
+                            ['365', t('Joined this year')],
+                        ],
+                        t('Joined any time'),
+                        t('Registration'),
+                    )}
+                    {pick(
+                        'seen',
+                        f.seen,
+                        [
+                            ['1', t('Active today')],
+                            ['7', t('Active this week')],
+                            ['30', t('Active this month')],
+                            ['idle', t('Not active for a month')],
+                        ],
+                        t('Any activity'),
+                        t('Activity'),
+                    )}
+                    {pick(
+                        'rules',
+                        f.rules,
+                        [
+                            ['yes', t('Rules accepted')],
+                            ['no', t('Rules not accepted yet')],
+                        ],
+                        t('Any rules'),
+                        t('Rules'),
+                    )}
+                    {pick(
+                        'lang',
+                        f.lang,
+                        languages.map((l) => [l.code, l.native_name]),
+                        t('Any language'),
+                        t('Language'),
+                    )}
+                    {countries.length > 0 &&
+                        pick(
+                            'country',
+                            f.country,
+                            countries.map((c) => [c, countryName(c, locale)]),
+                            t('Any country'),
+                            t('Country'),
+                        )}
+                    {narrowed && (
+                        <Link
+                            href={route('admin.users.index', { q: q || undefined, filter: filter ?? undefined })}
+                            className="text-brand px-2 text-sm hover:underline"
+                        >
+                            {t('Reset filters')}
+                        </Link>
+                    )}
                 </div>
             )}
             {selectable.length > 0 && (
@@ -201,6 +332,8 @@ export default function AdminUsers({
                                     <div className="text-muted-foreground truncate text-xs">
                                         {user.username && <>@{user.username} · </>}
                                         {user.email} · {t(':count posts', { count: user.posts_count })}
+                                        {user.country && <> · {countryName(user.country, locale)}</>}
+                                        {user.locale && <> · {languages.find((l) => l.code === user.locale)?.native_name ?? user.locale}</>}
                                     </div>
                                     <div className="text-muted-foreground text-xs">
                                         {user.created_at &&
