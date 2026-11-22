@@ -1091,5 +1091,9 @@
     "Any rules": "القواعد: الكل",
     "Rules": "القواعد",
     "Any language": "أي لغة",
-    "Any country": "أي دولة"
+    "Any country": "أي دولة",
+    "Edited": "معدّل",
+    "Press Esc to cancel.": "اضغط Esc للإلغاء.",
+    "Block :name": "حظر :name",
+    "Comment actions": "إجراءات التعليق"
 }

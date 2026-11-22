@@ -127,6 +127,8 @@ Route::middleware(['auth', 'verified', 'rules'])->group(function () {
     Route::get('link-preview', [PostController::class, 'linkPreview'])->middleware('throttle:30,1')->name('links.preview');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::patch('comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::patch('posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('posts/{post}/tag', [PostController::class, 'untag'])->name('posts.untag');
     Route::get('hashtags/suggest', [HashtagController::class, 'suggest'])->name('hashtags.suggest');

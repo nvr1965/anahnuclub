@@ -18,7 +18,7 @@ import { useT } from '@/lib/i18n';
 import { relativeTime } from '@/lib/relative-time';
 import { type Comment, type PinPlace, type Post, type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { Code, Ellipsis, Eye, Flag, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2, UserMinus, UserPlus } from 'lucide-react';
+import { Ban, Code, Ellipsis, Eye, Flag, MessageCircle, Pencil, Pin, PinOff, SendHorizontal, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Lookup = (type: string, id: number) => Record<string, string> | undefined;
@@ -62,6 +62,9 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
     // "Report" on this post or one of its comments.
     const [reporting, setReporting] = useState<{ type: 'post' | 'comment'; id: number } | null>(null);
     const [embedding, setEmbedding] = useState(false);
+    // The comment its author is rewriting, in place of its bubble, as on Facebook.
+    const [editingComment, setEditingComment] = useState<number | null>(null);
+    const commentEdit = useForm({ body: '' });
     const audienceLabels = useAudienceLabels();
     const mine = auth.user?.id === post.author?.id;
     const canChangeAudience = mine && !post.group;
@@ -136,40 +139,131 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
         });
     };
 
+    const startCommentEdit = (comment: Comment) => {
+        setEditingComment(comment.id);
+        commentEdit.setData('body', comment.editable_text ?? '');
+        commentEdit.clearErrors();
+    };
+
+    const saveCommentEdit: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (editingComment === null) return;
+        commentEdit.patch(route('comments.update', editingComment), { preserveScroll: true, onSuccess: () => setEditingComment(null) });
+    };
+
+    const removeComment = (comment: Comment) => {
+        if (window.confirm(t('Delete this comment?'))) router.delete(route('comments.destroy', comment.id), { preserveScroll: true });
+    };
+
+    const blockAuthor = (comment: Comment) => {
+        if (comment.author && window.confirm(t('Block :name? You will stop seeing each other in the club.', { name: comment.author.name }))) {
+            router.post(route('blocks.user', comment.author.id), {}, { preserveScroll: true });
+        }
+    };
+
+    // The "…" beside a comment, as on Facebook: its author edits or deletes it; others report it or
+    // block its author; the post's author, the group's moderators and the team may also delete it.
+    const commentMenu = (comment: Comment) => {
+        const own = Boolean(auth.user) && comment.author?.id === auth.user?.id;
+        const canDelete = own || post.can_delete;
+        const canBlock = Boolean(auth.user) && !own && Boolean(comment.author);
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    className="text-muted-foreground pointer-coarse:opacity-100 shrink-0 self-center rounded-full p-1.5 transition hover:bg-slate-100 focus-visible:opacity-100 data-[state=open]:opacity-100 sm:opacity-0 sm:group-hover/comment:opacity-100 dark:hover:bg-neutral-800"
+                    aria-label={t('Comment actions')}
+                >
+                    <Ellipsis className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    {comment.editable_text !== null && (
+                        <DropdownMenuItem onSelect={() => startCommentEdit(comment)}>
+                            <Pencil className="size-4" /> {t('Edit')}
+                        </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                        <DropdownMenuItem onSelect={() => removeComment(comment)} className="text-red-600">
+                            <Trash2 className="size-4" /> {t('Delete')}
+                        </DropdownMenuItem>
+                    )}
+                    {!own && (
+                        <DropdownMenuItem onSelect={() => setReporting({ type: 'comment', id: comment.id })}>
+                            <Flag className="size-4" /> {t('Report comment')}
+                        </DropdownMenuItem>
+                    )}
+                    {canBlock && (
+                        <DropdownMenuItem onSelect={() => blockAuthor(comment)}>
+                            <Ban className="size-4" /> {t('Block :name', { name: comment.author!.name })}
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    };
+
     const renderComment = (comment: Comment, thread: number, small = false) => (
         <div key={comment.id} id={`comment-${comment.id}`} className="flex gap-2">
             <Avatar className={small ? 'size-6' : 'size-8'}>
                 <AvatarImage src={comment.author?.avatar ?? undefined} alt="" className="object-cover" />
                 <DefaultAvatarFallback />
             </Avatar>
-            <div className="min-w-0">
-                <div className="rounded-2xl bg-slate-100 px-3 py-2 text-[0.9375rem] dark:bg-neutral-800">
-                    {comment.author ? (
-                        <div className="flex flex-wrap items-center gap-x-1.5">
-                            <Link href={route('people.show', comment.author.id)} className="text-[0.8125rem] font-semibold hover:underline">
-                                {comment.author.name}
-                            </Link>
-                            <UserBadge badge={comment.author.badge} size="xs" />
+            {editingComment === comment.id ? (
+                <form onSubmit={saveCommentEdit} className="min-w-0 flex-1">
+                    <div className="flex items-center rounded-full bg-slate-100 pe-1 dark:bg-neutral-800">
+                        <input
+                            dir="auto"
+                            className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[0.9375rem] outline-none"
+                            value={commentEdit.data.body}
+                            autoFocus
+                            onChange={(e) => commentEdit.setData('body', e.target.value)}
+                            onKeyDown={(e) => e.key === 'Escape' && setEditingComment(null)}
+                            aria-label={t('Edit')}
+                        />
+                        <button
+                            className="text-brand rounded-full p-1.5 hover:bg-black/5 disabled:opacity-30"
+                            disabled={commentEdit.processing || !commentEdit.data.body.trim()}
+                            aria-label={t('Save')}
+                        >
+                            <SendHorizontal className="size-5 rtl:rotate-180" />
+                        </button>
+                    </div>
+                    {commentEdit.errors.body && <div className="px-3 pt-0.5 text-xs text-red-600">{commentEdit.errors.body}</div>}
+                    <div className="text-muted-foreground px-3 pt-0.5 text-xs">
+                        {t('Press Esc to cancel.')}{' '}
+                        <button type="button" className="text-brand font-semibold hover:underline" onClick={() => setEditingComment(null)}>
+                            {t('Cancel')}
+                        </button>
+                    </div>
+                </form>
+            ) : (
+                <div className="min-w-0">
+                    <div className="group/comment flex items-center gap-1">
+                        <div className="min-w-0 rounded-2xl bg-slate-100 px-3 py-2 text-[0.9375rem] dark:bg-neutral-800">
+                            {comment.author ? (
+                                <div className="flex flex-wrap items-center gap-x-1.5">
+                                    <Link href={route('people.show', comment.author.id)} className="text-[0.8125rem] font-semibold hover:underline">
+                                        {comment.author.name}
+                                    </Link>
+                                    <UserBadge badge={comment.author.badge} size="xs" />
+                                </div>
+                            ) : (
+                                <div className="text-[0.8125rem] font-semibold">{t('Former member')}</div>
+                            )}
+                            <TranslatedText item={comment} fetched={translated('comment', comment.id)} original={{ body: comment.body }} />
                         </div>
-                    ) : (
-                        <div className="text-[0.8125rem] font-semibold">{t('Former member')}</div>
-                    )}
-                    <TranslatedText item={comment} fetched={translated('comment', comment.id)} original={{ body: comment.body }} />
+                        {commentMenu(comment)}
+                    </div>
+                    <div className="text-muted-foreground flex gap-3 px-3 pt-0.5 text-xs">
+                        <span>{relativeTime(comment.created_at, locale)}</span>
+                        {auth.user && (
+                            <button type="button" className="font-semibold hover:underline" onClick={() => startReply(thread, comment)}>
+                                {t('Reply')}
+                            </button>
+                        )}
+                        {comment.edited && <span>{t('Edited')}</span>}
+                    </div>
                 </div>
-                <div className="text-muted-foreground flex gap-3 px-3 pt-0.5 text-xs">
-                    <span>{relativeTime(comment.created_at, locale)}</span>
-                    {auth.user && (
-                        <button type="button" className="font-semibold hover:underline" onClick={() => startReply(thread, comment)}>
-                            {t('Reply')}
-                        </button>
-                    )}
-                    {comment.author?.id !== auth.user?.id && (
-                        <button type="button" className="hover:underline" onClick={() => setReporting({ type: 'comment', id: comment.id })}>
-                            {t('Report')}
-                        </button>
-                    )}
-                </div>
-            </div>
+            )}
         </div>
     );
 
