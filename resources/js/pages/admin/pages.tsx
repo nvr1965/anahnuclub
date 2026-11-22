@@ -57,18 +57,21 @@ export default function AdminPages({ languages, pages, edit, donate_links, skins
                             key={page.slug}
                             href={route('admin.pages.index', { page: page.slug })}
                             preserveScroll
-                            className={`flex flex-wrap items-center gap-2 p-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50 ${edit?.slug === page.slug ? 'bg-brand-soft/50' : ''}`}
+                            className={`flex flex-col gap-2 p-3 hover:bg-slate-50 sm:flex-row sm:items-center sm:gap-3 dark:hover:bg-neutral-800/50 ${edit?.slug === page.slug ? 'bg-brand-soft/50' : ''}`}
                         >
-                            <span dir="auto" className="flex-1 font-medium">
+                            {/* The title keeps its own line on a phone; on wider screens it never shrinks below 12rem, and the badges wrap instead. */}
+                            <span dir="auto" className="min-w-0 font-medium break-words sm:min-w-48 sm:flex-1">
                                 {page.title}
                             </span>
-                            {!page.published && <Badge tone="red">{t('Hidden')}</Badge>}
-                            {page.in_footer && <Badge>{t('In footer')}</Badge>}
-                            {languages.map((l) => (
-                                <Badge key={l.code} tone={page.languages.includes(l.code) ? 'green' : 'gray'}>
-                                    {l.code}
-                                </Badge>
-                            ))}
+                            <span className="flex flex-wrap gap-1.5 sm:max-w-[65%] sm:justify-end">
+                                {!page.published && <Badge tone="red">{t('Hidden')}</Badge>}
+                                {page.in_footer && <Badge>{t('In footer')}</Badge>}
+                                {languages.map((l) => (
+                                    <Badge key={l.code} tone={page.languages.includes(l.code) ? 'green' : 'gray'}>
+                                        {l.code}
+                                    </Badge>
+                                ))}
+                            </span>
                         </Link>
                     ))}
                     {pages.length === 0 && <p className="text-muted-foreground p-4 text-sm">{t('No pages yet.')}</p>}
