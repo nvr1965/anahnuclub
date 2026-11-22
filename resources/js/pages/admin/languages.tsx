@@ -166,7 +166,7 @@ export default function AdminLanguages({ languages, total, can_translate }: { la
                                 aria-label={t('On')}
                                 onChange={() => send('patch', route('admin.languages.update', language.code), { enabled: !language.enabled })}
                             />
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-40">
                                 <span className="font-medium">{language.native_name}</span>{' '}
                                 <span className="text-muted-foreground text-sm">
                                     {language.name} · {language.code}

@@ -136,7 +136,7 @@ export default function AdminReports({ reports, status, open }: { reports: Page<
                                     placeholder={t('Note for the record')}
                                     value={notes[r.id] ?? ''}
                                     onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
-                                    className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+                                    className="min-w-0 flex-1 basis-48 rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-800"
                                 />
                                 <ActionButton danger onClick={() => decide(r, 'remove')}>
                                     {t('Remove')}

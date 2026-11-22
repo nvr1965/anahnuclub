@@ -140,7 +140,7 @@ export default function Translators({ translators }: { translators: Translator[]
                                         aria-label={t('On')}
                                         onChange={(e) => set(index, { on: e.target.checked })}
                                     />
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1 basis-40">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-semibold">{row.label}</span>
                                             <Badge tone={price[row.price].tone}>{price[row.price].text}</Badge>

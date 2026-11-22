@@ -116,7 +116,7 @@ export default function AdminPages({ languages, pages, edit, donate_links, skins
                             />
                             <input
                                 type="url"
-                                className={`${field.replace('w-full', '')} min-w-0 flex-1`}
+                                className={`${field.replace('w-full', '')} min-w-0 flex-1 basis-48`}
                                 placeholder="https://ko-fi.com/…"
                                 value={link.url}
                                 onChange={(e) => setLink(i, 'url', e.target.value)}
@@ -186,7 +186,7 @@ function SkinSettings({ skins }: { skins: Props['skins'] }) {
             <div className="divide-y rounded-md border dark:divide-neutral-800">
                 {all.map((skin) => (
                     <div key={skin} className="flex flex-wrap items-center gap-3 p-2.5">
-                        <label className="flex min-w-0 flex-1 items-center gap-2">
+                        <label className="flex min-w-0 flex-1 basis-56 items-center gap-2">
                             <input
                                 type="checkbox"
                                 className="accent-brand size-4"
