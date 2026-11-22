@@ -38,7 +38,9 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class, BannedEmails::rule()],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+            // 16 or older, and the terms of use and the community rules accepted.
+            'terms' => ['accepted'],
+        ], ['terms.accepted' => __('Please confirm that you are 16 or older and accept the terms of use and the community rules.')]);
 
         $user = User::create([
             'name' => $request->name,

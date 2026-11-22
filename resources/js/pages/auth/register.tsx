@@ -12,12 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
-interface RegisterForm {
+type RegisterForm = {
     name: string;
     email: string;
     password: string;
     password_confirmation: string;
-}
+    terms: boolean;
+};
 
 export default function Register() {
     const t = useT();
@@ -26,6 +27,7 @@ export default function Register() {
         email: '',
         password: '',
         password_confirmation: '',
+        terms: false,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -103,7 +105,33 @@ export default function Register() {
                         <InputError message={errors.password_confirmation} />
                     </div>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
+                    <div className="grid gap-1">
+                        <label className="flex items-start gap-3 text-sm">
+                            <input
+                                type="checkbox"
+                                name="terms"
+                                required
+                                tabIndex={5}
+                                className="accent-brand mt-0.5 size-4 shrink-0"
+                                checked={data.terms}
+                                onChange={(e) => setData('terms', e.target.checked)}
+                                disabled={processing}
+                            />
+                            <span>
+                                {t('I am 16 or older and accept the')}{' '}
+                                <a href="/p/terms" target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-4">
+                                    {t('terms of use')}
+                                </a>{' '}
+                                {t('and the')}{' '}
+                                <a href="/p/rules" target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-4">
+                                    {t('community rules')}
+                                </a>
+                            </span>
+                        </label>
+                        <InputError message={errors.terms} />
+                    </div>
+
+                    <Button type="submit" className="mt-2 w-full" tabIndex={6} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         {t('Create account')}
                     </Button>
@@ -112,7 +140,7 @@ export default function Register() {
 
                 <div className="text-muted-foreground text-center text-sm">
                     {t('Already have an account?')}{' '}
-                    <TextLink href={route('login')} tabIndex={6}>
+                    <TextLink href={route('login')} tabIndex={7}>
                         {t('Log in')}
                     </TextLink>
                 </div>

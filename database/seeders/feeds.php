@@ -42,7 +42,6 @@ return [
         ['Bokra', 'https://bokra.net/', 'ar'],
         ['Bokra · Telegram', 'https://t.me/s/bokranews', 'ar'],
         ['BBC Arabic', 'https://feeds.bbci.co.uk/arabic/rss.xml', 'ar'],
-        ['الجزيرة', 'https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9', 'ar'],
         ['عرب 48', 'https://www.arab48.com/rss', 'ar'],
     ], 'dropped' => ['https://www.arabnews.com/rss.xml']],
     ['slug' => 'farik', 'group' => 'uzbekistan', 'was_group' => 'central-asia', 'name' => 'Farik', 'was' => 'Фарик', 'locale' => 'uz', 'timezone' => 'Asia/Tashkent', 'min' => 1, 'limit' => 2, 'topic' => 'O‘zbekiston: yangiliklar va qiziqarli voqealar', 'sources' => [
@@ -81,7 +80,6 @@ return [
     ['slug' => 'jake', 'group' => 'america', 'name' => 'Jake', 'locale' => 'en', 'timezone' => 'America/New_York', 'limit' => 3, 'topic' => 'USA and Canada', 'sources' => [
         ['NPR', 'https://feeds.npr.org/1001/rss.xml', 'en'],
         ['CBC', 'https://www.cbc.ca/webfeed/rss/rss-topstories', 'en'],
-        ['AP News', 'https://feedx.net/rss/ap.xml', 'en'],
     ]],
     // Latin America in Spanish: the region's own and the big international Spanish services.
     ['slug' => 'lucia', 'group' => 'latam', 'name' => 'Lucía', 'locale' => 'es', 'timezone' => 'America/Mexico_City', 'min' => 1, 'limit' => 2, 'topic' => 'América Latina: las noticias del día', 'sources' => [
@@ -91,16 +89,12 @@ return [
         ['DW Español', 'https://rss.dw.com/xml/rss-sp-all', 'es'],
         ['France 24 Español', 'https://www.france24.com/es/rss', 'es'],
     ]],
-    // Iran in Persian: the independent services abroad (about one post in one or two days), and apart from them
-    // the voice of the Islamic Republic's own agencies (one post in three days), said so on its profile.
+    // Iran in Persian: the independent services abroad (about one post in one or two days). The Islamic Republic's own
+    // agencies (IRNA, Mehr, Fars) and their author کاوه are off: under Israeli counter-terrorism law, republishing praise
+    // of terror is on the publisher; the 2026_11_22_000002 migration paused that author.
     ['slug' => 'shirin', 'group' => 'iran', 'name' => 'شیرین', 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'limit' => 1, 'topic' => 'ایران و جهان: اخبار روز', 'sources' => [
         ['BBC فارسی', 'https://feeds.bbci.co.uk/persian/rss.xml', 'fa'],
         ['DW فارسی', 'https://rss.dw.com/xml/rss-fa-all', 'fa'],
-    ]],
-    ['slug' => 'kaveh', 'group' => 'iran', 'name' => 'کاوه', 'locale' => 'fa', 'timezone' => 'Asia/Tehran', 'limit' => 1, 'every' => 2, 'topic' => 'صدای رسمی تهران', 'about' => ':name · نویسنده AnahnuClub. :topic: خبرهای خبرگزاری‌های دولتی جمهوری اسلامی ایران، همان‌طور که منتشر شده‌اند، برای آشنایی با دیدگاه رسمی، با لینک.', 'sources' => [
-        ['ایرنا', 'https://www.irna.ir/rss', 'fa'],
-        ['خبرگزاری مهر', 'https://www.mehrnews.com/rss', 'fa'],
-        ['خبرگزاری فارس', 'https://www.farsnews.ir/rss', 'fa'],
     ]],
     ['slug' => 'camille', 'group' => 'france', 'was_group' => 'europe', 'name' => 'Camille', 'locale' => 'fr', 'timezone' => 'Europe/Paris', 'limit' => 2, 'topic' => 'France et Europe', 'sources' => [
         ['France 24', 'https://www.france24.com/fr/rss', 'fr'],
@@ -109,7 +103,6 @@ return [
     ]],
     ['slug' => 'lev', 'group' => 'world', 'name' => 'Leo', 'was' => 'Лев', 'locale' => 'en', 'timezone' => 'Europe/London', 'limit' => 2, 'topic' => 'The world today', 'sources' => [
         ['BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml', 'en'],
-        ['Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml', 'en'],
         ['DW', 'https://rss.dw.com/xml/rss-en-all', 'en'],
         ['Euronews', 'https://www.euronews.com/rss', 'en'],
     ]],
@@ -186,6 +179,14 @@ return [
         'it' => ['name' => 'Tech & IT', 'was' => 'IT и технологии', 'description' => 'IT news, gadgets, startups and programming.', 'locale' => 'en', 'avatar' => 'it'],
     ],
     'retired' => [
+        // Legal risk: Al Jazeera is under a closure order in Israel; IRNA, Mehr and Fars are Iranian state media (Fars
+        // is close to the IRGC); feedx.net re-publishes AP without a licence.
+        'https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9',
+        'https://www.aljazeera.com/xml/rss/all.xml',
+        'https://www.irna.ir/rss',
+        'https://www.mehrnews.com/rss',
+        'https://www.farsnews.ir/rss',
+        'https://feedx.net/rss/ap.xml',
         // Fewer Russian sources: the authors write in the languages of their countries.
         'https://www.gazeta.uz/ru/rss/',
         'https://kun.uz/ru/news/rss',

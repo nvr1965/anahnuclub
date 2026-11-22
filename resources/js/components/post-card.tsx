@@ -316,7 +316,7 @@ export function PostCard({ post, translated, full = false }: { post: Post; trans
                         <AvatarImage src="/images/logo-mark.png?v=2" alt="anahnu.club" />
                     </Avatar>
                 ) : (
-                    <Link href={profile(post.author?.id) ?? '#'} className="shrink-0">
+                    <Link href={profile(post.author?.id) ?? '#'} className="shrink-0" aria-label={post.author?.name ?? t('Guest')}>
                         <Avatar className="size-10">
                             <AvatarImage src={post.author?.avatar ?? undefined} alt={post.author?.name} className="object-cover" />
                             <DefaultAvatarFallback />

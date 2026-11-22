@@ -338,14 +338,12 @@ class FeedsTest extends TestCase
         $this->assertSame(['Noticias de América Latina', 'es'], [$latam->name, $latam->locale]);
         $this->assertNotNull($latam->avatar_path);
         $this->assertSame(['es'], $lucia->feedChannel()->first()->sources()->pluck('locale')->unique()->values()->all());
-        // Iran in Persian: شیرین from BBC and DW, کاوه the state agencies, once in a few days, said so on its profile.
+        // Iran in Persian: شیرین from BBC and DW; the state agencies (and their author کاوه) are off.
         $shirin = User::where('email', 'shirin@authors.anahnu.club')->first();
-        $kaveh = User::where('email', 'kaveh@authors.anahnu.club')->first();
-        $this->assertSame(['fa', 'fa'], [$shirin->locale, $kaveh->locale]);
+        $this->assertSame('fa', $shirin->locale);
         $this->assertSame('اخبار ایران', $shirin->feedChannel()->first()->group->name);
-        $this->assertSame($shirin->feedChannel()->first()->group_id, $kaveh->feedChannel()->first()->group_id);
-        $this->assertSame([1, 2], [$shirin->feedChannel()->first()->every_days, $kaveh->feedChannel()->first()->every_days]);
-        $this->assertStringContainsString('خبرگزاری‌های دولتی', $kaveh->about);
+        $this->assertNull(User::where('email', 'kaveh@authors.anahnu.club')->first());
+        $this->assertSame(0, FeedSource::whereIn('url', ['https://www.farsnews.ir/rss', 'https://www.aljazeera.com/xml/rss/all.xml', 'https://feedx.net/rss/ap.xml'])->where('active', true)->count());
         $this->assertStringContainsString('نویسنده AnahnuClub', $shirin->about);
         // Light topics: Linda in "Cooking", Mia in "Beauty", Ron in "Tech & IT"; Изя's jokes whole.
         $linda = User::where('email', 'faina@authors.anahnu.club')->first();
@@ -413,7 +411,8 @@ class FeedsTest extends TestCase
         $this->artisan('feeds:setup')->assertSuccessful();
 
         $authors = User::where('email', 'like', '%@authors.anahnu.club')->get();
-        $this->assertCount(count(glob(resource_path('club-authors/*.png'))), $authors);
+        // کاوه (the Iranian state agencies) is off: its picture stays for the account made earlier.
+        $this->assertCount(count(glob(resource_path('club-authors/*.png'))) - 1, $authors);
         foreach ($authors as $author) {
             $this->assertNotNull($author->cover_path, $author->name);
             Storage::disk('public')->assertExists($author->cover_path);

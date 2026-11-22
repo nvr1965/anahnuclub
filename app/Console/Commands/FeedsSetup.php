@@ -110,7 +110,9 @@ class FeedsSetup extends Command
             }
         }
         $this->tidyGroups($groups);
-        // Addresses given earlier that never worked: off, so they do not fill the admin page with errors.
+        // Addresses given earlier that never worked, or that are off for legal reasons: off, with their waiting news, so they do not fill the admin page with errors.
+        FeedItem::whereIn('feed_source_id', FeedSource::whereIn('url', $retired)->select('id'))->whereIn('status', ['new', 'approved'])
+            ->update(['status' => 'skipped', 'reason' => 'source off']);
         FeedSource::whereIn('url', $retired)->update(['active' => false]);
         $this->info(FeedChannel::count().' authors, '.FeedSource::count().' sources.');
 

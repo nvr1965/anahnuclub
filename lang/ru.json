@@ -1095,5 +1095,16 @@
     "Edited": "Изменено",
     "Press Esc to cancel.": "Нажмите Esc, чтобы отменить.",
     "Block :name": "Заблокировать :name",
-    "Comment actions": "Действия с комментарием"
+    "Comment actions": "Действия с комментарием",
+    ":site content. It loads from :site, which will receive your IP address and may set its own cookies.": "Материал с :site. Он загружается с :site, который получит ваш IP-адрес и может сохранить свои cookie.",
+    "Always show": "Показывать всегда",
+    "Open on :site": "Открыть на :site",
+    "I am 16 or older and accept the": "Мне есть 16 лет, и я принимаю",
+    "terms of use": "условия использования",
+    "and the": "и",
+    "community rules": "правила сообщества",
+    "Please confirm that you are 16 or older and accept the terms of use and the community rules.": "Подтвердите, что вам есть 16 лет и вы принимаете условия использования и правила сообщества.",
+    "We have updated the community rules or the terms of use. Please read them and confirm that you accept them.": "Мы обновили правила сообщества или условия использования. Пожалуйста, прочитайте их и подтвердите, что принимаете.",
+    "I am 16 or older, I have read the community rules and the terms of use and accept them": "Мне есть 16 лет, я прочитал(а) правила сообщества и условия использования и принимаю их",
+    "Read the terms of use": "Прочитать условия использования"
 }
