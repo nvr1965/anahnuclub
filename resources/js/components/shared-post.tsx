@@ -42,7 +42,11 @@ export function SharedPostView({ post, translated }: { post: SharedPost | null; 
                         <AvatarImage src="/images/logo-mark.png?v=2" alt="anahnu.club" />
                     </Avatar>
                 ) : (
-                    <Link href={post.author ? route('people.show', post.author.id) : '#'} className="shrink-0">
+                    <Link
+                        href={post.author ? route('people.show', post.author.id) : '#'}
+                        className="shrink-0"
+                        aria-label={post.author?.name ?? t('Guest')}
+                    >
                         <Avatar className="size-9">
                             <AvatarImage src={post.author?.avatar ?? undefined} alt={post.author?.name} className="object-cover" />
                             <DefaultAvatarFallback />
