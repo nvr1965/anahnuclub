@@ -665,4 +665,21 @@ class FeedsTest extends TestCase
         $this->assertLessThanOrEqual(mb_strlen(trim($post)) / 4, mb_strlen($item['title']));
         $this->assertLessThanOrEqual(mb_strlen(trim($post)) / 4, mb_strlen($item['summary']));
     }
+
+    public function test_news_of_switched_off_sources_is_deleted()
+    {
+        $author = User::factory()->create();
+        $channel = FeedChannel::create(['user_id' => $author->id, 'topic' => 'x', 'daily_limit' => 2]);
+        $fars = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'Fars', 'url' => 'https://www.farsnews.ir/rss']);
+        $bbc = FeedSource::create(['feed_channel_id' => $channel->id, 'name' => 'BBC', 'url' => 'https://feeds.bbci.co.uk/persian/rss.xml']);
+        $bad = Post::create(['user_id' => $author->id, 'body' => 'Fars']);
+        $good = Post::create(['user_id' => $author->id, 'body' => 'BBC']);
+        FeedItem::create(['feed_channel_id' => $channel->id, 'feed_source_id' => $fars->id, 'url' => 'https://farsnews.ir/1', 'title' => 'a', 'status' => 'posted', 'post_id' => $bad->id]);
+        FeedItem::create(['feed_channel_id' => $channel->id, 'feed_source_id' => $bbc->id, 'url' => 'https://bbc.co.uk/1', 'title' => 'b', 'status' => 'posted', 'post_id' => $good->id]);
+
+        (require database_path('migrations/2026_11_22_000004_delete_posts_of_switched_off_sources.php'))->up();
+
+        $this->assertModelMissing($bad);
+        $this->assertModelExists($good);
+    }
 }
