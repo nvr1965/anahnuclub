@@ -182,4 +182,28 @@ class AdminTest extends TestCase
             ->where('languages', fn ($rows) => collect($rows)->firstWhere('code', 'en')['base'] === true && collect($rows)->firstWhere('code', 'ru')['base'] === false));
         $this->delete('/admin/languages/en')->assertStatus(422);
     }
+
+    public function test_the_users_list_can_be_sorted_and_filtered()
+    {
+        $zoe = User::factory()->create(['name' => 'Zoe', 'country' => 'IL', 'locale' => 'he']);
+        $zoe->forceFill(['last_seen_at' => now()->subHour()])->save();
+        Post::create(['user_id' => $zoe->id, 'body' => 'One']);
+        Post::create(['user_id' => $zoe->id, 'body' => 'Two']);
+        $anna = User::factory()->create(['name' => 'anna', 'country' => 'RU', 'locale' => 'ru', 'rules_accepted_at' => null]);
+        $anna->forceFill(['created_at' => now()->subDays(60), 'last_seen_at' => now()->subDays(40)])->save();
+        $this->admin->forceFill(['name' => 'Mark', 'created_at' => now()->subDays(90)])->save();
+
+        $names = fn (string $query) => collect($this->actingAs($this->admin)->get('/admin/users'.$query)->assertOk()
+            ->viewData('page')['props']['users']['data'])->pluck('name')->all();
+
+        $this->assertSame(['anna', 'Mark', 'Zoe'], $names('?sort=name'), 'case-insensitive by name');
+        $this->assertSame('Zoe', $names('?sort=posts')[0]);
+        $this->assertSame(['Zoe'], $names('?posts=with'));
+        $this->assertSame(['Zoe'], $names('?joined=30'));
+        $this->assertSame(['anna'], $names('?seen=idle&country=RU'));
+        $this->assertSame(['anna'], $names('?rules=no'));
+        $this->assertSame(['Zoe'], $names('?lang=he&country=il'));
+        $this->assertCount(3, $names('?sort=bogus&posts=bogus'));
+        $this->get('/admin/users')->assertInertia(fn ($page) => $page->where('countries', ['IL', 'RU'])->where('filters.sort', 'new'));
+    }
 }
