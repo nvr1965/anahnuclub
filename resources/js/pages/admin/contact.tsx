@@ -30,7 +30,7 @@ export default function AdminContact({ messages }: { messages: Page<Row> }) {
                 {messages.data.map((m) => (
                     <article key={m.id} className={`${card} p-4 ${m.read ? 'opacity-70' : 'border-brand border-s-4'}`}>
                         <header className="flex flex-wrap items-center gap-2">
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-40">
                                 <div className="font-semibold" dir="auto">
                                     {m.user_id ? (
                                         <Link href={route('people.show', m.user_id)} className="hover:underline">

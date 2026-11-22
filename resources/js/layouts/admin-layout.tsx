@@ -69,11 +69,14 @@ export default function AdminLayout({ title, children, actions }: { title: strin
                     </Link>
                 ))}
             </div>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h1 className="text-2xl font-semibold">{title}</h1>
-                {actions}
+            {/* The site wraps long links anywhere (app.css); in admin rows that let flex items shrink names to one letter a line, so here words only break when they cannot fit at all. */}
+            <div className="[overflow-wrap:break-word]">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h1 className="text-2xl font-semibold">{title}</h1>
+                    {actions}
+                </div>
+                {children}
             </div>
-            {children}
         </ClubLayout>
     );
 }

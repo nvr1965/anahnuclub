@@ -72,7 +72,7 @@ export default function LanguageTexts({
                     </p>
                     <div className="flex flex-wrap gap-2">
                         <input
-                            className={`${field.replace('w-full', '')} min-w-0 flex-1 sm:max-w-sm`}
+                            className={`${field.replace('w-full', '')} min-w-0 flex-1 basis-48 sm:max-w-sm`}
                             placeholder={t('Search')}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}

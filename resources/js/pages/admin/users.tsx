@@ -276,7 +276,7 @@ export default function AdminUsers({
                     {banned.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
                     {banned.map((b) => (
                         <div key={b.id} className="flex flex-wrap items-center gap-3 p-3">
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-40">
                                 <div className="font-medium">{b.email}</div>
                                 <div className="text-muted-foreground text-xs" dir="auto">
                                     {b.name}

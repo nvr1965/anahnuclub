@@ -78,7 +78,7 @@ export default function AdminGroups({
                 {groups.data.length === 0 && <p className="text-muted-foreground p-6 text-center">{t('Nothing found.')}</p>}
                 {groups.data.map((group) => (
                     <div key={group.id} className="flex flex-wrap items-center gap-3 p-3">
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 basis-40">
                             <div className="flex flex-wrap items-center gap-2">
                                 <Link href={route('groups.show', group.slug)} dir="auto" className="font-medium hover:underline">
                                     {group.name}

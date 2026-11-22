@@ -522,7 +522,7 @@ function Sources({ channels, sources }: { channels: Channel[]; sources: Source[]
             <div className={`${card} divide-y dark:divide-neutral-800`}>
                 {sources.map((s) => (
                     <div key={s.id} className="flex flex-wrap items-center gap-3 p-3">
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 basis-40">
                             <div className="flex flex-wrap items-center gap-2">
                                 <b>{name(s.channel_id)}</b> · <span dir="auto">{s.name}</span>
                                 {s.locale && <Badge>{s.locale}</Badge>}
