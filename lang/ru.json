@@ -1091,5 +1091,9 @@
     "Any rules": "Правила: все",
     "Rules": "Правила",
     "Any language": "Любой язык",
-    "Any country": "Любая страна"
+    "Any country": "Любая страна",
+    "Edited": "Изменено",
+    "Press Esc to cancel.": "Нажмите Esc, чтобы отменить.",
+    "Block :name": "Заблокировать :name",
+    "Comment actions": "Действия с комментарием"
 }

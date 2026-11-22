@@ -18,6 +18,9 @@ class CommentResource extends JsonResource
             'parent_id' => $this->parent_id,
             'body' => Html::clean($this->body),
             'created_at' => $this->created_at?->toIso8601String(),
+            'edited' => $this->edited_at !== null,
+            // Only for its author: the words to put back in the box when they edit it.
+            'editable_text' => $this->resource->canBeEditedBy($request->user()) ? $this->resource->editableText() : null,
             'author' => AuthorResource::make($this->whenLoaded('user')),
             'translation' => TranslationPayload::for($this->resource, app()->getLocale(), app(ContentTranslator::class)),
         ];

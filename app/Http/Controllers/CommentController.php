@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\TranslateContent;
+use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\ClubActivity;
@@ -52,6 +53,42 @@ class CommentController extends Controller
             ->whereKeyNot([$me->id, $post->user_id ?? 0, $repliedTo->id ?? 0])
             ->get()
             ->each(fn (User $other) => ClubActivity::send($other, 'comment_also', $me, $url, $subject, $data['body']));
+
+        return back();
+    }
+
+    /**
+     * The author rewrites a comment, as on Facebook: readers see "edited", the new text is translated
+     * again, and the words first written stay stored for the team (original_body).
+     */
+    public function update(Request $request, Comment $comment): RedirectResponse
+    {
+        $me = $request->user();
+        abort_unless($comment->canBeEditedBy($me), 403);
+        abort_unless($comment->post?->isVisibleTo($me), 404);
+        $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
+
+        $body = Html::fromPlainText($data['body']);
+        if ($body === $comment->body) {
+            return back();
+        }
+        $comment->update([
+            'original_body' => $comment->original_body ?? $comment->body,
+            'body' => $body,
+            'locale' => LanguageGuesser::guess($data['body']) ?? $comment->locale,
+            'edited_at' => now(),
+        ]);
+        Background::run(new TranslateContent($comment));
+
+        return back();
+    }
+
+    /** Its author, the post's author, the group's moderators or the team take a comment away, with its replies. */
+    public function destroy(Request $request, Comment $comment): RedirectResponse
+    {
+        $post = $comment->post;
+        abort_unless($post && $comment->canBeDeletedBy($request->user(), $post), 403);
+        $comment->delete();
 
         return back();
     }

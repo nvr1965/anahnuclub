@@ -83,7 +83,13 @@ class WebPushTest extends TestCase
 
         // The signature checks out against the published key.
         $raw = WebPush::b64decode($m[3]);
-        $int = fn (string $b) => "\x02".chr(strlen($b = (ord($b[0]) & 0x80 ? "\0" : '').ltrim($b, "\0") ?: "\0")).$b;
+        // DER integers: leading zeros dropped first, then a zero put back when the top bit is set.
+        $int = function (string $b) {
+            $b = ltrim($b, "\0") ?: "\0";
+            $b = (ord($b[0]) & 0x80 ? "\0" : '').$b;
+
+            return "\x02".chr(strlen($b)).$b;
+        };
         $r = $int(substr($raw, 0, 32));
         $s = $int(substr($raw, 32));
         $der = "\x30".chr(strlen($r.$s)).$r.$s;
