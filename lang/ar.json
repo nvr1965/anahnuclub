@@ -1095,5 +1095,16 @@
     "Edited": "معدّل",
     "Press Esc to cancel.": "اضغط Esc للإلغاء.",
     "Block :name": "حظر :name",
-    "Comment actions": "إجراءات التعليق"
+    "Comment actions": "إجراءات التعليق",
+    ":site content. It loads from :site, which will receive your IP address and may set its own cookies.": "محتوى من :site. يُحمَّل من :site، الذي سيحصل على عنوان IP الخاص بك وقد يحفظ ملفات تعريف ارتباط خاصة به.",
+    "Always show": "العرض دائمًا",
+    "Open on :site": "الفتح على :site",
+    "I am 16 or older and accept the": "عمري 16 عامًا أو أكثر وأقبل",
+    "terms of use": "شروط الاستخدام",
+    "and the": "و",
+    "community rules": "قواعد المجتمع",
+    "Please confirm that you are 16 or older and accept the terms of use and the community rules.": "يُرجى تأكيد أن عمرك 16 عامًا أو أكثر وأنك تقبل شروط الاستخدام وقواعد المجتمع.",
+    "We have updated the community rules or the terms of use. Please read them and confirm that you accept them.": "حدّثنا قواعد المجتمع أو شروط الاستخدام. يُرجى قراءتها وتأكيد قبولك لها.",
+    "I am 16 or older, I have read the community rules and the terms of use and accept them": "عمري 16 عامًا أو أكثر، وقرأت قواعد المجتمع وشروط الاستخدام وأقبلها",
+    "Read the terms of use": "قراءة شروط الاستخدام"
 }

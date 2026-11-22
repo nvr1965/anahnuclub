@@ -30,6 +30,7 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'terms' => '1',
         ]);
 
         $this->assertAuthenticated();
@@ -49,7 +50,7 @@ class RegistrationTest extends TestCase
     {
         Notification::fake();
         config(['mail.team_address' => 'team@anahnu.club, owner@example.com']);
-        $this->post('/register', ['name' => 'Test User', 'email' => 'test@example.com', 'password' => 'password', 'password_confirmation' => 'password']);
+        $this->post('/register', ['name' => 'Test User', 'email' => 'test@example.com', 'password' => 'password', 'password_confirmation' => 'password', 'terms' => '1']);
 
         Notification::assertSentOnDemand(NewMember::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === ['team@anahnu.club', 'owner@example.com']);
     }
@@ -58,7 +59,7 @@ class RegistrationTest extends TestCase
     {
         Notification::fake();
         config(['mail.team_address' => '']);
-        $this->post('/register', ['name' => 'Test User', 'email' => 'test@example.com', 'password' => 'password', 'password_confirmation' => 'password']);
+        $this->post('/register', ['name' => 'Test User', 'email' => 'test@example.com', 'password' => 'password', 'password_confirmation' => 'password', 'terms' => '1']);
 
         Notification::assertNothingSentTo(new AnonymousNotifiable);
         Notification::assertCount(1);
@@ -92,5 +93,12 @@ class RegistrationTest extends TestCase
 
         $this->assertNull($user->fresh()->email_verified_at);
         Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_registration_needs_the_age_and_the_terms()
+    {
+        $this->post('/register', ['name' => 'Young', 'email' => 'young@example.com', 'password' => 'password', 'password_confirmation' => 'password'])
+            ->assertSessionHasErrors('terms');
+        $this->assertGuest();
     }
 }

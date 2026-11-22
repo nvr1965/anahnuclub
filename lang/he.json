@@ -1095,5 +1095,16 @@
     "Edited": "נערך",
     "Press Esc to cancel.": "יש להקיש Esc לביטול.",
     "Block :name": "לחסום את :name",
-    "Comment actions": "פעולות על התגובה"
+    "Comment actions": "פעולות על התגובה",
+    ":site content. It loads from :site, which will receive your IP address and may set its own cookies.": "תוכן מ-:site. הוא נטען מ-:site, שיקבל את כתובת ה-IP שלך ועשוי לשמור עוגיות משלו.",
+    "Always show": "להציג תמיד",
+    "Open on :site": "לפתוח ב-:site",
+    "I am 16 or older and accept the": "אני בן/בת 16 ומעלה ומקבל/ת את",
+    "terms of use": "תנאי השימוש",
+    "and the": "ואת",
+    "community rules": "כללי הקהילה",
+    "Please confirm that you are 16 or older and accept the terms of use and the community rules.": "אנא אשרו שמלאו לכם 16 ושאתם מקבלים את תנאי השימוש ואת כללי הקהילה.",
+    "We have updated the community rules or the terms of use. Please read them and confirm that you accept them.": "עדכנו את כללי הקהילה או את תנאי השימוש. אנא קראו אותם ואשרו שאתם מקבלים אותם.",
+    "I am 16 or older, I have read the community rules and the terms of use and accept them": "מלאו לי 16, קראתי את כללי הקהילה ואת תנאי השימוש ואני מקבל/ת אותם",
+    "Read the terms of use": "לקריאת תנאי השימוש"
 }

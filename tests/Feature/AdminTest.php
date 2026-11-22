@@ -79,14 +79,14 @@ class AdminTest extends TestCase
         $this->get('/admin/users?filter=banned')->assertInertia(fn ($page) => $page->where('banned_count', 1)->where('banned.0.email', 'spam@example.com'));
 
         auth()->logout();
-        $this->post('/register', ['name' => 'Again', 'email' => 'Spam@example.com', 'password' => 'password', 'password_confirmation' => 'password'])
+        $this->post('/register', ['name' => 'Again', 'email' => 'Spam@example.com', 'password' => 'password', 'password_confirmation' => 'password', 'terms' => '1'])
             ->assertSessionHasErrors('email');
         $this->assertGuest();
 
         $id = DB::table('banned_emails')->value('id');
         $this->actingAs($this->admin)->delete("/admin/banned-emails/{$id}")->assertRedirect();
         auth()->logout();
-        $this->post('/register', ['name' => 'Again', 'email' => 'spam@example.com', 'password' => 'password', 'password_confirmation' => 'password']);
+        $this->post('/register', ['name' => 'Again', 'email' => 'spam@example.com', 'password' => 'password', 'password_confirmation' => 'password', 'terms' => '1']);
         $this->assertAuthenticated();
     }
 

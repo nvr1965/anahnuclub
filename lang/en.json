@@ -1095,5 +1095,16 @@
     "Edited": "Edited",
     "Press Esc to cancel.": "Press Esc to cancel.",
     "Block :name": "Block :name",
-    "Comment actions": "Comment actions"
+    "Comment actions": "Comment actions",
+    ":site content. It loads from :site, which will receive your IP address and may set its own cookies.": ":site content. It loads from :site, which will receive your IP address and may set its own cookies.",
+    "Always show": "Always show",
+    "Open on :site": "Open on :site",
+    "I am 16 or older and accept the": "I am 16 or older and accept the",
+    "terms of use": "terms of use",
+    "and the": "and the",
+    "community rules": "community rules",
+    "Please confirm that you are 16 or older and accept the terms of use and the community rules.": "Please confirm that you are 16 or older and accept the terms of use and the community rules.",
+    "We have updated the community rules or the terms of use. Please read them and confirm that you accept them.": "We have updated the community rules or the terms of use. Please read them and confirm that you accept them.",
+    "I am 16 or older, I have read the community rules and the terms of use and accept them": "I am 16 or older, I have read the community rules and the terms of use and accept them",
+    "Read the terms of use": "Read the terms of use"
 }

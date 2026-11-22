@@ -39,7 +39,7 @@ export default function WelcomeMember({ again, rules }: Props) {
                     </h1>
                     <p className="text-muted-foreground mt-2">
                         {again
-                            ? t('We have updated the community rules. Please read them and confirm that you accept them.')
+                            ? t('We have updated the community rules or the terms of use. Please read them and confirm that you accept them.')
                             : t('Anahnu.Club is a place for conversation, friendship and mutual support. Here is where to start.')}
                     </p>
                     {!again && (
@@ -66,6 +66,9 @@ export default function WelcomeMember({ again, rules }: Props) {
                             className="prose prose-sm prose-slate dark:prose-invert max-h-96 max-w-none overflow-y-auto rounded-md border border-slate-200 p-4 dark:border-neutral-800"
                             dangerouslySetInnerHTML={{ __html: rules.body }}
                         />
+                        <a href="/p/terms" target="_blank" rel="noreferrer" className="text-brand inline-block text-sm font-medium underline">
+                            {t('Read the terms of use')}
+                        </a>
                         <label className="flex items-start gap-3 text-[0.9375rem]">
                             <input
                                 type="checkbox"
@@ -73,7 +76,7 @@ export default function WelcomeMember({ again, rules }: Props) {
                                 checked={form.data.accept}
                                 onChange={(e) => form.setData('accept', e.target.checked)}
                             />
-                            <span>{t('I have read the community rules and accept them')}</span>
+                            <span>{t('I am 16 or older, I have read the community rules and the terms of use and accept them')}</span>
                         </label>
                         {form.errors.accept && <p className="text-sm text-red-600">{form.errors.accept}</p>}
                         <button

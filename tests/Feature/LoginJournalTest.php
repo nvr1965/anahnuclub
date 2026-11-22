@@ -54,6 +54,7 @@ class LoginJournalTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'terms' => '1',
         ]);
         $this->assertDatabaseHas('login_logs', ['method' => 'register', 'success' => true]);
         auth()->logout();
