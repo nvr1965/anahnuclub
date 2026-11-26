@@ -16,11 +16,16 @@ use Illuminate\Support\Facades\Cache;
 /** What search engines read besides the pages: robots.txt, the sitemap, and the old site's addresses. */
 class SeoController extends Controller
 {
+    /**
+     * robots.txt. A rule closes every address that begins with it, so "/link-preview" (the composer's
+     * link reader) ends with "$": without it, it also closed /link-previews/…/image, the pictures of
+     * posts' link cards, and Google reported them as blocked by robots.txt.
+     */
     public function robots(): Response
     {
         $lines = SiteMeta::indexable()
             ? ['User-agent: *', ...array_map(fn ($path) => "Disallow: /$path", ['admin', 'settings', 'messages', 'calls', 'notifications',
-                'search', 'link-preview', 'translations', 'locale', 'login', 'forgot-password', 'reset-password', 'verify-email', 'auth/']),
+                'search', 'link-preview$', 'translations', 'locale', 'login', 'forgot-password', 'reset-password', 'verify-email', 'auth/']),
                 '', 'Sitemap: '.route('sitemap')]
             // A test copy of the site stays out of search results.
             : ['User-agent: *', 'Disallow: /'];
