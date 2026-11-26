@@ -249,6 +249,30 @@ class SeoTest extends TestCase
             ->assertSee('Sitemap: '.route('sitemap'));
     }
 
+    public function test_robots_txt_leaves_link_card_pictures_open()
+    {
+        $robots = $this->get('/robots.txt')->assertOk()->getContent();
+
+        // Google's rule: a line closes every address that begins with it; "$" marks the end.
+        $closed = function (string $path) use ($robots) {
+            preg_match_all('~^Disallow: (\S+)$~m', $robots, $rules);
+            foreach ($rules[1] as $rule) {
+                $exact = str_ends_with($rule, '$');
+                $rule = rtrim($rule, '$');
+                if ($exact ? $path === $rule : str_starts_with($path, $rule)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $this->assertTrue($closed('/link-preview'));
+        $this->assertFalse($closed('/link-previews/1170/image'));
+        $this->assertTrue($closed('/admin/users'));
+        $this->assertFalse($closed('/posts/596'));
+    }
+
     public function test_the_sitemap_lists_pages_in_every_language_and_posts_in_theirs()
     {
         $author = User::factory()->create();
