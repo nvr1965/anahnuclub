@@ -22,7 +22,7 @@ type Type = 'people' | 'posts' | 'groups' | 'videos' | 'events' | 'pages';
 interface Results {
     people: Person[];
     posts: { data: Post[] } | Post[];
-    groups: { name: string; slug: string; members_count: number; is_private: boolean }[];
+    groups: { name: string; slug: string; is_private: boolean }[];
     videos: VideoItem[];
     events: EventItem[];
     pages: { slug: string; title: string }[];
@@ -162,9 +162,6 @@ export default function SearchPage({ q, type, counts, results: raw, more, sideba
                                     <span dir="auto" className="flex items-center gap-1.5 font-medium">
                                         {group.is_private && <Lock className="text-muted-foreground size-3.5" />}
                                         {group.name}
-                                    </span>
-                                    <span className="text-muted-foreground shrink-0 text-sm whitespace-nowrap">
-                                        {t(':count members', { count: group.members_count })}
                                     </span>
                                 </Link>
                             </li>

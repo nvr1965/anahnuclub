@@ -31,7 +31,7 @@ class GroupController extends Controller
             ->where('published', true)
             ->when($request->user(), fn ($query, $viewer) => $query->whereNotIn('id', $viewer->blockedGroupIds()))
             ->when($q !== '', fn ($query) => $query->matching($q))
-            ->withCount(['members' => fn ($query) => $query->where('group_user.approved', true), 'posts'])
+            ->withCount('posts')
             ->orderByDesc('posts_count')
             ->orderBy('id')
             ->paginate(30)
@@ -41,7 +41,6 @@ class GroupController extends Controller
                 'name' => $g->name,
                 'slug' => $g->slug,
                 'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null,
-                'members_count' => $g->members_count,
                 'posts_count' => $g->posts_count,
             ]);
 
@@ -75,7 +74,6 @@ class GroupController extends Controller
                 'is_private' => $group->is_private,
                 // The text as typed, for the settings form.
                 'description_text' => trim(html_entity_decode(strip_tags(preg_replace('~<br\s*/?>\R?|</p>~i', "\n", (string) $group->description)))),
-                'members_count' => $group->members()->wherePivot('approved', true)->count(),
                 'is_member' => $member,
                 'blocked' => (bool) $request->user()?->blockedGroupIds()->contains($group->id),
                 'role' => $role = $group->roleOf($request->user()),

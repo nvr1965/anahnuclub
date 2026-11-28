@@ -274,7 +274,6 @@ export interface Paginated<T> {
 
 export interface Sidebar {
     members: Person[];
-    members_count: number;
-    groups: { name: string; slug: string; avatar: string | null; posts_count: number }[];
+    groups: { name: string; slug: string; avatar: string | null }[];
     photos: { id: number; thumb: string; url: string }[];
 }

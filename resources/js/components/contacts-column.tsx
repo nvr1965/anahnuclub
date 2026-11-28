@@ -35,10 +35,7 @@ export function ContactsColumn({ sidebar }: { sidebar: Sidebar }) {
             )}
             <div className="mx-2 border-t border-slate-300 dark:border-neutral-700" />
             <section>
-                <h3 className="text-muted-foreground flex justify-between px-2 pb-1 text-sm font-semibold">
-                    <span>{t('Members')}</span>
-                    <span className="font-normal">{sidebar.members_count}</span>
-                </h3>
+                <h3 className="text-muted-foreground px-2 pb-1 text-sm font-semibold">{t('Members')}</h3>
                 {sidebar.members.map((member) => (
                     <Link
                         key={member.id}

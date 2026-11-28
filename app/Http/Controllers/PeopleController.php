@@ -77,13 +77,12 @@ class PeopleController extends Controller
                     default => 'received',
                 }];
             }),
-            'total' => $people->total(),
             'q' => $q,
             'country' => $country ?: null,
             'lang' => $lang ?: null,
-            // What the filters can offer: the countries and languages members actually have, with how many.
-            'countries' => $publicCountry($visible())->groupBy('country')->selectRaw('country, count(*) as n')->pluck('n', 'country'),
-            'langs' => $visible()->whereNotNull('locale')->groupBy('locale')->selectRaw('locale, count(*) as n')->pluck('n', 'locale'),
+            // What the filters can offer: the countries and languages members actually have (no counts: the club does not show its size).
+            'countries' => $publicCountry($visible())->distinct()->pluck('country')->values(),
+            'langs' => $visible()->whereNotNull('locale')->distinct()->pluck('locale')->values(),
         ]);
     }
 

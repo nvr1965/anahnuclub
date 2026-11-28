@@ -157,8 +157,8 @@ class ProfileAndFriendsTest extends TestCase
 
         $this->actingAs($me)->get('/people')->assertOk()->assertInertia(fn ($page) => $page
             ->component('people/index')
-            ->where('total', 2)
             ->has('people.data', 2)
+            ->missing('total')
         );
         $this->actingAs($me)->get('/people?q=Ольг')->assertInertia(fn ($page) => $page
             ->has('people.data', 1)
@@ -200,7 +200,7 @@ class ProfileAndFriendsTest extends TestCase
 
         $this->actingAs($me)->get('/people?country=IL')->assertInertia(fn ($page) => $page
             ->where('people.data', fn ($rows) => collect($rows)->pluck('id')->all() === [$il->id])
-            ->where('countries.IL', 1)->where('countries.RU', 1));
+            ->where('countries', fn ($c) => collect($c)->sort()->values()->all() === ['IL', 'RU']));
         $this->get('/people?lang=ru')->assertInertia(fn ($page) => $page
             ->where('people.data', fn ($rows) => collect($rows)->pluck('id')->sort()->values()->all() === collect([$hidden->id, $ru->id])->sort()->values()->all()));
     }

@@ -11,7 +11,7 @@ import { defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type Sidebar } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { MessageSquare, Search, Users, X } from 'lucide-react';
+import { MessageSquare, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface GroupRow {
@@ -19,7 +19,6 @@ interface GroupRow {
     name: string;
     slug: string;
     avatar: string | null;
-    members_count: number;
     posts_count: number;
 }
 
@@ -98,9 +97,6 @@ export default function GroupsIndex({
                                 {group.name}
                             </div>
                             <div className="text-muted-foreground mt-1 flex gap-3 text-xs">
-                                <span className="inline-flex items-center gap-1">
-                                    <Users className="size-3.5" /> {group.members_count}
-                                </span>
                                 <span className="inline-flex items-center gap-1">
                                     <MessageSquare className="size-3.5" /> {group.posts_count}
                                 </span>
