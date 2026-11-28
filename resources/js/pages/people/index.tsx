@@ -53,9 +53,7 @@ export default function People({ people, q, country, lang, countries, langs }: P
             <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-2xl font-bold">
-                            {t('All members')}
-                        </h1>
+                        <h1 className="text-2xl font-bold">{t('All members')}</h1>
                         <InviteButton />
                     </div>
                     <label className="relative w-full sm:w-64">
