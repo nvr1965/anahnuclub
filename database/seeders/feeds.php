@@ -1,6 +1,12 @@
 <?php
 
 /*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
+/*
  * The club's authors at the start of the feed filling, and their sources. Each author's name and topic
  * are in the language it posts in; 'min' and 'limit' are its posts a day (a number between them each day).
  * Read by `php artisan feeds:setup`, which adds what is missing and never changes what an admin edited.

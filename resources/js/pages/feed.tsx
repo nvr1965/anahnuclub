@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { MomentTray } from '@/components/moments/moment-tray';
 import { PostComposer } from '@/components/post-composer';
 import { PostList } from '@/components/post-list';

@@ -1,6 +1,12 @@
 <?php
 
 /*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
+/*
  * The translation block: machine-translation services tried in turn. The keys live in config/services.php
  * (and .env, or are entered on the admin page); the order, on/off and daily limits can be changed on the admin page "Translators".
  */

@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { type ReactNode } from 'react';
 
 export function ClubCard({ title, children, className = '' }: { title?: ReactNode; children: ReactNode; className?: string }) {

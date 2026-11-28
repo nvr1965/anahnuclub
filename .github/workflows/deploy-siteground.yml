@@ -1,3 +1,7 @@
+# Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+# Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+# Developed with the use of Claude.
+
 name: deploy to SiteGround
 
 # After each push to main, once the frontend is built (build-assets.yml), log in to

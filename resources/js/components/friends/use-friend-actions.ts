@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { type Person } from '@/types';
 import { router } from '@inertiajs/react';
 import { useState } from 'react';

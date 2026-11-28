@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { Appearance, useAppearance } from '@/hooks/use-appearance';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';

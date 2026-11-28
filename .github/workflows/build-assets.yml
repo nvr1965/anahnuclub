@@ -1,3 +1,7 @@
+# Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+# Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+# Developed with the use of Claude.
+
 name: build assets
 
 # Shared hosting has no Node, so the built frontend is kept on the `build` branch

@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /**
  * Scales a picture down in the browser before uploading, so phone photos of several
  * megabytes go up quickly. Pictures the browser cannot read are sent as they are.

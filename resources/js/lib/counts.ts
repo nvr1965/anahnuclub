@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { onFreshNews } from '@/lib/push';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';

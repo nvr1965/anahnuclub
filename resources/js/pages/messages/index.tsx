@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { Bubble, fileSize, gap, type Message } from '@/components/chat-bubble';
 import { EMOJI } from '@/components/chat-dock';
 import { PanelMenu, panelMenuItem } from '@/components/notification-bell';

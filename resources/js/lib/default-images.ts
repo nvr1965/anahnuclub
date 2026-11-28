@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /** Pictures shown when a member, group or event has none of its own (public/images/defaults, CC0). */
 export const defaultImages = {
     user: '/images/defaults/user.svg',

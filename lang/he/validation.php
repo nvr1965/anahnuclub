@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 return [
     'required' => 'השדה :attribute הוא חובה.',
     'email' => 'השדה :attribute חייב להיות כתובת דוא"ל.',

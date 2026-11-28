@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { InviteButton } from '@/components/invite-button';
 import { PersonCard, primary, secondary } from '@/components/person-card';
 import AppLayout from '@/layouts/app-layout';

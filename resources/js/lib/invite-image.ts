@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /**
  * Draws the invitation picture a shared link shows (1200×630) from a language's interface texts:
  * the slogan, three lines on what the club offers, a "join" button, and a post and a chat with a

@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /**
  * Installing the club as an app. Chrome and Edge offer it through an event that comes once,
  * early, so it is caught here at start-up and kept for the "Install the app" menu item.

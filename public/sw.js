@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 // Anahnu Club as an installed app. Pages always come from the network (the club is live and
 // personal); the built scripts and styles, whose names change with every release, are kept on the
 // phone so the app opens fast; with no connection a page shows the offline notice.

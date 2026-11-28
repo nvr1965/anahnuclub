@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { useT } from '@/lib/i18n';
 import { enablePush, pushState, testPush, type PushReport, type PushState } from '@/lib/push';
 import { BellRing, X } from 'lucide-react';

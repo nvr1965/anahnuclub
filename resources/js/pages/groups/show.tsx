@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { GroupForm } from '@/components/group-form';
 import { GroupInvite, InvitationBanner } from '@/components/group-invite';
 import { GroupTeam, OfferBanner, RoleBadge, type GroupRole, type OfferRole, type TeamMember } from '@/components/group-team';

@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { EventForm } from '@/components/event-form';
 import { EventCard } from '@/components/post-media';
 import AppLayout from '@/layouts/app-layout';

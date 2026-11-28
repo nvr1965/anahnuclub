@@ -1,3 +1,7 @@
+# Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+# Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+# Developed with the use of Claude.
+
 import json, base64, sys
 logo = base64.b64encode(open('/root/work/anahnuclub/public/images/logo-tile.png','rb').read()).decode()
 L = {

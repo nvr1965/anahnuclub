@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { MomentWords } from '@/components/moments/moment-look';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';

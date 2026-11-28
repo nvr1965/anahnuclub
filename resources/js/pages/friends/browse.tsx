@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { FriendsChips, type FriendsMenuCounts } from '@/components/friends/friends-layout';
 import { MutualLine, type FriendCard } from '@/components/friends/mutual-line';
 import { softButton, useFriendActions, type FriendStatus } from '@/components/friends/use-friend-actions';

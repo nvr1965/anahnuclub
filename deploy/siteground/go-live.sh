@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+# Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+# Developed with the use of Claude.
+
 # Moves the club from test.anahnu.club to anahnu.club, in place of the old Joomla site.
 # Members and content are imported anew from Joomla; only the administrator settings of the test
 # site stay (languages, translators and their keys, site pages, interface texts).
