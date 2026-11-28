@@ -1,6 +1,12 @@
 <?php
 
 /*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
+/*
  * The daily filling of the feed by the club's authors. The starting authors and their sources
  * are in database/seeders/feeds.php; everything is changed later on the admin page "Feed filling".
  */

@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 return [
     // Search engines may index the site only at its real address (anahnu.club). A test copy such as
     // test.anahnu.club keeps this off, so robots.txt shuts everything and pages say "noindex".

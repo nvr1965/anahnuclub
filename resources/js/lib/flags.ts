@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 // Language → country flag (SVG from flag-icons). A region in the code (pt-BR) takes that region's flag.
 // Only the countries listed get into the build.
 const FLAG_URLS = import.meta.glob<string>(

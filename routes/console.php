@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 use App\Feeds\FeedPublisher;
 use App\Jobs\TranslateContent;
 use App\Jobs\TranslateInterface;

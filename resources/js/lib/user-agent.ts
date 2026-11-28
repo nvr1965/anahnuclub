@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /** "Chrome · Android" from a browser's User-Agent line; good enough to tell one's devices apart. */
 export function describeDevice(ua: string | null): string {
     if (!ua) return '';

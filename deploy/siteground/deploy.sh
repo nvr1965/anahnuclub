@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+# Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+# Developed with the use of Claude.
+
 # Installs or updates the club on SiteGround shared hosting, over SSH, as the site user.
 #
 #   ~/www/<site>/app          this repository (code, .env, storage), not reachable from the web

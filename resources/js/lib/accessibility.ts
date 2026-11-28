@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /**
  * The visitor's accessibility settings (IS 5568 / WCAG 2.0 AA): text size, a palette, and a few aids.
  * Kept in this browser only and put on <html> as classes before the page draws (also by the inline

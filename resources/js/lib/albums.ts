@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 type Translate = (key: string, replace?: Record<string, string | number>) => string;
 
 /** Albums the site keeps by itself are named in the reader's language. */

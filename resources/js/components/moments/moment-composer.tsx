@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { CameraCapture, cameraAvailable } from '@/components/camera-capture';
 import { useT } from '@/lib/i18n';
 import { shrinkImage, videoFrame, videoInfo } from '@/lib/shrink-image';

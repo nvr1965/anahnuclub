@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+# Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+# Developed with the use of Claude.
+
 # Sets up a test server for AnahnuClub on a fresh Ubuntu 24.04 or 26.04 machine:
 # nginx + PHP (the release's default, 8.2+) + PostgreSQL (the app) + MariaDB (only to read the old Joomla dump) + Node 22.
 #

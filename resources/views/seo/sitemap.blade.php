@@ -1,3 +1,8 @@
+{{--
+    Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+    Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+    Developed with the use of Claude.
+--}}
 {{-- Every page in each of its languages, each listing all its language versions (Google's hreflang in sitemaps). --}}
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 @foreach ($urls as $url)

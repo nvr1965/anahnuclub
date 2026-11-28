@@ -1,3 +1,8 @@
+{{--
+    Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+    Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+    Developed with the use of Claude.
+--}}
 {{-- An old address of the Joomla site with nothing here: search engines drop it, people get a way on (members' pages are
      there after signing in). --}}
 @extends('errors::minimal')

@@ -1,3 +1,8 @@
+{{--
+    Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+    Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+    Developed with the use of Claude.
+--}}
 <!DOCTYPE html>
 <html translate="no" lang="{{ app()->getLocale() }}" dir="{{ $rtl ? 'rtl' : 'ltr' }}">
 <head>

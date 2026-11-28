@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { CreateMenu } from '@/components/create-menu';
 import { InstallAppHelp } from '@/components/install-app';
 import { LanguageSwitcher } from '@/components/language-switcher';

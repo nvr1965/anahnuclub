@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { PostList } from '@/components/post-list';
 import { EventCard } from '@/components/post-media';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';

@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 return [
     'required' => 'حقل :attribute مطلوب.',
     'email' => 'يجب أن يكون :attribute بريداً إلكترونياً صالحاً.',

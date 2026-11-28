@@ -1,3 +1,8 @@
+{{--
+    Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+    Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+    Developed with the use of Claude.
+--}}
 @php
     $author = $official ? 'anahnu.club' : ($post->user?->name ?? __('Former member'));
     $avatar = $official ? asset('images/logo-tile.png').'?v=2' : $post->user?->avatar;

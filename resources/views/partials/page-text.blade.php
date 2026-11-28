@@ -1,3 +1,8 @@
+{{--
+    Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+    Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+    Developed with the use of Claude.
+--}}
 {{-- A plain copy of the page: heading, text (already cleaned HTML) and links to more of the site. --}}
 <main style="max-width:42rem;margin:2rem auto;padding:0 1rem;font-family:sans-serif;line-height:1.5">
     <h1>{{ $content['heading'] }}</h1>

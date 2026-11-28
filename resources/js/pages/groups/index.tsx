@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { GroupForm } from '@/components/group-form';
 import { InviteButton } from '@/components/invite-button';
 import AppLayout from '@/layouts/app-layout';

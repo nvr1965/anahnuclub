@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { ShareMenu } from '@/components/share-menu';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';

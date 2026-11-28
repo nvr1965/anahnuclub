@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { AdminSearch, Badge, card, type Page, Pager } from '@/components/admin-ui';
 import { useLoginMethod } from '@/components/login-method';
 import AdminLayout from '@/layouts/admin-layout';

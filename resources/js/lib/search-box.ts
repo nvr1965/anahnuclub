@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 /**
  * Puts the cursor into the search box the current style shows on screen and lights it up for a moment.
  * Returns false when no box is visible (Stream between lg and xl, Showcase between md and xl), so the caller can open

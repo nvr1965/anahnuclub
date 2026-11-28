@@ -1,3 +1,9 @@
+/*
+ * Author and Developer: Nikolay Reyzvikh (Николай Рейзвих).
+ * Copyright (c) 2026 Nikolay Reyzvikh. All rights reserved.
+ * Developed with the use of Claude.
+ */
+
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { DefaultAvatarFallback } from '@/components/user-avatar';
 import { useAutoTranslate } from '@/hooks/use-auto-translate';
