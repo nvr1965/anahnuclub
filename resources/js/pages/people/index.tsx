@@ -18,15 +18,14 @@ type Member = Person & { friendship: 'none' | 'friends' | 'sent' | 'received' };
 
 interface Props {
     people: Paginated<Member>;
-    total: number;
     q: string;
     country: string | null;
     lang: string | null;
-    countries: Record<string, number>;
-    langs: Record<string, number>;
+    countries: string[];
+    langs: string[];
 }
 
-export default function People({ people, total, q, country, lang, countries, langs }: Props) {
+export default function People({ people, q, country, lang, countries, langs }: Props) {
     const t = useT();
     const { locale, languages } = usePage<SharedData>().props;
     const params = (patch: Record<string, string | null>) =>
@@ -54,9 +53,7 @@ export default function People({ people, total, q, country, lang, countries, lan
             <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-2xl font-bold">
-                            {t('All members')} <span className="text-muted-foreground font-normal">{total}</span>
-                        </h1>
+                        <h1 className="text-2xl font-bold">{t('All members')}</h1>
                         <InviteButton />
                     </div>
                     <label className="relative w-full sm:w-64">
@@ -79,12 +76,12 @@ export default function People({ people, total, q, country, lang, countries, lan
                         onChange={(e) => filter({ country: e.target.value || null })}
                     >
                         <option value="">{t('All countries')}</option>
-                        {Object.entries(countries)
-                            .map(([code, n]) => [code, countryName(code, locale), n] as const)
+                        {countries
+                            .map((code) => [code, countryName(code, locale)] as const)
                             .sort((a, b) => a[1].localeCompare(b[1], locale))
-                            .map(([code, name, n]) => (
+                            .map(([code, name]) => (
                                 <option key={code} value={code}>
-                                    {name} ({n})
+                                    {name}
                                 </option>
                             ))}
                     </select>
@@ -95,9 +92,9 @@ export default function People({ people, total, q, country, lang, countries, lan
                         onChange={(e) => filter({ lang: e.target.value || null })}
                     >
                         <option value="">{t('All languages')}</option>
-                        {Object.entries(langs).map(([code, n]) => (
+                        {langs.map((code) => (
                             <option key={code} value={code}>
-                                {languages.find((l) => l.code === code)?.native_name ?? code} ({n})
+                                {languages.find((l) => l.code === code)?.native_name ?? code}
                             </option>
                         ))}
                     </select>

@@ -14,7 +14,7 @@ import { coverStyle, defaultImages } from '@/lib/default-images';
 import { useT } from '@/lib/i18n';
 import { type Paginated, type Person, type Post, type Sidebar } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Ban, Users } from 'lucide-react';
+import { Ban } from 'lucide-react';
 
 interface Group {
     id: number;
@@ -26,7 +26,6 @@ interface Group {
     is_private: boolean;
     description_text: string;
     name_text: string;
-    members_count: number;
     is_member: boolean;
     blocked: boolean;
     role: GroupRole | null;
@@ -64,10 +63,11 @@ export default function GroupShow({
                             <h1 dir="auto" className="text-2xl font-semibold">
                                 {group.name}
                             </h1>
-                            <p className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 text-sm">
-                                <Users className="size-4" /> {t(':count members', { count: group.members_count })}
-                                {group.role && <RoleBadge role={group.role} />}
-                            </p>
+                            {group.role && (
+                                <p className="mt-1 inline-flex items-center gap-1.5 text-sm">
+                                    <RoleBadge role={group.role} />
+                                </p>
+                            )}
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {group.blocked ? (

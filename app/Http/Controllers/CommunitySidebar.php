@@ -28,7 +28,6 @@ class CommunitySidebar
                 ->limit(20)
                 ->get()
                 ->map(fn (User $u) => PeopleController::card($u)),
-            'members_count' => User::where('blocked', false)->listedFor($user)->count(),
             'groups' => ($user ? $user->groups() : Group::query())
                 ->where('published', true)
                 ->where('is_private', false)
@@ -41,7 +40,6 @@ class CommunitySidebar
                     'name' => $g->name,
                     'slug' => $g->slug,
                     'avatar' => $g->avatar_path ? asset('storage/'.$g->avatar_path) : null,
-                    'posts_count' => $g->posts_count,
                 ]),
             'photos' => self::photos($user),
         ];

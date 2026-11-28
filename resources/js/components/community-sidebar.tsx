@@ -24,8 +24,7 @@ export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
                         </Link>
                     ))}
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-                    <span className="text-muted-foreground">{t(':count members', { count: sidebar.members_count })}</span>
+                <div className="mt-3 flex items-center justify-end gap-2 text-xs">
                     <Link href={route('people.index')} className="text-brand font-semibold hover:underline">
                         {t('Show all')}
                     </Link>
@@ -54,7 +53,6 @@ export function CommunitySidebar({ sidebar }: { sidebar: Sidebar }) {
                                     <span dir="auto" className="min-w-0 truncate font-medium">
                                         {group.name}
                                     </span>
-                                    <span className="text-muted-foreground ms-auto shrink-0 text-xs">{group.posts_count}</span>
                                 </Link>
                             </li>
                         ))}
